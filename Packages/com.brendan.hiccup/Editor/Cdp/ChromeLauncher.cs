@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +16,8 @@ namespace Hiccup.Editor.Cdp
 
         /// <summary>Browser-level DevTools web socket, valid once <see cref="LaunchAsync"/> returns.</summary>
         public string BrowserWebSocketUrl { get; private set; }
+        /// <summary>The DevTools HTTP/WebSocket port Chrome was started on.</summary>
+        public int DevToolsPort { get; private set; }
 
         /// <summary>Path Chrome was started from.</summary>
         public string ExecutablePath { get; private set; }
@@ -94,9 +98,14 @@ namespace Hiccup.Editor.Cdp
             _profileDir = Path.Combine(Path.GetTempPath(), "hiccup-cdp-" + Guid.NewGuid().ToString("N").Substring(0, 8));
             Directory.CreateDirectory(_profileDir);
 
-            // Port 0 makes Chrome pick a free port and write it to DevToolsActivePort in the profile directory.
+            // The port is chosen here rather than by Chrome (port 0) so it can be named in --remote-allow-origins:
+            // since Chrome 111 the DevTools front end that Chrome serves on this port may only open a socket to it
+            // from an allowed origin, and that front end is what the "Open in Chrome DevTools" button loads.
+            // Allowing exactly this origin keeps other local pages from reaching the debugging port.
+            DevToolsPort = FreePort();
             var args = new System.Text.StringBuilder();
-            args.Append("--remote-debugging-port=0");
+            args.Append("--remote-debugging-port=").Append(DevToolsPort);
+            args.Append(" --remote-allow-origins=http://127.0.0.1:").Append(DevToolsPort).Append(",http://localhost:").Append(DevToolsPort);
             args.Append(" --user-data-dir=\"").Append(_profileDir).Append('"');
             args.Append(" --no-first-run --no-default-browser-check --no-service-autorun");
             args.Append(" --disable-extensions --disable-background-networking --disable-sync");
@@ -135,6 +144,23 @@ namespace Hiccup.Editor.Cdp
             _process.BeginOutputReadLine();
 
             BrowserWebSocketUrl = await ReadDevToolsEndpointAsync(_profileDir, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>A port nothing is listening on right now. Chrome binds it moments later; a collision is very unlikely.</summary>
+        private static int FreePort()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            try { return ((IPEndPoint)listener.LocalEndpoint).Port; }
+            finally { listener.Stop(); }
+        }
+
+        /// <summary>The DevTools front end for a page target, served by this Chrome. Opens in any Chromium browser.</summary>
+        public string DevToolsUrl(string targetId)
+        {
+            if (DevToolsPort == 0 || string.IsNullOrEmpty(targetId))
+                return null;
+            return $"http://127.0.0.1:{DevToolsPort}/devtools/inspector.html?ws=127.0.0.1:{DevToolsPort}/devtools/page/{targetId}";
         }
 
         private async Task<string> ReadDevToolsEndpointAsync(string profileDir, CancellationToken ct)

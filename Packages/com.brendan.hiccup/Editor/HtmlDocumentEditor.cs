@@ -45,6 +45,20 @@ namespace Hiccup.Editor
                 if (GUILayout.Button("Invalidate"))
                     doc.Invalidate();
             }
+
+            // The preview's Chrome serves its own DevTools front end; it connects to this document's page over the
+            // debugging port, so the DOM, styles, console and network of the live document are all inspectable.
+            var devTools = HtmlEditorPreview.DevToolsUrl(doc);
+            using (new EditorGUI.DisabledScope(devTools == null))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button(new GUIContent("Open in Chrome DevTools",
+                        "Opens Chrome's DevTools for this document's preview page in your default browser. " +
+                        "The page must open in a Chromium browser; use Copy URL and paste it into Chrome otherwise.")))
+                    Application.OpenURL(devTools);
+                if (GUILayout.Button(new GUIContent("Copy URL", "Copies the DevTools URL to the clipboard."), GUILayout.Width(80)))
+                    EditorGUIUtility.systemCopyBuffer = devTools;
+            }
         }
     }
 }

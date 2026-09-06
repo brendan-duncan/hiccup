@@ -431,6 +431,13 @@ nothing to do with the protocol: the same bridge calls a script would make carry
 
 **The UI is upside down.** Toggle **Window > Hiccup > Flip Preview Vertically**.
 
+**Inspecting a document.** The inspector's **Open in Chrome DevTools** loads
+`http://127.0.0.1:<port>/devtools/inspector.html?ws=127.0.0.1:<port>/devtools/page/<targetId>`, the front end the
+preview Chrome serves on its own debugging port, pointed at the document's target. The launcher chooses that port
+up front (a free loopback port) so it can pass `--remote-allow-origins` naming exactly that origin; Chrome 111+
+rejects the front end's socket otherwise, and naming the origin keeps other local pages away from the port. The
+link works in any Chromium browser; the front end is not served to others.
+
 **Colors look washed out or edges are haloed.** The sRGB handling in `ApplyPendingFrame` is the place to look —
 specifically the `linear: true` staging texture and the `GL.sRGBWrite = false` around the blit.
 

@@ -108,6 +108,14 @@ namespace Hiccup.Editor.Cdp
 
         /// <summary>True once Chrome is up and the protocol connection is live.</summary>
         public bool Connected => _client != null && _client.IsOpen;
+
+        /// <summary>URL of Chrome's DevTools front end for a document's page, or null until the page exists.</summary>
+        public string DevToolsUrl(int panelId)
+        {
+            if (_chrome == null || !Connected || !_panels.TryGetValue(panelId, out var panel) || panel.TargetId == null)
+                return null;
+            return _chrome.DevToolsUrl(panel.TargetId);
+        }
         public bool Failed => _failed;
         public string Status { get; private set; } = "not started";
 

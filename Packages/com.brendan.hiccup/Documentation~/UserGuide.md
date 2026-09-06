@@ -784,6 +784,11 @@ In Play mode, Hiccup renders documents through a real copy of Chrome, so you can
 Layout, styling, script behavior, mouse input and events are all genuine. The toggles live under
 **Window ▸ Hiccup**.
 
+**Inspect the page.** Select the document's GameObject while playing and press **Open in Chrome DevTools** in
+the Inspector. Chrome's own developer tools open on that document's page, so you can inspect the DOM, tweak
+styles live, read the console and watch network requests, exactly as on a web page. The page has to open in a
+Chromium browser; if your default browser is something else, **Copy URL** and paste it into Chrome.
+
 **Edit while playing.** Save a change to a `.html`, `.css` or `.js` file a document uses and switch back to
 Unity so it reimports the file. The document picks it up: a style sheet change is applied in place and the page
 keeps its state (open dialogs, typed text, scroll position), while an HTML or script change reloads the document

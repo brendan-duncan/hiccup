@@ -74,6 +74,10 @@ namespace Hiccup.Editor
             set => EditorPrefs.SetBool(HotReloadKey, value);
         }
 
+        /// <summary>URL of the DevTools front end for a document's preview page, or null when there is none yet.</summary>
+        public static string DevToolsUrl(HtmlDocument document)
+            => document != null && s_backend != null ? s_backend.DevToolsUrl(document.PanelId) : null;
+
         /// <summary>One-line description of the preview for inspectors.</summary>
         public static string Status =>
             !Enabled ? "disabled" :

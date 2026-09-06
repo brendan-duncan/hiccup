@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- **Open in Chrome DevTools** on the HtmlDocument inspector during play mode (with a **Copy URL** button beside
+  it): opens the preview Chrome's own DevTools front end for that document's page, so its DOM, styles, console
+  and network are inspectable live. The launcher now picks the debugging port itself and passes it to
+  `--remote-allow-origins`, which recent Chrome requires before the front end may connect; no other origin is
+  allowed. `HtmlDocument.PanelId` is public.
 - Element API additions: `QAll` and `Children` on an element, `Closest(selector)`, `GetData`/`SetData` for
   `data-*` attributes, `ScrollTop`/`ScrollLeft`, `ValueAsFloat`/`ValueAsInt`, `SelectedIndex` and
   `SetOptions(...)` for `<select>`, `Call(method)` for zero-argument DOM methods with `Select()` as a shortcut,

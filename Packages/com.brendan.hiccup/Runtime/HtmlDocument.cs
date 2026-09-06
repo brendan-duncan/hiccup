@@ -107,7 +107,8 @@ namespace Hiccup
         /// which is when a game should stop treating keys as commands. See <see cref="HtmlRuntime.TextInputFocused"/>.
         /// </summary>
         public bool TextInputFocused { get; private set; }
-        internal int PanelId => _panel;
+        /// <summary>The bridge-side panel id, for diagnostics. 0 until the panel is created.</summary>
+        public int PanelId => _panel;
         public HtmlRuntime Runtime => HtmlRuntime.Instance;
         public HtmlRenderMode RenderMode => HtmlRuntime.HasInstance ? HtmlRuntime.Instance.Mode : HtmlRenderMode.Unavailable;
 

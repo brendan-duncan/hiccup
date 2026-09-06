@@ -160,6 +160,9 @@ Toggles live under **Window > Hiccup**:
 | Flip Preview Vertically | Corrects the frame orientation if it comes out upside down on your graphics API. |
 | Reload Changed Assets in Play Mode | On by default. A saved `.css` is applied to live documents in place; a saved `.html` or `.js` reloads them. |
 
+An `HtmlDocument`'s inspector has **Open in Chrome DevTools** while playing: Chrome's DevTools for that document's
+page, live, in your browser (a Chromium one; **Copy URL** is there for pasting into Chrome otherwise).
+
 What the preview gives you is genuine, because it is genuinely Chrome: layout, CSS, fonts, script behavior and
 event payloads. What it cannot give you is the part that only exists in a web build — accessibility (screen
 readers, find-in-page, text selection), IME, and HTML-in-Canvas compositing itself. A document that looks and
