@@ -9,7 +9,7 @@ namespace Hiccup
     /// </summary>
     /// <remarks>
     /// In texture mode the mesh samples the document's texture. In overlay mode behind a transparent canvas
-    /// (<see cref="HtmlRuntime.OverlayCutout"/>) the mesh instead writes colour and alpha 0 with depth, cutting a
+    /// (<see cref="HtmlRuntime.OverlayCutout"/>) the mesh instead writes color and alpha 0 with depth, cutting a
     /// hole in the frame through which the DOM shows, so nearer geometry covers the panel as it should.
     /// </remarks>
     [AddComponentMenu("Hiccup/HTML World Surface")]

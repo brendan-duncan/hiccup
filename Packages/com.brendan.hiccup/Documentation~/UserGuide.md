@@ -254,7 +254,7 @@ back into the same rectangle. So:
   To Rect** off, set **Size** to a fixed design resolution, and let the Raw Image stretch the texture. Hit
   testing and screen-reader bounds follow the stretched rectangle either way.
 * **Leave the Raw Image's Color white and its Material empty.** The surface assigns the package's premultiplied
-  UI material at runtime; the colour tints the whole document.
+  UI material at runtime; the color tints the whole document.
 
 **World panels** work the other way round: **Size** on the document is the CSS pixel size, and the Quad's scale
 is its size in the world. Keep their aspect ratios equal or the texture stretches; **Pixels Per Unit** on the
@@ -387,7 +387,7 @@ setting it by hand. Leave **Mipmaps** on — world panels are minified and will 
 
 **Pointer Mode** decides what the panel captures:
 
-| Mode | Behaviour |
+| Mode | Behavior |
 | --- | --- |
 | `ChildrenOnly` *(default)* | Only the direct children of your content capture clicks. Clicking empty space reaches Unity — what a HUD wants. |
 | `Panel` | The whole rectangle captures input. For a full-screen menu that should block the game. |
@@ -432,7 +432,7 @@ any of this.
 ## Working in the Editor
 
 Play mode renders documents through a real Chrome, so you can iterate without building. Layout, styling, script
-behaviour, mouse input and events are all genuine. Toggles live under **Window ▸ Hiccup**.
+behavior, mouse input and events are all genuine. Toggles live under **Window ▸ Hiccup**.
 
 Keys typed in the Game view reach the document the last click landed in, so text fields and shortcuts work; IME
 and composed input do not. It cannot show you accessibility or HTML-in-Canvas compositing either. It is a fast
@@ -468,7 +468,7 @@ CSS transform. Check the console for a `getElementTransform` or `updateElementGe
 **The texture only updates sometimes.** Set `HtmlRuntime.UpdateMode = HtmlUpdateMode.EveryFrame`. If that fixes
 it, paint events are not firing for that panel — worth reporting, with your Chrome version.
 
-**Colours look wrong or edges are haloed.** `PremultipliedAlpha` and the surface material must agree. Leave the
+**Colors look wrong or edges are haloed.** `PremultipliedAlpha` and the surface material must agree. Leave the
 setting at its default unless you know why you are changing it.
 
 **Everything is blank for the first frame or two.** Normal — there is no snapshot yet. It retries.

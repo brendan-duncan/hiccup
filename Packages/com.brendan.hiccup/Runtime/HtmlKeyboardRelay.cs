@@ -48,7 +48,7 @@ namespace Hiccup
                 Alt = e.alt,
                 Meta = e.command,
             });
-            // Not consumed: BlockUnityInput is not modelled by the Editor preview, so Unity sees the same keys.
+            // Not consumed: BlockUnityInput is not modeled by the Editor preview, so Unity sees the same keys.
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Hiccup
     /// </summary>
     /// <remarks>
     /// In texture mode the RawImage shows the document's texture. In overlay mode behind a transparent canvas
-    /// (<see cref="HtmlRuntime.OverlayCutout"/>) it writes colour and alpha 0 instead, so the DOM overlay shows
+    /// (<see cref="HtmlRuntime.OverlayCutout"/>) it writes color and alpha 0 instead, so the DOM overlay shows
     /// through its rectangle and anything drawn after it in the UI still covers it.
     /// </remarks>
     [AddComponentMenu("Hiccup/HTML Screen Surface")]

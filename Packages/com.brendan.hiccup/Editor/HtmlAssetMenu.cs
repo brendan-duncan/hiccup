@@ -11,7 +11,7 @@ namespace Hiccup.Editor
     {
         private const string Menu = "Assets/Create/Hiccup/";
 
-        // Same neighbourhood as Unity's own text-like assets (C# Script, UI Toolkit files).
+        // Same neighborhood as Unity's own text-like assets (C# Script, UI Toolkit files).
         private const int Priority = 81;
 
         private const string HtmlTemplate =

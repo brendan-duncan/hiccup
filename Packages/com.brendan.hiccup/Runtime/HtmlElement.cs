@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Hiccup
 {
     /// <summary>
-    /// Handle to a DOM element inside an <see cref="HtmlDocument"/>. Modelled loosely after UI Toolkit's VisualElement,
+    /// Handle to a DOM element inside an <see cref="HtmlDocument"/>. Modeled loosely after UI Toolkit's VisualElement,
     /// but every call goes straight to the live DOM. Invalid handles (element not found) are safe to use: all
     /// setters are no-ops and all getters return empty values.
     /// </summary>
@@ -210,7 +210,7 @@ namespace Hiccup
         }
         public bool HasClass(string className) => IsValid && HtmlNative.Hiccup_ElemHasClass(_handle, className) != 0;
 
-        // ------------------------------------------------------------------ behaviour
+        // ------------------------------------------------------------------ behavior
 
         public HtmlElement Focus()
         {

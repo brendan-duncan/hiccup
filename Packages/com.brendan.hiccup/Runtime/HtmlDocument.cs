@@ -42,7 +42,7 @@ namespace Hiccup
         [Tooltip("Generate mipmaps after every update and sample trilinear + anisotropic. Recommended for world-space panels.")]
         [SerializeField] private bool mipmaps = true;
 
-        [Header("Behaviour")]
+        [Header("Behavior")]
         [SerializeField] private bool visible = true;
         [SerializeField] private HtmlPointerMode pointerMode = HtmlPointerMode.ChildrenOnly;
         [Tooltip("Stop pointer/keyboard events that target the document from also reaching Unity's input.")]

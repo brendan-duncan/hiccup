@@ -11,10 +11,10 @@ namespace Hiccup.Samples
     /// </summary>
     public class ThreeJsDeskBootstrap : MonoBehaviour
     {
-        [Tooltip("Screen size in metres (16:9).")]
+        [Tooltip("Screen size in meters (16:9).")]
         [SerializeField] private Vector2 screenSize = new Vector2(0.64f, 0.36f);
 
-        [Tooltip("Document resolution: CSS pixels per metre of screen. 2000 makes the default screen 1280 x 720.")]
+        [Tooltip("Document resolution: CSS pixels per meter of screen. 2000 makes the default screen 1280 x 720.")]
         [SerializeField] private float pixelsPerMetre = 2000f;
 
         private void Awake()
@@ -113,7 +113,7 @@ namespace Hiccup.Samples
             bezel.transform.localScale = new Vector3(screenSize.x + 0.05f, screenSize.y + 0.05f, 0.03f);
             Paint(bezel, plastic);
 
-            var screen = Primitive("Quad");   // a Quad faces -Z, towards the chair
+            var screen = Primitive("Quad");   // a Quad faces -Z, toward the chair
             screen.name = "Screen (HTML)";
             screen.SetActive(false);          // configure before OnEnable creates the browser-side panel
             screen.transform.position = new Vector3(0f, screenY, screenZ - 0.0165f);

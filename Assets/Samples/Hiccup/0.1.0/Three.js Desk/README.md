@@ -15,7 +15,7 @@ into a WebGL texture that three.js draws on a plane. Unity â†’ HTML-in-Canvas â†
 
 **Controls.** Right-drag on the mouse pad to slide the mouse and move the cursor without pressing anything.
 Left-press and drag the mouse to press-and-drag: with the cursor over a shape that moves the shape, over empty
-space it orbits the three.js camera. Left-press and release without moving to click a shape (it recolours).
+space it orbits the three.js camera. Left-press and release without moving to click a shape (it recolors).
 Scroll to zoom. Over the big screen the cursor is forwarded into the nested build instead.
 
 | Piece | Where | Demonstrates |

@@ -6,9 +6,9 @@ namespace Hiccup.Ugui
 {
     /// <summary>
     /// Exports textures, or sub-rectangles of them, as PNG data URLs the mirrored page can use as backgrounds.
-    /// uGUI tints a graphic by multiplying its vertex colour into the texture, which CSS cannot express for an
+    /// uGUI tints a graphic by multiplying its vertex color into the texture, which CSS cannot express for an
     /// arbitrary image, so the tint is baked into the export instead. Results are cached by texture, rectangle and
-    /// tint; the tint is quantised to 128 levels per channel so a colour transition does not produce a PNG per frame.
+    /// tint; the tint is quantized to 128 levels per channel so a color transition does not produce a PNG per frame.
     /// </summary>
     internal sealed class UguiTextureCache : IDisposable
     {
@@ -41,8 +41,8 @@ namespace Hiccup.Ugui
         /// <summary>Number of PNGs exported so far, for the inspector.</summary>
         public int Count => _urls.Count + _sliced.Count;
 
-        // 128 levels per channel: within one 8-bit step of the exact colour, so a baked tint is indistinguishable from
-        // a CSS colour, while a colour-tint transition still collapses onto a bounded set of PNGs.
+        // 128 levels per channel: within one 8-bit step of the exact color, so a baked tint is indistinguishable from
+        // a CSS color, while a color-tint transition still collapses onto a bounded set of PNGs.
         private const int TintLevels = 127;
 
         public static int QuantizeTint(Color c)
@@ -225,7 +225,7 @@ namespace Hiccup.Ugui
             return 1;
         }
 
-        /// <summary>Bilinear sample at a pixel-centre coordinate, clamped to the slice's own pixels.</summary>
+        /// <summary>Bilinear sample at a pixel-center coordinate, clamped to the slice's own pixels.</summary>
         private static Color32 Sample(Color32[] src, int sw, float sx, float sy, int xlo, int xhi, int ylo, int yhi)
         {
             float fx = sx - 0.5f, fy = sy - 0.5f;
@@ -266,7 +266,7 @@ namespace Hiccup.Ugui
             return "data:image/png;base64," + Convert.ToBase64String(png);
         }
 
-        /// <summary>Readable textures (everything created at runtime, and imported ones with Read/Write on) are copied on the CPU: no render target, no colour-space round trip.</summary>
+        /// <summary>Readable textures (everything created at runtime, and imported ones with Read/Write on) are copied on the CPU: no render target, no color-space round trip.</summary>
         private static Color32[] ReadDirect(Texture texture, RectInt rect, int w, int h)
         {
             if (!(texture is Texture2D t2) || !t2.isReadable)

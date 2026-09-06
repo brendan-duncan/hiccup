@@ -1,5 +1,5 @@
 // Overlay-mode cutout for world-space panels. When the DOM overlay sits behind a transparent canvas, the mesh
-// writes colour and alpha 0 (and depth) so the page shows through exactly where the panel is, and anything
+// writes color and alpha 0 (and depth) so the page shows through exactly where the panel is, and anything
 // nearer in the scene covers it. Plain CG so it renders under Built-in, URP and HDRP (untagged pass).
 Shader "Hiccup/Overlay Cutout"
 {

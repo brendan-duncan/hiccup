@@ -1,5 +1,5 @@
 // uGUI shader for HTML UI textures. Same structure as UI/Default but blends premultiplied alpha
-// (the browser snapshots are premultiplied) and does not apply the default UI colour tricks.
+// (the browser snapshots are premultiplied) and does not apply the default UI color tricks.
 Shader "Hiccup/UI Premultiplied"
 {
     Properties
@@ -96,7 +96,7 @@ Shader "Hiccup/UI Premultiplied"
             fixed4 frag(v2f IN) : SV_Target
             {
                 half4 color = tex2D(_MainTex, IN.texcoord);
-                // Premultiplied tint: scale colour by tint rgb, everything by tint alpha.
+                // Premultiplied tint: scale color by tint rgb, everything by tint alpha.
                 color.rgb *= IN.color.rgb;
                 color *= IN.color.a;
 

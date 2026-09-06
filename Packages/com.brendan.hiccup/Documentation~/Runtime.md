@@ -32,7 +32,7 @@ null. Where the overlay sits depends on the canvas:
 * **Transparent canvas** (`webglContextAttributes: { alpha: true }`, which the package template sets): the
   overlay is inserted just *before* the canvas and `HtmlRuntime.OverlayCutout` is true. Surfaces then draw a
   cutout instead of a texture: `HtmlWorldSurface` uses `Hiccup/Overlay Cutout`, an opaque pass that writes
-  depth and colour+alpha 0, and `HtmlScreenSurface` uses `Hiccup/UI Overlay Cutout`, which does the same
+  depth and color+alpha 0, and `HtmlScreenSurface` uses `Hiccup/UI Overlay Cutout`, which does the same
   through uGUI. The DOM shows through those pixels, so a panel is occluded by nearer geometry exactly as a
   textured one would be. Two consequences: anything that rewrites alpha after the scene (some post-processing
   stacks) closes the hole, and pixels the scene itself leaves at alpha 0 show the page background. Pointer
@@ -40,7 +40,7 @@ null. Where the overlay sits depends on the canvas:
   receiving them so the DOM gets them natively; the routing uses the panel's projected shape, not scene depth.
 
 Mode is chosen once in `HUI.init` and never changes. `HtmlRuntime.ForceOverlay = true` (before the first
-document) selects overlay deliberately, which is useful for comparing behaviour.
+document) selects overlay deliberately, which is useful for comparing behavior.
 
 ## Layers
 
@@ -61,10 +61,10 @@ The ABI is deliberately narrow: ints, floats, C strings and one function pointer
 does. The jslib is written in ES5 on purpose, because the Emscripten JS pre-processor is not a full parser and
 has rejected newer syntax across Unity 6 releases.
 
-## Initialisation and feature detection
+## Initialization and feature detection
 
 `HtmlRuntime.Initialize` runs the first time any document is created. It tells JS the backend (1 = WebGL2,
-2 = WebGPU, from `SystemInfo.graphicsDeviceType`), whether the project is in linear colour space, and the
+2 = WebGPU, from `SystemInfo.graphicsDeviceType`), whether the project is in linear color space, and the
 overlay/debug flags, and hands over the event callback pointer.
 
 `HUI.init` then probes, in order:
@@ -153,9 +153,9 @@ The two backends differ in *who owns the texture*, which is the single most impo
 returned to C#. Unity wraps it with `Texture2D.CreateExternalTexture`. The browser owning the texture means it
 can re-specify format and size freely, which the `texElementImage2D` variants need.
 
-`allocGLTexture` allocates with `SRGB8_ALPHA8` when the project is in linear colour space, otherwise `RGBA8`, and
+`allocGLTexture` allocates with `SRGB8_ALPHA8` when the project is in linear color space, otherwise `RGBA8`, and
 then, if the document uses mipmaps, calls `generateMipmap` on the still-empty texture. That is not an
-optimisation: a mipmapped texture without a complete chain is incomplete and samples as opaque black until the
+optimization: a mipmapped texture without a complete chain is incomplete and samples as opaque black until the
 first real upload.
 
 Uploads go through whichever entry point exists:
@@ -259,7 +259,7 @@ sweep runs again on every panel creation to catch handlers registered late.
 Each panel listens for a default set — `click`, `dblclick`, `input`, `change`, `submit`, `keydown`, `focusin`,
 `focusout` — and `HtmlDocument.Listen` (called automatically by `On`) adds more.
 
-`onDomEvent` normalises the DOM event into a flat, `JsonUtility`-friendly object: type, target id (assigning
+`onDomEvent` normalizes the DOM event into a flat, `JsonUtility`-friendly object: type, target id (assigning
 `hui-N` if the element has none, so it can be queried later), tag, name, the closest `[data-action]` value, the
 control's value and checked state, key/code, pointer position **relative to the panel** in CSS pixels, modifier
 flags, the space-separated ids of ancestors up to the panel, and the merged `data-*` attributes of the target and
@@ -298,10 +298,10 @@ the browser is doing its normal job. Three things the bridge does explicitly:
   and setting the text on the next animation frame so repeated identical messages are still announced.
   Visibility changes set `aria-hidden` alongside `hidden`.
 
-## Colour and alpha
+## Color and alpha
 
-In linear colour space the texture is `SRGB8_ALPHA8` (WebGL) or copied with `colorSpace: 'srgb'` (WebGPU), so the
-sampler linearises on read. Snapshots are premultiplied by default, which is why the package ships
+In linear color space the texture is `SRGB8_ALPHA8` (WebGL) or copied with `colorSpace: 'srgb'` (WebGPU), so the
+sampler linearizes on read. Snapshots are premultiplied by default, which is why the package ships
 `Hiccup/UI Premultiplied` and `Hiccup/Unlit Premultiplied` and the surfaces assign them automatically. Turning
 `PremultipliedAlpha` off changes the unpack flag and stops the surface applying the premultiplied material —
 change both or neither.

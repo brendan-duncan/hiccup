@@ -9,7 +9,7 @@ This document describes how that works, and where it deliberately diverges from 
 
 ## What the preview is, and is not
 
-It is genuinely Chrome, so layout, CSS, fonts, script behaviour, form controls, dialogs and DOM event payloads
+It is genuinely Chrome, so layout, CSS, fonts, script behavior, form controls, dialogs and DOM event payloads
 are all real. A document that lays out correctly here lays out correctly in a build.
 
 It is not the shipping path. Three things exist only in a web build and cannot be checked here:
@@ -19,7 +19,7 @@ It is not the shipping path. Three things exist only in a web build and cannot b
   assistive technology is pointed at.
 * **IME and text composition.**
 * **HTML-in-Canvas itself** — `layoutsubtree`, `drawable`, `texElementImage2D`, `copyElementImageToTexture`,
-  `updateElementGeometry`, `getElementTransform`. The preview rasterises the page instead of compositing it, so
+  `updateElementGeometry`, `getElementTransform`. The preview rasterizes the page instead of compositing it, so
   it cannot tell you whether those APIs behaved.
 
 ## The seam
@@ -148,7 +148,7 @@ be acknowledged with `Page.screencastFrameAck` or the screencast stalls after on
 A screencast message is almost entirely one base64 string, and a full-viewport frame runs to megabytes. Pushing
 that through the generic protocol path meant a multi-megabyte string, a character-by-character copy of it inside
 the JSON parser, and a third copy for the base64 decode — per frame, on top of the decode itself. Those
-allocations were most of the Editor's hitching. `CdpClient` instead recognises the message in its raw UTF-8
+allocations were most of the Editor's hitching. `CdpClient` instead recognizes the message in its raw UTF-8
 bytes, decodes the payload directly from them, and parses only the few hundred bytes that remain as JSON. The
 frame reaches the backend on the receive thread through `ScreencastFrameHandler`, which acknowledges it at once
 and queues it for decoding.
@@ -189,7 +189,7 @@ preview texture interchangeable with the WebGL one. Whether that flip is correct
 render-target origin, which is why it is a `_FlipY` shader property wired to a menu toggle rather than a
 hard-coded `1 - uv.y`.
 
-**Pass-through, not re-encode.** The target is `GraphicsFormat.R8G8B8A8_SRGB` so that the UI shader linearises
+**Pass-through, not re-encode.** The target is `GraphicsFormat.R8G8B8A8_SRGB` so that the UI shader linearizes
 correctly when it samples the result — the same as the WebGL path. But writing to an sRGB target would normally
 apply a linear→sRGB encode on output, which would corrupt values that are already encoded. `GL.sRGBWrite` is set
 to `false` around the blit to suppress that, so the raw premultiplied bytes are stored as-is.
@@ -279,7 +279,7 @@ On Windows, IMGUI reports a typed key as two `KeyDown` events — one with the `
 Only the one with a printable character inserts text; a `KeyCode` without a character is dispatched only when it
 is a special key or a modifier shortcut, so nothing is doubled.
 
-Unity still sees the same keys, as it sees the same clicks — `BlockUnityInput` is not modelled.
+Unity still sees the same keys, as it sees the same clicks — `BlockUnityInput` is not modeled.
 
 ## Events
 
@@ -295,7 +295,7 @@ default event set and constructs a byte-identical payload, then hands it to the 
 
 That arrives as `Runtime.bindingCalled`, is routed to a panel by `sessionId`, and goes to
 `HtmlBackend.DispatchEvent` → `HtmlRuntime.DispatchToPanel` → `HtmlDocument.DispatchNative`, which is the same
-entry point the jslib callback uses. `JsonUtility` deserialises it into `HtmlEvent`, so `On`, `OnAction`,
+entry point the jslib callback uses. `JsonUtility` deserializes it into `HtmlEvent`, so `On`, `OnAction`,
 `e.GetData` and ancestor bubbling all work as documented.
 
 ## The element API
@@ -391,7 +391,7 @@ already done their work for the frame:
 
 **The UI is upside down.** Toggle **Window > Hiccup > Flip Preview Vertically**.
 
-**Colours look washed out or edges are haloed.** The sRGB handling in `ApplyPendingFrame` is the place to look —
+**Colors look washed out or edges are haloed.** The sRGB handling in `ApplyPendingFrame` is the place to look —
 specifically the `linear: true` staging texture and the `GL.sRGBWrite = false` around the blit.
 
 **Nothing updates but the page seems alive.** Watch for the screenshot-polling message in the console; if it

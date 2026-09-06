@@ -10,7 +10,7 @@ What it shows:
 |---|---|
 | `Image` (sliced, rounded sprite made in memory) | `border-image` from a tinted PNG export |
 | `Text` with rich text, `VerticalLayoutGroup`, `HorizontalLayoutGroup` | Absolutely positioned text with the rectangles uGUI computed; selectable, findable, read by screen readers |
-| `Button` with colour transitions | `<button>`; hover and press still tint the uGUI image through `Selectable` |
+| `Button` with color transitions | `<button>`; hover and press still tint the uGUI image through `Selectable` |
 | `Toggle`, `Slider`, `InputField`, `Dropdown` | Native checkbox, range, text input and `<select>` over the uGUI visuals, driving the uGUI components |
 | `ScrollRect` + `ContentSizeFitter` | The viewport scrolls in the browser; the content's `anchoredPosition` follows |
 | `Image.Type.Filled` (radial) and a rotating `RectTransform` | `conic-gradient` mask and a CSS transform, updated every frame |
@@ -19,7 +19,7 @@ Things to try:
 
 * Uncheck **HTML mirror** at the top to see and use the same canvas drawn natively by uGUI, then check it again
   to go back to the DOM copy. Disabling the mirror component restores the canvas and removes the document;
-  enabling it rebuilds the mirror. Compare text rendering, control feel, and Tab/screen-reader behaviour in
+  enabling it rebuilds the mirror. Compare text rendering, control feel, and Tab/screen-reader behavior in
   each mode. An `EventSystem` with the Input System UI module is in the scene so native mode takes input.
 * Press **Tab**: focus moves through the button, toggle, slider, input and dropdown with a visible ring.
 * Select the subtitle text, or **Ctrl+F** for "Scroll item 17" in a build.

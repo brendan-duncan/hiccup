@@ -445,7 +445,7 @@ namespace Hiccup.Samples
             {
                 for (int x = 0; x < size; x++)
                 {
-                    // signed distance to a rounded box centred in the texture
+                    // signed distance to a rounded box centered in the texture
                     float qx = Mathf.Abs(x + 0.5f - half) - (half - r), qy = Mathf.Abs(y + 0.5f - half) - (half - r);
                     float d = new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude + Mathf.Min(Mathf.Max(qx, qy), 0f) - r;
                     byte a = (byte)Mathf.RoundToInt(Mathf.Clamp01(0.5f - d) * 255f);

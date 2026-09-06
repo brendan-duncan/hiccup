@@ -9,9 +9,9 @@ namespace Hiccup
     /// (see <c>Hiccup.Editor.CdpHtmlBackend</c>), so documents render and respond in the Game view.
     /// </summary>
     /// <remarks>
-    /// Only the panel-level surface is modelled. Element queries and the DOM mutation API return empty
+    /// Only the panel-level surface is modeled. Element queries and the DOM mutation API return empty
     /// results on a backend that does not implement them, which leaves <see cref="HtmlElement.None"/>
-    /// behaviour intact rather than throwing.
+    /// behavior intact rather than throwing.
     /// </remarks>
     public interface IHtmlBackend
     {

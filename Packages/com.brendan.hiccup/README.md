@@ -79,7 +79,7 @@ document's screen transform from the camera every frame so the browser hit-tests
 * Content: `Text`, `InnerHtml`, `Append(html)`, `Prepend(html)`, `InsertHtml(where, html)`, `Remove()`.
 * State: `Value`, `Checked`, `Disabled`, `Hidden`, `GetAttribute/SetAttribute/RemoveAttribute`,
   `GetProperty/SetProperty`, `SetStyle`, `GetComputedStyle`, `AddClass/RemoveClass/ToggleClass/EnableClass`.
-* Behaviour: `Focus()`, `Blur()`, `Click()`, `ShowModal()/CloseModal()`, `ScrollIntoView()`, `Bounds`.
+* Behavior: `Focus()`, `Blur()`, `Click()`, `ShowModal()/CloseModal()`, `ScrollIntoView()`, `Bounds`.
 * Events: `doc.On(type, h)`, `doc.On(elementId, type, h)`, `element.On(type, h)`, `doc.OnAction(name, h)`
   (for `data-action`), `doc.EventReceived`. `HtmlEvent` carries type, target id/tag/name, value, checked state,
   key/code, pointer position in panel pixels, modifiers, ancestor path and `data-*` attributes. Set
@@ -138,7 +138,7 @@ Toggles live under **Window > Hiccup**:
 | Log Browser Console | Forwards the page's `console` output to the Unity console. |
 | Flip Preview Vertically | Corrects the frame orientation if it comes out upside down on your graphics API. |
 
-What the preview gives you is genuine, because it is genuinely Chrome: layout, CSS, fonts, script behaviour and
+What the preview gives you is genuine, because it is genuinely Chrome: layout, CSS, fonts, script behavior and
 event payloads. What it cannot give you is the part that only exists in a web build — accessibility (screen
 readers, find-in-page, text selection), IME, and HTML-in-Canvas compositing itself. A document that looks and
 behaves correctly in the Game view still has to be checked in a build.
@@ -154,7 +154,7 @@ Ctrl shortcuts work from the Game view; IME and composed input do not. Not yet w
 mode and `BlockUnityInput` (Unity receives the same clicks and keys the document does), and mipmap parity with
 the WebGL path.
 
-[Documentation~/EditorPreview.md](Documentation~/EditorPreview.md) describes the frame pipeline, the colour and
+[Documentation~/EditorPreview.md](Documentation~/EditorPreview.md) describes the frame pipeline, the color and
 orientation handling, input projection and the element handle model in detail.
 
 ## Limitations

@@ -23,7 +23,7 @@ var HiccupLibrary = {
     mode: 0,           // 0 = overlay fallback, 1 = html-in-canvas texture mode
     updateMode: 0,     // 0 = auto, 1 = only on paint events, 2 = every frame
     geometryMode: 0,   // 0 = auto, 1 = updateElementGeometry, 2 = getElementTransform, 3 = CSS matrix3d only
-    linear: false,     // project colour space is linear -> sRGB texture storage
+    linear: false,     // project color space is linear -> sRGB texture storage
     debug: false,
     eventCb: 0,
     panels: {},

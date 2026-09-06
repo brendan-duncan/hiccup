@@ -60,7 +60,7 @@ try {
 const UNITY_URL = 'https://brendan-duncan.github.io/hiccup/build/sample/';
 const NESTED_PX = { w: 1280, h: 720 };     // CSS pixels of the nested page
 const NESTED_SIZE = { w: 6.4, h: 3.6 };    // world size of its screen in this scene: the wall of the room
-const LOOK_AT = { x: 0, y: 1.6, z: -0.6 }; // the orbit centre, between the shapes and the big screen
+const LOOK_AT = { x: 0, y: 1.6, z: -0.6 }; // the orbit center, between the shapes and the big screen
 
 const hint = document.getElementById('hint');
 const nestedLabel = document.getElementById('nested');
@@ -77,7 +77,7 @@ try {
   say('three.js failed to load');
   throw e;
 }
-hint.textContent = 'Right-drag on the pad to move the cursor, left-drag the mouse to press. Drag a shape to move it, drag empty space to orbit, tap to recolour, scroll to zoom. The cursor works on the big screen too.';
+hint.textContent = 'Right-drag on the pad to move the cursor, left-drag the mouse to press. Drag a shape to move it, drag empty space to orbit, tap to recolor, scroll to zoom. The cursor works on the big screen too.';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));

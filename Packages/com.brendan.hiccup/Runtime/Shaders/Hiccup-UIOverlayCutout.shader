@@ -1,5 +1,5 @@
 // Overlay-mode cutout for uGUI panels (HtmlScreenSurface). Same structure as UI/Default so masks and stencils
-// behave, but it writes colour and alpha 0 without blending: the DOM overlay behind a transparent canvas shows
+// behave, but it writes color and alpha 0 without blending: the DOM overlay behind a transparent canvas shows
 // through the RawImage's rectangle.
 Shader "Hiccup/UI Overlay Cutout"
 {

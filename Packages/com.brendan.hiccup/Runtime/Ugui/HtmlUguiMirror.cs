@@ -53,7 +53,7 @@ namespace Hiccup.Ugui
         [Tooltip("Draw a dashed outline where a Graphic has no HTML equivalent (custom meshes, unknown Graphic subclasses).")]
         [SerializeField] private bool outlineUnsupported = true;
         [Tooltip("uGUI List: clicking opens the Dropdown's own template list, mirrored like everything else, so it looks exactly as authored. " +
-                 "Native Select: an invisible <select> over the caption opens the browser's picker (styled to the dropdown's colours where Chrome allows), which screen readers and keyboards understand best.")]
+                 "Native Select: an invisible <select> over the caption opens the browser's picker (styled to the dropdown's colors where Chrome allows), which screen readers and keyboards understand best.")]
         [SerializeField] private DropdownMode dropdownMode = DropdownMode.UguiList;
         [Tooltip("Also write every exported sprite/texture PNG to <persistentDataPath>/HiccupUguiExports, to check what the page receives.")]
         [SerializeField] private bool dumpExports;
@@ -667,7 +667,7 @@ namespace Hiccup.Ugui
             {
                 sb.Append("transform-origin:").Append(F(rt.pivot.x * 100f)).Append("% ").Append(F((1f - rt.pivot.y) * 100f)).Append("%;transform:");
                 if (Mathf.Abs(rot) > 0.001f)
-                    sb.Append("rotate(").Append(F(-rot)).Append("deg) ");   // CSS turns clockwise, Unity anticlockwise
+                    sb.Append("rotate(").Append(F(-rot)).Append("deg) ");   // CSS turns clockwise, Unity counterclockwise
                 if (Mathf.Abs(s.x - 1f) > 0.0001f || Mathf.Abs(s.y - 1f) > 0.0001f)
                     sb.Append("scale(").Append(F(s.x)).Append(',').Append(F(s.y)).Append(')');
                 sb.Append(';');
@@ -844,7 +844,7 @@ namespace Hiccup.Ugui
             return sb.ToString();
         }
 
-        /// <summary>Font and colours for a native select so its picker (Chrome's customisable select) matches the dropdown.</summary>
+        /// <summary>Font and colors for a native select so its picker (Chrome's customizable select) matches the dropdown.</summary>
         private string SelectStyle(Node n)
         {
             var sb = _ctl;

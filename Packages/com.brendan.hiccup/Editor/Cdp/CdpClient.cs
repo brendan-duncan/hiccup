@@ -190,7 +190,7 @@ namespace Hiccup.Editor.Cdp
         /// <summary>
         /// Screencast frames are almost entirely one base64 string, and pushing that through the generic path
         /// means a multi-megabyte string, a character-by-character copy of it in the parser, and a third copy for
-        /// the decode. This recognises the message in its raw bytes, decodes the payload straight from them, and
+        /// the decode. This recognizes the message in its raw bytes, decodes the payload straight from them, and
         /// parses only what is left.
         /// </summary>
         private bool TryDispatchScreencastFrame(byte[] buffer, int length)

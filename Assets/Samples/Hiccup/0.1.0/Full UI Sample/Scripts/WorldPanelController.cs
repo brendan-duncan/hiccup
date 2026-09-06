@@ -58,7 +58,7 @@ namespace Hiccup.Samples
             doc.OnAction("color", e =>
             {
                 Game.RandomizeColors();
-                Log("Debris colours re-randomised", "ok");
+                Log("Debris colors re-randomized", "ok");
             });
 
             doc.On("lights", "change", e =>
@@ -118,7 +118,7 @@ namespace Hiccup.Samples
                     Document.Q("[data-action=spin]").Click();
                     break;
                 case "color":
-                case "colour":
+                case "color":
                     Document.Q("[data-action=color]").Click();
                     break;
                 case "status":

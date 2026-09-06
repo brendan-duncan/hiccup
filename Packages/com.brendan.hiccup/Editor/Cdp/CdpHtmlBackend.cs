@@ -20,7 +20,7 @@ namespace Hiccup.Editor.Cdp
     /// pixel-to-clip matrix, so both screen and world surfaces are clickable.
     /// <para>
     /// This is a preview, not the real thing: accessibility, IME and HTML-in-Canvas compositing only exist in a
-    /// web build. Layout, styling, script behaviour and event payloads are genuine, because it is genuinely Chrome.
+    /// web build. Layout, styling, script behavior and event payloads are genuine, because it is genuinely Chrome.
     /// </para>
     /// </remarks>
     internal sealed class CdpHtmlBackend : IHtmlBackend
@@ -1161,7 +1161,7 @@ namespace Hiccup.Editor.Cdp
             var shader = Shader.Find(BlitShaderName);
             if (shader == null)
             {
-                Debug.LogWarning($"[Hiccup] {BlitShaderName} is missing; preview colours will not be premultiplied.");
+                Debug.LogWarning($"[Hiccup] {BlitShaderName} is missing; preview colors will not be premultiplied.");
                 return null;
             }
             _blit = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
