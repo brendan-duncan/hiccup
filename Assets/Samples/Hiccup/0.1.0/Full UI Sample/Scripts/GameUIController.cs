@@ -40,6 +40,11 @@ namespace Hiccup.Samples
             new Item { Id = "oxygen", Name = "O₂ canister", Icon = "🫧", Category = "consumable", Qty = 5, Description = "Twelve hours of breathing." },
         };
 
+        /// <summary>A live camera feed shown in the HUD; pushed to the page as a small JPEG a few times a second.</summary>
+        public RenderTexture DroneCam;
+        private const float DroneCamInterval = 1f / 8f;
+        private float _droneCamNext;
+
         private string _screen = "menu";
         private string _selectedItem;
         private int _toastId;
@@ -262,6 +267,15 @@ namespace Hiccup.Samples
         }
 
         // ------------------------------------------------------------------ HUD
+
+        private void Update()
+        {
+            // The feed is a CPU readback plus a JPEG encode per push, so it runs only while the HUD is up, at 8 Hz.
+            if (_screen != "hud" || DroneCam == null || Document == null || !Document.IsCreated || Time.unscaledTime < _droneCamNext)
+                return;
+            _droneCamNext = Time.unscaledTime + DroneCamInterval;
+            Document.SetImage("dronecam", DroneCam, HtmlImageFormat.Jpeg, 70);
+        }
 
         private void UpdateHud()
         {

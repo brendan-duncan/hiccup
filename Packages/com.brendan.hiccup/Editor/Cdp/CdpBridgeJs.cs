@@ -29,6 +29,7 @@ namespace Hiccup.Editor.Cdp
     live: null,
     idCounter: 0,
     listeners: {},
+    images: {},
     preventSubmit: true,
     DEFAULT_EVENTS: ['click', 'dblclick', 'input', 'change', 'submit', 'keydown', 'focusin', 'focusout'],
 
@@ -77,7 +78,43 @@ namespace Hiccup.Editor.Cdp
       d.body.appendChild(HUI.live);
 
       for (var i = 0; i < HUI.DEFAULT_EVENTS.length; i++) HUI.listen(HUI.DEFAULT_EVENTS[i], true);
+      HUI.observeImages();
       return true;
+    },
+
+    // ---------------------------------------------------------------- images
+    // Mirrors the jslib, with data: URLs from the backend instead of blob: URLs.
+
+    setImage: function (name, url) {
+      if (url) HUI.images[name] = url; else delete HUI.images[name];
+      if (url) HUI.panel.style.setProperty('--hui-image-' + name, 'url(' + JSON.stringify(url) + ')');
+      else HUI.panel.style.removeProperty('--hui-image-' + name);
+      var els = HUI.content.querySelectorAll('[data-hui-image=' + JSON.stringify(name) + ']');
+      for (var i = 0; i < els.length; i++) HUI.applyImage(els[i], url);
+    },
+    applyImage: function (el, url) {
+      if (el.tagName === 'IMG') { if (url) el.src = url; else el.removeAttribute('src'); }
+      else el.style.backgroundImage = url ? 'url(' + JSON.stringify(url) + ')' : '';
+    },
+    bindImage: function (el) {
+      var name = el.getAttribute('data-hui-image');
+      if (name && HUI.images[name]) HUI.applyImage(el, HUI.images[name]);
+    },
+    observeImages: function () {
+      var observer = new MutationObserver(function (records) {
+        for (var r = 0; r < records.length; r++) {
+          var rec = records[r];
+          if (rec.type === 'attributes') { HUI.bindImage(rec.target); continue; }
+          for (var n = 0; n < rec.addedNodes.length; n++) {
+            var node = rec.addedNodes[n];
+            if (node.nodeType !== 1) continue;
+            if (node.hasAttribute('data-hui-image')) HUI.bindImage(node);
+            var list = node.querySelectorAll('[data-hui-image]');
+            for (var i = 0; i < list.length; i++) HUI.bindImage(list[i]);
+          }
+        }
+      });
+      observer.observe(HUI.content, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-hui-image'] });
     },
 
     ensureId: function (el) {

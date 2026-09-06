@@ -85,6 +85,7 @@ namespace Hiccup
         [DllImport("__Internal")] public static extern int Hiccup_PanelCreateGLTexture(int id);
         [DllImport("__Internal")] public static extern void Hiccup_PanelBindGPUTexture(int id, IntPtr texturePtr);
         [DllImport("__Internal")] public static extern void Hiccup_PanelAnnounce(int id, string text, int assertive);
+        [DllImport("__Internal")] public static extern void Hiccup_PanelSetImage(int id, string name, byte[] data, int length, string mime);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_PanelEval(int id, string code);
         [DllImport("__Internal")] public static extern void Hiccup_PanelEvalAsync(int id, string code, int requestId);
 
@@ -198,6 +199,7 @@ namespace Hiccup
         public static int Hiccup_PanelCreateGLTexture(int id) => 0;
         public static void Hiccup_PanelBindGPUTexture(int id, IntPtr texturePtr) { }
         public static void Hiccup_PanelAnnounce(int id, string text, int assertive) => HtmlBackend.Current?.PanelAnnounce(id, text, assertive != 0);
+        public static void Hiccup_PanelSetImage(int id, string name, byte[] data, int length, string mime) => HtmlBackend.Current?.PanelSetImage(id, name, data, length, mime);
         public static IntPtr Hiccup_PanelEval(int id, string code) => AllocUtf8(HtmlBackend.Current?.PanelEval(id, code));
         public static void Hiccup_PanelEvalAsync(int id, string code, int requestId)
         {

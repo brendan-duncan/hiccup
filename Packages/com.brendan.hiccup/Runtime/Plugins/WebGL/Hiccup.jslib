@@ -388,7 +388,8 @@ var HiccupLibrary = {
         w: w, h: h, scale: 1, texW: Math.max(1, Math.round(w * HUI.dpr())), texH: Math.max(1, Math.round(h * HUI.dpr())),
         glTex: 0, gpuPtr: 0, staging: null, dirty: true, visible: true, mipmaps: true, updated: false,
         premultiply: true, blockInput: true, preventSubmit: true,
-        listeners: {}, blockers: [], live: null, lastMatrix: null
+        listeners: {}, blockers: [], live: null, lastMatrix: null,
+        images: {}, observer: null
       };
       // What Eval / EvalAsync code sees as `HUI`: the bridge, plus this panel's send() and its elements.
       p.api = Object.create(HUI);
@@ -400,6 +401,7 @@ var HiccupLibrary = {
       if (HUI.mode === 1) HUI.canvas.appendChild(el); else HUI.overlay.appendChild(el);
 
       HUI.attachEvents(p);
+      HUI.observeImages(p);
       HUI.setBlockInput(p, true);
       HUI.guardUnityInput();
       HUI.requestPaint();
@@ -415,6 +417,8 @@ var HiccupLibrary = {
         if (gl && GL.textures[p.glTex]) { gl.deleteTexture(GL.textures[p.glTex]); GL.textures[p.glTex] = null; }
       }
       if (p.staging) { try { p.staging.destroy(); } catch (e) {} }
+      if (p.observer) { p.observer.disconnect(); p.observer = null; }
+      for (var name in p.images) HUI.revokeImage(p.images[name]);
       // release element handles that live inside this panel
       for (var h = 1; h < HUI.handles.length; h++) {
         var e = HUI.handles[h];
@@ -874,6 +878,56 @@ var HiccupLibrary = {
       requestAnimationFrame(function () { l.textContent = text; });
     },
 
+    // ------------------------------------------------------------------ images
+
+    // Unity textures arrive as encoded bytes and live as blob URLs. An element opts in with data-hui-image="name":
+    // an <img> gets the URL as src, anything else as background-image; the panel also carries --hui-image-<name>
+    // for CSS. The observer binds elements that arrive later, through innerHTML or InsertHtml.
+    setImage: function (p, name, url) {
+      var old = p.images[name];
+      if (url) p.images[name] = url; else delete p.images[name];
+      if (url) p.el.style.setProperty('--hui-image-' + name, 'url("' + url + '")');
+      else p.el.style.removeProperty('--hui-image-' + name);
+      var els = p.content.querySelectorAll('[data-hui-image="' + name + '"]');
+      for (var i = 0; i < els.length; i++) HUI.applyImage(els[i], url);
+      if (old) HUI.revokeImage(old);
+      p.dirty = true;
+      HUI.requestPaint();
+    },
+
+    applyImage: function (el, url) {
+      if (el.tagName === 'IMG') { if (url) el.src = url; else el.removeAttribute('src'); }
+      else el.style.backgroundImage = url ? 'url("' + url + '")' : '';
+    },
+
+    // A newly bound element with no image yet keeps whatever src or background its author gave it.
+    bindImage: function (p, el) {
+      var name = el.getAttribute('data-hui-image');
+      if (name && p.images[name]) HUI.applyImage(el, p.images[name]);
+    },
+
+    observeImages: function (p) {
+      if (typeof MutationObserver === 'undefined') return;
+      p.observer = new MutationObserver(function (records) {
+        for (var r = 0; r < records.length; r++) {
+          var rec = records[r];
+          if (rec.type === 'attributes') { HUI.bindImage(p, rec.target); continue; }
+          for (var n = 0; n < rec.addedNodes.length; n++) {
+            var node = rec.addedNodes[n];
+            if (node.nodeType !== 1) continue;
+            if (node.hasAttribute('data-hui-image')) HUI.bindImage(p, node);
+            var list = node.querySelectorAll('[data-hui-image]');
+            for (var i = 0; i < list.length; i++) HUI.bindImage(p, list[i]);
+          }
+        }
+      });
+      p.observer.observe(p.content, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-hui-image'] });
+    },
+
+    revokeImage: function (url) {
+      if (url && url.indexOf('blob:') === 0) { try { URL.revokeObjectURL(url); } catch (e) {} }
+    },
+
     // ------------------------------------------------------------------ page -> C#
 
     // HUI.send(name, payload) from page script. Delivered synchronously, like a DOM event.
@@ -972,6 +1026,16 @@ var HiccupLibrary = {
   // WebGPU: Unity owns the texture, the bridge draws into it.
   Hiccup_PanelBindGPUTexture: function (id, ptr) { var p = HUI.panel(id); if (p) { p.gpuPtr = ptr; p.dirty = true; HUI.requestPaint(); } },
   Hiccup_PanelAnnounce: function (id, textPtr, assertive) { var p = HUI.panel(id); if (p) HUI.announce(p, UTF8ToString(textPtr), !!assertive); },
+  // Encoded image bytes from C#; the Blob takes its own copy, so the heap range is free to go afterwards.
+  Hiccup_PanelSetImage: function (id, namePtr, dataPtr, length, mimePtr) {
+    var p = HUI.panel(id); if (!p) return;
+    var name = UTF8ToString(namePtr), url = null;
+    if (dataPtr && length > 0) {
+      try { url = URL.createObjectURL(new Blob([HEAPU8.subarray(dataPtr, dataPtr + length)], { type: UTF8ToString(mimePtr) })); }
+      catch (e) { HUI.warnOnce('img' + name, 'Could not create an image for "' + name + '": ' + e); return; }
+    }
+    HUI.setImage(p, name, url);
+  },
   Hiccup_PanelEval: function (id, codePtr) {
     var p = HUI.panel(id); if (!p) return HUI.cstr('');
     try {

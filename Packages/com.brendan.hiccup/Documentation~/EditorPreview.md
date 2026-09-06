@@ -310,6 +310,10 @@ That arrives as `Runtime.bindingCalled`, is routed to a panel by `sessionId`, an
 entry point the jslib callback uses. `JsonUtility` deserializes it into `HtmlEvent`, so `On`, `OnAction`,
 `e.GetData` and ancestor bubbling all work as documented.
 
+Images (`HtmlDocument.SetImage`) cross as `data:` URLs inside a `__HUI.setImage(name, url)` evaluate, since the
+page is a separate process with no access to a blob the Unity side could make; the page-side binding logic is
+the same as the jslib's. A panel remembers its images and re-sends them when its page is set up.
+
 Page messages take a second binding, `HUI_Message`. `__HUI.send(name, payload)` stringifies the payload the way
 the jslib does and posts `{name, data}` as JSON; `Runtime.bindingCalled` is routed by binding name to
 `HtmlBackend.DispatchMessage`, so `OnMessage` handlers run from the same per-frame pump as event handlers.

@@ -44,6 +44,11 @@ namespace Hiccup
         void PanelInvalidate(int panel);
         void PanelSetGeometry(int panel, float[] pixelToClipColumnMajor);
         void PanelAnnounce(int panel, string text, bool assertive);
+        /// <summary>
+        /// Stores encoded image bytes under a name and binds them to the panel's <c>[data-hui-image=name]</c>
+        /// elements and <c>--hui-image-name</c> custom property. A null or empty <paramref name="data"/> removes it.
+        /// </summary>
+        void PanelSetImage(int panel, string name, byte[] data, int length, string mime);
         string PanelEval(int panel, string javascript);
         /// <summary>
         /// Runs <paramref name="javascript"/> as an async function body and reports the outcome through

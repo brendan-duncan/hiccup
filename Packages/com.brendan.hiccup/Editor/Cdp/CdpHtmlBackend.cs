@@ -43,6 +43,7 @@ namespace Hiccup.Editor.Cdp
             public readonly HashSet<string> Listened = new HashSet<string>();
             public string Html = string.Empty;
             public string Css = string.Empty;
+            public readonly Dictionary<string, string> Images = new Dictionary<string, string>();   // name -> data: URL
 
             public bool Ready;                     // bridge injected; commands can be sent directly
             public bool SetupFailed;               // the page could not be created; it will never become Ready
@@ -357,6 +358,8 @@ namespace Hiccup.Editor.Cdp
             Eval(panel, "setVisible", null, JsBool(panel.Visible));
             foreach (var type in panel.Listened)
                 Eval(panel, "listen", type, "true");
+            foreach (var image in panel.Images)
+                Eval(panel, "setImage", image.Key, Json.Quote(image.Value));
 
             StartScreencast(panel);
         }
@@ -536,6 +539,20 @@ namespace Hiccup.Editor.Cdp
         }
 
         public void PanelInvalidate(int id) { /* the browser repaints on its own; nothing to force */ }
+
+        public void PanelSetImage(int id, string name, byte[] data, int length, string mime)
+        {
+            if (!_panels.TryGetValue(id, out var p) || string.IsNullOrEmpty(name))
+                return;
+            // The page is a separate process, so the bytes travel as a data: URL; Chrome keeps the decoded image.
+            string url = data == null || length <= 0 ? null : "data:" + mime + ";base64," + Convert.ToBase64String(data, 0, length);
+            if (url == null)
+                p.Images.Remove(name);
+            else
+                p.Images[name] = url;
+            if (p.Ready)
+                Eval(p, "setImage", name, url == null ? "null" : Json.Quote(url));
+        }
 
         public void PanelAnnounce(int id, string text, bool assertive)
         {

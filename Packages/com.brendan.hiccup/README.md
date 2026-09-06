@@ -86,6 +86,9 @@ document's screen transform from the camera every frame so the browser hit-tests
   key/code, pointer position in panel pixels, modifiers, ancestor path and `data-*` attributes. Set
   `e.Handled = true` to stop further C# dispatch. Only a default set of event types is forwarded; call
   `doc.Listen("pointerover")` (done automatically by `On`) for others.
+* Images: `doc.SetImage("portrait", texture)` (or a `Sprite`, a rect, or encoded bytes) shows a Unity texture in
+  every element with `data-hui-image="portrait"` and as `var(--hui-image-portrait)` in CSS; call again to update,
+  `RemoveImage` to clear.
 * Page-side code: `doc.Scripts` (`.js` TextAssets) run in the page in order when the document is created and after
   `Reload()`, each as a function body with `panel`, `root` and `HUI` in scope.
 * Escape hatch: `doc.Eval(js)` runs JavaScript with `panel`, `root` and `HUI` in scope. `doc.EvalAsync(js)` runs

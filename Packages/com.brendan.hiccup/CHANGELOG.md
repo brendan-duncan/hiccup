@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Unity textures in the page. `HtmlDocument.SetImage(name, texture)` (also a `Sprite`, a pixel rectangle, or
+  already-encoded bytes) reads the pixels back, encodes them as PNG or JPEG and hands them to the page, where
+  every element with `data-hui-image="name"` receives them, now or when it is added later: an `<img>` as `src`,
+  anything else as `background-image`, and CSS can use `var(--hui-image-name)`. Calling it again updates the
+  image, so a RenderTexture can be a live feed; `RemoveImage` clears it. The web bridge keeps a blob URL per
+  image, the Editor preview a data URL. The Full UI Sample's HUD shows a second camera this way, as a JPEG at 8 Hz.
 - Hot reload in play mode. Saving a `.html`, `.css` or `.js` asset a live document uses pushes it into the page
   once Unity reimports it: a style sheet change is applied in place and the page keeps its state, an HTML or
   script change calls `Reload()`. `HtmlDocument.ReloadStyles()` is the new public half of that. Toggle it under

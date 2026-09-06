@@ -21,6 +21,7 @@ For details on previewing inside the Editor, read [EditorPreview.md](EditorPrevi
 - [Reacting to the UI](#reacting-to-the-ui)
 - [Updating the UI](#updating-the-ui)
 - [Running JavaScript in the page](#running-javascript-in-the-page)
+- [Showing Unity textures in the page](#showing-unity-textures-in-the-page)
 - [Panels in the 3D scene](#panels-in-the-3d-scene)
 - [Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface)
 - [Input and click-through](#input-and-click-through)
@@ -271,7 +272,8 @@ emoji, transitions.
   monitor that way. Overlay mode shows cross-origin frames too. To force overlay mode, set
   `HtmlRuntime.ForceOverlay = true` before the first document is enabled.
 * **External resources** (fonts, images from a URL) load normally, but a slow web font means a frame or two of
-  fallback text. Prefer bundling fonts with the build.
+  fallback text. Prefer bundling fonts with the build. Pictures that live in Unity go through `SetImage`; see
+  [Showing Unity textures in the page](#showing-unity-textures-in-the-page).
 
 **Backgrounds.** The panel is transparent by default, so the game shows through. Give `.hui-content`, or your
 own root element, a background color if you want the UI to be opaque.
@@ -484,6 +486,38 @@ in the Editor preview. Set `m.Handled = true` to stop later handlers for the sam
 `<script>` tags inside your HTML do not run (the browser ignores them when HTML is inserted this way). Put
 page-side code in the document's **Scripts** instead, or run it with `Eval` from the `Created` event, which fires
 once the page can be written to in both the build and the Editor.
+
+## Showing Unity textures in the page
+
+A texture that lives in Unity, such as a character portrait, an item icon from a sprite atlas, or a camera
+rendering into a RenderTexture, can be shown by the page. Give the element a `data-hui-image` name in the HTML
+and hand the texture to the document under that name:
+
+```html
+<img data-hui-image="portrait" alt="Commander Reyes" width="96" height="96">
+<div class="minimap" data-hui-image="minimap"></div>
+```
+
+```csharp
+doc.SetImage("portrait", portraitTexture);              // Texture2D or RenderTexture
+doc.SetImage("icon-wrench", wrenchSprite);              // just the sprite's rectangle of its atlas
+doc.SetImage("minimap", minimapRT, HtmlImageFormat.Jpeg, 70);
+doc.RemoveImage("portrait");
+```
+
+An `<img>` receives the picture as its `src`; any other element receives it as its `background-image`. The
+element does not have to exist yet: an element added later with the same `data-hui-image` name picks the
+picture up as it appears, so inventory rows built with `InnerHtml` work without further calls. CSS can use the
+picture too, as `background-image: var(--hui-image-portrait)`. Names use letters, digits, `-` and `_`.
+
+**Cost.** Each call reads the pixels back from the GPU and encodes them, then the browser decodes them. A
+portrait set once costs nothing afterwards. A live feed costs that every call, so keep it small (the sample's
+drone camera is 256 by 144), use JPEG when there is no transparency, and push it a few times a second rather
+than every frame. The **Full UI Sample** does exactly this: a second camera renders into a RenderTexture, and
+the HUD controller pushes it as a JPEG eight times a second while the HUD is showing.
+
+If you already have encoded bytes, a PNG loaded from disk or a WebP from a download, hand them over directly
+with `doc.SetImage("logo", bytes, "image/png")`.
 
 ## Panels in the 3D scene
 

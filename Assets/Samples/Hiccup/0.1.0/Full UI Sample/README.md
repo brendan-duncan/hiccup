@@ -7,7 +7,7 @@ What it shows:
 
 | Piece | Where | Demonstrates |
 |---|---|---|
-| Main menu, settings form, inventory, HUD | `Resources/HiccupSample/GameUI.html` + `.style.css` + `.tooltips.js` | Screen switching, `data-action` routing, live form input, ARIA tabs with arrow keys, roving-tabindex listbox, `<dialog>` modals with focus trapping, toasts, `aria-live` announcements, themes (dark/light/high-contrast), `forced-colors` and `prefers-reduced-motion` support |
+| Main menu, settings form, inventory, HUD | `Resources/HiccupSample/GameUI.html` + `.style.css` + `.tooltips.js` | Screen switching, `data-action` routing, live form input, ARIA tabs with arrow keys, roving-tabindex listbox, `<dialog>` modals with focus trapping, toasts, `aria-live` announcements, themes (dark/light/high-contrast), `forced-colors` and `prefers-reduced-motion` support, a live drone-camera feed (`SetImage` from a RenderTexture) |
 | Drone console on a quad | `Resources/HiccupSample/WorldPanel.html` + `.style.css` | A perspective-projected, fully interactive HTML form in the 3D scene (`HtmlWorldSurface`), including a text input and a log |
 | Game logic | `Scripts/SampleGame.cs`, `SalvageTarget.cs` | Unity gameplay driven from HTML events and pushing state back to the DOM |
 

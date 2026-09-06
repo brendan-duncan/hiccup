@@ -292,6 +292,18 @@ error message and is reported through the eval callback with the request id `Htm
 a later turn, never from inside the P/Invoke. The document completes the matching `Task<string>`, faults it with
 `HtmlEvalException` on failure, and cancels it if the panel is destroyed first.
 
+## Images
+
+`Hiccup_PanelSetImage` receives encoded bytes (PNG or JPEG from `HtmlImageEncoder`, or whatever the caller
+handed over) and wraps them in a `Blob` and an object URL; the Blob takes its own copy, so the heap range is free
+once the call returns. `setImage` stores the URL per panel, sets `--hui-image-<name>` on the panel element, and
+applies it to every `[data-hui-image=<name>]` under the content root: `src` on an `<img>`, `background-image`
+on anything else. A `MutationObserver` on the content root binds elements that arrive afterwards through
+`innerHTML` or `insertAdjacentHTML`, and re-binds one whose `data-hui-image` attribute changes, so the HTML
+never has to know the URL. Replacing an image revokes the old URL after the new one is applied; destroying the
+panel revokes all of them. The encoder reads readable textures on the CPU and everything else through a blit
+into an sRGB target and a `ReadPixels`, the same path the uGUI mirror uses.
+
 ## Element handles
 
 `HUI.handles` is an array of element references with a free list; `Hiccup_Query` returns an index. The element

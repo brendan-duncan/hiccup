@@ -73,6 +73,17 @@ namespace Hiccup.Samples
                 game.Targets.Add(target);
             }
 
+            // ---- Drone camera: renders into a RenderTexture the HUD shows through HtmlDocument.SetImage
+            var droneGo = new GameObject("Drone Camera");
+            var droneCam = droneGo.AddComponent<Camera>();
+            droneCam.transform.position = new Vector3(0f, 9f, 1f);
+            droneCam.transform.LookAt(new Vector3(0f, 0f, 1f), Vector3.forward);
+            droneCam.clearFlags = CameraClearFlags.SolidColor;
+            droneCam.backgroundColor = new Color(0.02f, 0.03f, 0.06f);
+            droneCam.fieldOfView = 50f;
+            var droneFeed = new RenderTexture(256, 144, 16) { name = "Drone cam" };
+            droneCam.targetTexture = droneFeed;
+
             // ---- Full-screen HTML HUD
             var canvasGo = new GameObject("HUD Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             var canvas = canvasGo.GetComponent<Canvas>();
@@ -95,6 +106,7 @@ namespace Hiccup.Samples
             hudDoc.PointerMode = HtmlPointerMode.ChildrenOnly; // the sample CSS decides which regions take input
             hudGo.AddComponent<HtmlScreenSurface>();
             var hudController = hudGo.AddComponent<GameUIController>();
+            hudController.DroneCam = droneFeed;
             hudController.Game = game;
             hudController.Document = hudDoc;
             hudGo.SetActive(true);

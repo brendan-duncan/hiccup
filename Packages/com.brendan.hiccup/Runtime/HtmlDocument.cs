@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -79,6 +80,8 @@ namespace Hiccup
         private readonly Dictionary<string, List<Action<HtmlMessage>>> _messageHandlers = new Dictionary<string, List<Action<HtmlMessage>>>();
         private readonly Dictionary<int, TaskCompletionSource<string>> _evals = new Dictionary<int, TaskCompletionSource<string>>();
         private int _nextEval = 1;
+        private readonly Dictionary<string, (byte[] data, string mime)> _images = new Dictionary<string, (byte[], string)>();
+        private static readonly Regex s_imageName = new Regex("^[A-Za-z0-9_-]+$");
 
         /// <summary>Raised for every DOM event forwarded from the browser, before element/action handlers.</summary>
         public event Action<HtmlEvent> EventReceived;
@@ -278,6 +281,8 @@ namespace Hiccup
 
             SetCss(BuildCss());
             SetHtml(html != null ? html.text : string.Empty);
+            foreach (var image in _images)
+                HtmlNative.Hiccup_PanelSetImage(_panel, image.Key, image.Value.data, image.Value.data.Length, image.Value.mime);
             CreateTexture();
 
             // The jslib's DOM exists at once. A backend that starts a browser reports ready later, and
@@ -501,6 +506,85 @@ namespace Hiccup
             _evals.Clear();
             foreach (var tcs in pending)
                 tcs.TrySetCanceled();
+        }
+
+        // ------------------------------------------------------------------ images
+
+        /// <summary>
+        /// Shows a Unity texture in the page under a name. Every element with <c>data-hui-image="name"</c> receives
+        /// it, now and whenever such an element is added: an <c>&lt;img&gt;</c> as its <c>src</c>, anything else as
+        /// its <c>background-image</c>; CSS can also use <c>var(--hui-image-name)</c>. Call again to update it (a
+        /// RenderTexture feed, for instance) and <see cref="RemoveImage"/> to clear it. The pixels are read back and
+        /// encoded on the CPU each call, so keep live feeds small and infrequent, and prefer JPEG for opaque ones.
+        /// Names are letters, digits, <c>-</c> and <c>_</c>.
+        /// </summary>
+        public void SetImage(string name, Texture texture, HtmlImageFormat format = HtmlImageFormat.Png, int jpegQuality = 85)
+        {
+            if (texture == null)
+            {
+                RemoveImage(name);
+                return;
+            }
+            SetImage(name, texture, new RectInt(0, 0, texture.width, texture.height), format, jpegQuality);
+        }
+
+        /// <summary>Shows a sprite's rectangle of its texture in the page; see <see cref="SetImage(string, Texture, HtmlImageFormat, int)"/>.</summary>
+        public void SetImage(string name, Sprite sprite, HtmlImageFormat format = HtmlImageFormat.Png, int jpegQuality = 85)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                RemoveImage(name);
+                return;
+            }
+            var r = sprite.textureRect;
+            SetImage(name, sprite.texture, new RectInt(Mathf.RoundToInt(r.x), Mathf.RoundToInt(r.y), Mathf.RoundToInt(r.width), Mathf.RoundToInt(r.height)), format, jpegQuality);
+        }
+
+        /// <summary>Shows a pixel rectangle (bottom-left origin) of a texture in the page; see <see cref="SetImage(string, Texture, HtmlImageFormat, int)"/>.</summary>
+        public void SetImage(string name, Texture texture, RectInt rect, HtmlImageFormat format = HtmlImageFormat.Png, int jpegQuality = 85)
+        {
+            if (!ValidImageName(name))
+                return;
+            var bytes = HtmlImageEncoder.Encode(texture, rect, format, jpegQuality);
+            if (bytes == null)
+            {
+                RemoveImage(name);
+                return;
+            }
+            SetImage(name, bytes, HtmlImageEncoder.MimeType(format));
+        }
+
+        /// <summary>Shows already-encoded image bytes (a PNG, JPEG, WebP, SVG or GIF file) in the page under a name.</summary>
+        public void SetImage(string name, byte[] encoded, string mimeType)
+        {
+            if (!ValidImageName(name))
+                return;
+            if (encoded == null || encoded.Length == 0)
+            {
+                RemoveImage(name);
+                return;
+            }
+            mimeType = string.IsNullOrEmpty(mimeType) ? "application/octet-stream" : mimeType;
+            _images[name] = (encoded, mimeType);
+            if (_created)
+                HtmlNative.Hiccup_PanelSetImage(_panel, name, encoded, encoded.Length, mimeType);
+        }
+
+        /// <summary>Clears an image: bound <c>&lt;img&gt;</c> elements lose their <c>src</c>, other elements their background.</summary>
+        public void RemoveImage(string name)
+        {
+            if (string.IsNullOrEmpty(name) || !_images.Remove(name))
+                return;
+            if (_created)
+                HtmlNative.Hiccup_PanelSetImage(_panel, name, null, 0, string.Empty);
+        }
+
+        private static bool ValidImageName(string name)
+        {
+            if (!string.IsNullOrEmpty(name) && s_imageName.IsMatch(name))
+                return true;
+            Debug.LogWarning($"[Hiccup] Image name \"{name}\" is not valid: use letters, digits, '-' and '_'.");
+            return false;
         }
 
         /// <summary>Announces text to screen readers through an aria-live region.</summary>
