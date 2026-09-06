@@ -3,6 +3,13 @@
 ## Unreleased
 
 ### Added
+- Fuller event payloads. `HtmlEvent` gained `meta`, wheel `deltaX`/`deltaY`, `pointerId`/`pointerType`/`pressure`,
+  `movementX`/`movementY`, key `repeat` and `isComposing`, `relatedId` (with a `RelatedTarget` element) for focus
+  and pointer-over transitions, `editable` (the target takes text input) and `detail` (click count, or a
+  CustomEvent's detail as JSON). Both bridges emit the same fields.
+- Focus tracking. `HtmlDocument.HasFocus` and `TextInputFocused`, and `HtmlRuntime.FocusedDocument`,
+  `HasFocus` and `TextInputFocused`, follow focusin/focusout so a game can stop reading keys as commands
+  while the player types in a field. Hiding, disabling or destroying a document clears its focus.
 - Unity textures in the page. `HtmlDocument.SetImage(name, texture)` (also a `Sprite`, a pixel rectangle, or
   already-encoded bytes) reads the pixels back, encodes them as PNG or JPEG and hands them to the page, where
   every element with `data-hui-image="name"` receives them, now or when it is added later: an `<img>` as `src`,

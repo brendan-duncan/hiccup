@@ -100,6 +100,13 @@ namespace Hiccup
 
         /// <summary>True once <see cref="Created"/> has been raised: the panel exists and can be read and written.</summary>
         public bool IsCreated => _created && _ready;
+        /// <summary>True while an element inside this document has keyboard focus (tracked from focusin/focusout).</summary>
+        public bool HasFocus { get; private set; }
+        /// <summary>
+        /// True while the focused element takes text input (a text-like input, textarea, select or contenteditable),
+        /// which is when a game should stop treating keys as commands. See <see cref="HtmlRuntime.TextInputFocused"/>.
+        /// </summary>
+        public bool TextInputFocused { get; private set; }
         internal int PanelId => _panel;
         public HtmlRuntime Runtime => HtmlRuntime.Instance;
         public HtmlRenderMode RenderMode => HtmlRuntime.HasInstance ? HtmlRuntime.Instance.Mode : HtmlRenderMode.Unavailable;
@@ -166,6 +173,8 @@ namespace Hiccup
                 visible = value;
                 if (_created)
                     HtmlNative.Hiccup_PanelSetVisible(_panel, value ? 1 : 0);
+                if (!value)
+                    ClearFocus();
             }
         }
 
@@ -250,6 +259,7 @@ namespace Hiccup
         {
             if (_created)
                 HtmlNative.Hiccup_PanelSetVisible(_panel, 0);
+            ClearFocus();
         }
 
         private void OnDestroy() => DestroyPanel();
@@ -334,6 +344,14 @@ namespace Hiccup
             _ready = false;
             _panel = 0;
             CancelEvals();
+            ClearFocus();
+        }
+
+        private void ClearFocus()
+        {
+            HasFocus = false;
+            TextInputFocused = false;
+            HtmlRuntime.ClearFocusedDocument(this);
         }
 
         /// <summary>Re-applies the serialized HTML and style sheets, then runs the <see cref="Scripts"/> again.</summary>
@@ -697,6 +715,18 @@ namespace Hiccup
         public void Dispatch(HtmlEvent e)
         {
             e.Document = this;
+            // focusout precedes focusin when focus moves within the panel, and both arrive in one delivery, so
+            // nothing observes the gap.
+            if (e.type == "focusin")
+            {
+                HasFocus = true;
+                TextInputFocused = e.editable;
+                HtmlRuntime.SetFocusedDocument(this);
+            }
+            else if (e.type == "focusout")
+            {
+                ClearFocus();
+            }
             try { EventReceived?.Invoke(e); }
             catch (Exception ex) { Debug.LogException(ex, this); }
 

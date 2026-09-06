@@ -107,6 +107,23 @@ namespace Hiccup
         /// <summary>True in WebGL/WebGPU player builds, false in the Editor and on other platforms.</summary>
         public static bool IsWebPlayer => HtmlNative.Available;
 
+        /// <summary>The document holding keyboard focus, or null when no document does.</summary>
+        public static HtmlDocument FocusedDocument { get; private set; }
+        /// <summary>True while any document holds keyboard focus.</summary>
+        public static bool HasFocus => FocusedDocument != null;
+        /// <summary>
+        /// True while a text field, textarea, select or editable element in a document has focus: the moment for a
+        /// game to stop reading keys as commands, so typing "w" in a chat box does not move the player.
+        /// </summary>
+        public static bool TextInputFocused => FocusedDocument != null && FocusedDocument.TextInputFocused;
+
+        internal static void SetFocusedDocument(HtmlDocument doc) => FocusedDocument = doc;
+        internal static void ClearFocusedDocument(HtmlDocument doc)
+        {
+            if (ReferenceEquals(FocusedDocument, doc))
+                FocusedDocument = null;
+        }
+
         public static bool HasInstance => s_instance != null;
 
         public static HtmlRuntime Instance

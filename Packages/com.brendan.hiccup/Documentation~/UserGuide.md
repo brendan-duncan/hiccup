@@ -353,9 +353,13 @@ doc.On("keydown", e => { if (e.IsKey("Escape")) CloseMenu(); });
 
 Every handler receives an `HtmlEvent`. It carries the event `type`, the element's `id`, `tag`, `name` and
 `action`, its `value` (also as `ValueAsFloat` and `ValueAsInt`), `isChecked` for checkboxes, `key` and `code`
-for keyboard events, pointer `x` and `y` in panel pixels, the `ctrl`, `shift` and `alt` modifier flags, the
-list of ancestor elements in `path`, and any `data-*` attributes through `GetData(name)`. Set `e.Handled = true`
-to stop the event from reaching any further C# handlers.
+for keyboard events (plus `repeat` while a key is held and `isComposing` during IME input), pointer `x` and `y`
+in panel pixels with `pointerId`, `pointerType` (`mouse`, `pen` or `touch`), `pressure` and `movementX`/`Y`,
+wheel `deltaX`/`deltaY`, the `ctrl`, `shift`, `alt` and `meta` modifier flags, the click count or a
+CustomEvent's payload in `detail`, the element focus or the pointer came from or went to as `RelatedTarget`,
+`editable` when the target is a text field, the list of ancestor elements in `path`, and any `data-*`
+attributes through `GetData(name)`. Set `e.Handled = true` to stop the event from reaching any further C#
+handlers.
 
 Handlers run in this order: the `EventReceived` event first, then handlers registered for the target's id, then
 handlers for ancestor ids (nearest first), then `data-action` handlers, then handlers registered by type only.
@@ -712,6 +716,22 @@ field work. Without it, Unity's key handling swallows the keystrokes.
 
 **Prevent Form Submit** (on by default) stops a `<form>` from navigating the browser away from your game when
 it is submitted. Your `submit` handlers still run.
+
+**Game keys while typing.** Block Unity Input keeps keystrokes aimed at a text field away from Unity, but code
+that polls the keyboard directly (a movement script reading W, A, S and D, say) still sees keys go down.
+Check `HtmlRuntime.TextInputFocused` before acting on them: it is true exactly while a text field, textarea,
+select or editable element in any document has the keyboard, and false again when focus leaves it. `HasFocus`
+says whether any document element has focus at all, and `FocusedDocument` which one. Each document has its own
+`HasFocus` and `TextInputFocused` too.
+
+```csharp
+void Update()
+{
+    if (HtmlRuntime.TextInputFocused)
+        return;   // the player is typing in the UI
+    Move(Keyboard.current);
+}
+```
 
 ## Accessibility
 

@@ -261,9 +261,13 @@ Each panel listens for a default set — `click`, `dblclick`, `input`, `change`,
 
 `onDomEvent` normalizes the DOM event into a flat, `JsonUtility`-friendly object: type, target id (assigning
 `hui-N` if the element has none, so it can be queried later), tag, name, the closest `[data-action]` value, the
-control's value and checked state, key/code, pointer position **relative to the panel** in CSS pixels, modifier
-flags, the space-separated ids of ancestors up to the panel, and the merged `data-*` attributes of the target and
-the action element as `key=value` lines. `submit` gets `preventDefault()` when `PreventFormSubmit` is set, so a
+control's value and checked state, key/code with repeat and composition flags, pointer position **relative to the
+panel** in CSS pixels with pointer id, type, pressure and movement deltas, wheel deltas, the four modifier flags,
+the related element's id for focus and pointer-over transitions (only if it is inside the panel), whether the
+target takes text input, the click count or CustomEvent detail, the space-separated ids of ancestors up to the
+panel, and the merged `data-*` attributes of the target and the action element as `key=value` lines.
+`HtmlDocument.Dispatch` also reads `focusin`/`focusout` before running handlers to keep `HasFocus`,
+`TextInputFocused` and `HtmlRuntime.FocusedDocument` current. `submit` gets `preventDefault()` when `PreventFormSubmit` is set, so a
 form never navigates the page away from your game.
 
 That JSON crosses to C# through the function pointer registered at init (`[MonoPInvokeCallback]`; the delegate is

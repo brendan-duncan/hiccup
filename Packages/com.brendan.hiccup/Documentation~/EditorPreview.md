@@ -302,7 +302,10 @@ default event set and constructs a byte-identical payload, then hands it to the 
 ```json
 {"type":"click","id":"go","tag":"button","name":"","action":"start","value":"",
  "isChecked":false,"key":"","code":"","x":53,"y":123,"button":0,
- "ctrl":false,"shift":false,"alt":false,"path":"","dataset":"action=start"}
+ "ctrl":false,"shift":false,"alt":false,"meta":false,"deltaX":0,"deltaY":0,
+ "pointerId":0,"pointerType":"","pressure":0,"movementX":0,"movementY":0,
+ "repeat":false,"isComposing":false,"relatedId":"","editable":false,"detail":"1",
+ "path":"","dataset":"action=start"}
 ```
 
 That arrives as `Runtime.bindingCalled`, is routed to a panel by `sessionId`, and goes to

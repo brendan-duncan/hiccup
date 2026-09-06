@@ -122,6 +122,17 @@ namespace Hiccup.Editor.Cdp
       return el.id;
     },
 
+    isEditable: function (t) {
+      if (!t || !t.tagName) return false;
+      if (t.isContentEditable) return true;
+      var tag = t.tagName;
+      if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      if (tag !== 'INPUT') return false;
+      var ty = (t.type || 'text').toLowerCase();
+      return !(ty === 'button' || ty === 'submit' || ty === 'reset' || ty === 'checkbox' || ty === 'radio' ||
+               ty === 'range' || ty === 'color' || ty === 'file' || ty === 'image');
+    },
+
     setHtml: function (html) { HUI.content.innerHTML = html; },
     setCss: function (css) { HUI.style.textContent = css; },
     setPointerMode: function (mode) {
@@ -267,10 +278,26 @@ namespace Hiccup.Editor.Cdp
         key: '',
         code: '',
         x: 0, y: 0, button: -1,
-        ctrl: !!e.ctrlKey, shift: !!e.shiftKey, alt: !!e.altKey,
+        ctrl: !!e.ctrlKey, shift: !!e.shiftKey, alt: !!e.altKey, meta: !!e.metaKey,
+        deltaX: 0, deltaY: 0,
+        pointerId: 0, pointerType: '', pressure: 0,
+        movementX: 0, movementY: 0,
+        repeat: !!e.repeat, isComposing: !!e.isComposing,
+        relatedId: '',
+        editable: HUI.isEditable(t),
+        detail: '',
         path: path.join(' '),
         dataset: ''
       };
+
+      if (e.deltaY !== undefined) { o.deltaX = e.deltaX || 0; o.deltaY = e.deltaY || 0; }
+      if (e.pointerId !== undefined) { o.pointerId = e.pointerId; o.pointerType = e.pointerType || ''; o.pressure = e.pressure || 0; }
+      if (e.movementX !== undefined) { o.movementX = e.movementX || 0; o.movementY = e.movementY || 0; }
+      var rel = e.relatedTarget;
+      if (rel && rel instanceof Element && HUI.panel.contains(rel)) o.relatedId = HUI.ensureId(rel);
+      if (e.detail !== undefined && e.detail !== null) {
+        try { o.detail = typeof e.detail === 'object' ? JSON.stringify(e.detail) : String(e.detail); } catch (ex) { o.detail = ''; }
+      }
 
       if ('value' in t && t.value !== undefined && t.value !== null) o.value = String(t.value);
       if (t.type === 'checkbox' || t.type === 'radio') o.isChecked = !!t.checked;

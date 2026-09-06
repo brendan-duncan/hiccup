@@ -86,6 +86,8 @@ document's screen transform from the camera every frame so the browser hit-tests
 * Behavior: `Focus()`, `Blur()`, `Click()`, `ShowModal()/CloseModal()`, `ScrollIntoView()`, `Bounds`.
 * Events: `doc.On(type, h)`, `doc.On(elementId, type, h)`, `element.On(type, h)`, `doc.OnAction(name, h)`
   (for `data-action`), `doc.EventReceived`. `HtmlEvent` carries type, target id/tag/name, value, checked state,
+  wheel deltas, pointer id/type/pressure, movement, key repeat and composition state, the related element, whether
+  the target takes text input, click count or CustomEvent detail,
   key/code, pointer position in panel pixels, modifiers, ancestor path and `data-*` attributes. Set
   `e.Handled = true` to stop further C# dispatch. Only a default set of event types is forwarded; call
   `doc.Listen("pointerover")` (done automatically by `On`) for others.
@@ -99,6 +101,8 @@ document's screen transform from the camera every frame so the browser hit-tests
   `HtmlEvalException` on a throw or rejection.
 * Page to C#: script calls `HUI.send("name", payload)`; C# handles it with `doc.OnMessage("name", m => ...)`
   (`m.Data` is the string as sent, or JSON for anything else; `m.DataAs<T>()` deserializes it) or `doc.MessageReceived`.
+* Focus: `HtmlRuntime.TextInputFocused` (and `HasFocus`, `FocusedDocument`) says when a field in a document has the
+  keyboard, so game code can leave the keys alone; per document, `doc.HasFocus` and `doc.TextInputFocused`.
 * Options: `PointerMode` (Panel / ChildrenOnly / None), `BlockUnityInput`, `PremultipliedAlpha`,
   `HtmlRuntime.ForceOverlay`, `HtmlRuntime.UpdateMode`, `HtmlRuntime.DebugLogging`.
 
