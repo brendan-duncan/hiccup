@@ -269,6 +269,11 @@ class. An assembly reference to a package that may not be installed would not co
 configured for either backend or both. The backend reads the mouse once per `Update()` and hands the result to
 every document.
 
+Every document is its own page, so the browser cannot resolve overlap between them; the backend does. It finds
+the topmost panel under the pointer, the highest `SortOrder` and then the most recently created, and only that
+one is told the pointer is inside it. The others see it leave, except a panel that is mid-press, which keeps
+tracking until the release as it would anyway.
+
 ## Keyboard input
 
 Keys are read through `HtmlKeyboardRelay`, a component whose `OnGUI` sees the Game view's IMGUI key events.

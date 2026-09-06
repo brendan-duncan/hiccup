@@ -39,6 +39,7 @@ namespace Hiccup.Editor.Cdp
             public int Width = 1, Height = 1;      // CSS pixels
             public float Scale = 1f;               // extra device pixel ratio
             public bool Visible = true;
+            public int SortOrder;                  // among overlapping panels the highest one takes the pointer
             public bool Mipmaps = true;            // the target gets a mip chain, regenerated per frame
             public readonly HashSet<string> Listened = new HashSet<string>();
             public string Html = string.Empty;
@@ -534,6 +535,12 @@ namespace Hiccup.Editor.Cdp
             ApplyMetrics(p);
             if (p.Screencasting)
                 StartScreencast(p);
+        }
+
+        public void PanelSetSortOrder(int id, int order)
+        {
+            if (_panels.TryGetValue(id, out var p))
+                p.SortOrder = order;
         }
 
         public void PanelListen(int id, string eventType, bool enabled)
@@ -1038,13 +1045,16 @@ namespace Hiccup.Editor.Cdp
             bool haveMouse = EditorPointer.TryGetMouse(out var mousePosition, out bool mouseDown);
             _iteration.Clear();
             _iteration.AddRange(_panels.Values);
+            // Each document is its own page, so overlap is resolved here: only the topmost panel under the pointer
+            // (highest SortOrder, then the most recently created) is told the pointer is inside it.
+            Panel top = haveMouse ? TopmostPanelAt(mousePosition) : null;
             bool pointerInAnyPanel = false;
             foreach (var panel in _iteration)
             {
                 ApplyPendingFrame(panel);
                 PumpCaptureFallback(panel, now);
                 if (haveMouse)
-                    pointerInAnyPanel |= PumpPointer(panel, mousePosition, mouseDown);
+                    pointerInAnyPanel |= PumpPointer(panel, mousePosition, mouseDown, panel == top);
             }
 
             // A press that lands in no document takes keyboard focus away, as a click on the page would.
@@ -1445,12 +1455,25 @@ namespace Hiccup.Editor.Cdp
         // ------------------------------------------------------------------ pointer input
 
         /// <summary>Returns whether the pointer is over the panel this frame.</summary>
-        private bool PumpPointer(Panel panel, Vector2 screenPosition, bool buttonDown)
+        private Panel TopmostPanelAt(Vector2 screenPosition)
+        {
+            Panel top = null;
+            foreach (var panel in _iteration)
+            {
+                if (!panel.Ready || !panel.HasGeometry || !panel.Visible || !TryProjectToPanel(panel, screenPosition, out _))
+                    continue;
+                if (top == null || panel.SortOrder > top.SortOrder || (panel.SortOrder == top.SortOrder && panel.Id > top.Id))
+                    top = panel;
+            }
+            return top;
+        }
+
+        private bool PumpPointer(Panel panel, Vector2 screenPosition, bool buttonDown, bool topmost)
         {
             if (!panel.Ready || !Connected || !panel.HasGeometry || !panel.Visible)
                 return false;
 
-            bool inside = TryProjectToPanel(panel, screenPosition, out var documentPoint);
+            bool inside = TryProjectToPanel(panel, screenPosition, out var documentPoint) && topmost;
             documentPoint.x = Mathf.Clamp(documentPoint.x, 0, panel.Width);
             documentPoint.y = Mathf.Clamp(documentPoint.y, 0, panel.Height);
 

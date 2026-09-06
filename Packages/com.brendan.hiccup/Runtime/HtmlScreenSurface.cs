@@ -22,6 +22,8 @@ namespace Hiccup
         [SerializeField] private bool sizeDocumentToRect = true;
         [Tooltip("Camera used by the parent Canvas when it is not Screen Space - Overlay. Leave empty to use the Canvas' world camera.")]
         [SerializeField] private Camera uiCamera;
+        [Tooltip("Keep the document's Sort Order in step with the Raw Image's draw order (canvas sorting order, then depth within the canvas), so overlapping documents receive clicks in the order they are drawn. Turn off to set Sort Order yourself.")]
+        [SerializeField] private bool syncSortOrder = true;
 
         private RawImage _rawImage;
         private RectTransform _rect;
@@ -35,6 +37,27 @@ namespace Hiccup
         {
             get => document;
             set => document = value;
+        }
+
+        /// <summary>Whether <see cref="HtmlDocument.SortOrder"/> follows the Raw Image's draw order each frame.</summary>
+        public bool SyncSortOrder
+        {
+            get => syncSortOrder;
+            set => syncSortOrder = value;
+        }
+
+        /// <summary>
+        /// The Raw Image's place in uGUI's draw order as one number: the sorting order of the canvas that sorts it,
+        /// then its depth within that canvas. Later-drawn graphics get higher numbers, as z-index expects.
+        /// </summary>
+        private int DrawOrder()
+        {
+            var canvas = _rawImage.canvas;
+            int sorting = 0;
+            if (canvas != null)
+                sorting = canvas.overrideSorting || canvas.isRootCanvas ? canvas.sortingOrder : canvas.rootCanvas.sortingOrder;
+            int depth = Mathf.Clamp(_rawImage.depth, 0, 9999);   // -1 outside a canvas
+            return sorting * 10000 + depth;
         }
 
         private void OnEnable()
@@ -107,6 +130,9 @@ namespace Hiccup
                 _canvas = GetComponentInParent<Canvas>();
             if (!document.IsCreated)
                 return;
+
+            if (syncSortOrder)
+                document.SortOrder = DrawOrder();   // a no-op when unchanged
 
             var runtime = HtmlRuntime.Instance;
             bool cutout = document.RenderMode == HtmlRenderMode.Overlay && runtime.OverlayCutout;

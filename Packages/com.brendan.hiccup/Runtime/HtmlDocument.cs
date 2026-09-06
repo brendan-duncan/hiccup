@@ -61,6 +61,8 @@ namespace Hiccup
         [SerializeField] private bool preventFormSubmit = true;
         [Tooltip("Snapshot with premultiplied alpha (matches the Hiccup shaders).")]
         [SerializeField] private bool premultipliedAlpha = true;
+        [Tooltip("Stacking order among documents that overlap on screen: the higher one receives pointer input (and is drawn on top in overlay mode). HtmlScreenSurface keeps this in step with the Raw Image's draw order unless told otherwise.")]
+        [SerializeField] private int sortOrder;
         [SerializeField] private bool createOnEnable = true;
 
         private int _panel;
@@ -201,6 +203,25 @@ namespace Hiccup
             }
         }
 
+        /// <summary>
+        /// Stacking order among documents that overlap on screen. The browser hit-tests the one with the higher value
+        /// (and draws it on top in overlay mode), so it should match the order Unity draws them in; an
+        /// <see cref="HtmlScreenSurface"/> derives it from the Raw Image's draw order every frame unless
+        /// <c>SyncSortOrder</c> is off. Focus and reading order stay in creation order.
+        /// </summary>
+        public int SortOrder
+        {
+            get => sortOrder;
+            set
+            {
+                if (sortOrder == value)
+                    return;
+                sortOrder = value;
+                if (_created)
+                    HtmlNative.Hiccup_PanelSetSortOrder(_panel, value);
+            }
+        }
+
         public bool PremultipliedAlpha
         {
             get => premultipliedAlpha;
@@ -282,6 +303,7 @@ namespace Hiccup
             HtmlNative.Hiccup_PanelSetPointerMode(_panel, (int)pointerMode);
             HtmlNative.Hiccup_PanelSetBlockInput(_panel, blockUnityInput ? 1 : 0);
             HtmlNative.Hiccup_PanelSetPreventSubmit(_panel, preventFormSubmit ? 1 : 0);
+            HtmlNative.Hiccup_PanelSetSortOrder(_panel, sortOrder);
             HtmlNative.Hiccup_PanelSetPremultiplied(_panel, premultipliedAlpha ? 1 : 0);
             HtmlNative.Hiccup_PanelSetMipmaps(_panel, mipmaps ? 1 : 0);
             HtmlNative.Hiccup_PanelSetResolutionScale(_panel, resolutionScale);

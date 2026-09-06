@@ -107,6 +107,8 @@ document's screen transform from the camera every frame so the browser hit-tests
   (`m.Data` is the string as sent, or JSON for anything else; `m.DataAs<T>()` deserializes it) or `doc.MessageReceived`.
 * Focus: `HtmlRuntime.TextInputFocused` (and `HasFocus`, `FocusedDocument`) says when a field in a document has the
   keyboard, so game code can leave the keys alone; per document, `doc.HasFocus` and `doc.TextInputFocused`.
+* Stacking: `SortOrder` decides which of two overlapping documents receives clicks (and is drawn on top in overlay
+  mode); `HtmlScreenSurface` derives it from the Raw Image's draw order unless `SyncSortOrder` is off.
 * Options: `PointerMode` (Panel / ChildrenOnly / None), `BlockUnityInput`, `PremultipliedAlpha`,
   `HtmlRuntime.ForceOverlay`, `HtmlRuntime.UpdateMode`, `HtmlRuntime.DebugLogging`.
 

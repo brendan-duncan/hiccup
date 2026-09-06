@@ -1038,6 +1038,10 @@ var HiccupLibrary = {
   // Returns 1 once after each successful texture upload (WebGPU mip generation is done from C#).
   Hiccup_PanelTakeUpdated: function (id) { var p = HUI.panel(id); if (!p || !p.updated) return 0; p.updated = false; return 1; },
   Hiccup_PanelSetPreventSubmit: function (id, v) { var p = HUI.panel(id); if (p) p.preventSubmit = !!v; },
+  // Panels are positioned siblings, so z-index decides which one the browser hit-tests where they overlap (and
+  // paints on top in overlay mode). DOM order is left alone: moving a panel would reload any iframe inside it
+  // and change the focus order.
+  Hiccup_PanelSetSortOrder: function (id, order) { var p = HUI.panel(id); if (p) p.el.style.zIndex = String(order | 0); },
   Hiccup_PanelListen: function (id, typePtr, enabled) { var p = HUI.panel(id); if (p) HUI.listen(p, UTF8ToString(typePtr), !!enabled); },
   Hiccup_PanelInvalidate: function (id) { var p = HUI.panel(id); if (p) { p.dirty = true; HUI.requestPaint(); } },
   Hiccup_PanelSetGeometry: function (id, matPtr) {

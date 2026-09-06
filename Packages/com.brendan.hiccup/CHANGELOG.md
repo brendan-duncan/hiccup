@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Stacking order between overlapping documents. `HtmlDocument.SortOrder` sets the panel's `z-index`, so the
+  browser hit-tests the document Unity draws on top (and, in overlay mode, draws it on top too).
+  `HtmlScreenSurface` keeps it in step with the Raw Image's draw order every frame (canvas sorting order, then
+  depth within the canvas; **Sync Sort Order** turns that off), and the Editor preview routes the pointer to the
+  topmost document under it by the same order. Focus and reading order stay in creation order; DOM order is not
+  changed, since moving a panel would reload any iframe inside it.
 - Tests. `Tests/Editor` holds edit-mode tests for the pure C# layers (event payload parsing, dispatch order and
   `Handled`, messages, focus flags, `Html.Escape`, the image encoder, the preview's JSON reader) and consistency
   checks that read the sources: every native import has a jslib export and an Editor stub, both bridges build

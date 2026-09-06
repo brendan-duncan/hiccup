@@ -75,6 +75,7 @@ namespace Hiccup
         [DllImport("__Internal")] public static extern void Hiccup_PanelSetBlockInput(int id, int block);
         [DllImport("__Internal")] public static extern void Hiccup_PanelSetPremultiplied(int id, int v);
         [DllImport("__Internal")] public static extern void Hiccup_PanelSetPreventSubmit(int id, int v);
+        [DllImport("__Internal")] public static extern void Hiccup_PanelSetSortOrder(int id, int order);
         [DllImport("__Internal")] public static extern void Hiccup_PanelSetResolutionScale(int id, float scale);
         [DllImport("__Internal")] public static extern void Hiccup_PanelSetMipmaps(int id, int v);
         [DllImport("__Internal")] public static extern int Hiccup_PanelTakeUpdated(int id);
@@ -184,6 +185,7 @@ namespace Hiccup
         public static void Hiccup_PanelSetBlockInput(int id, int block) { }
         public static void Hiccup_PanelSetPremultiplied(int id, int v) { }
         public static void Hiccup_PanelSetPreventSubmit(int id, int v) { }
+        public static void Hiccup_PanelSetSortOrder(int id, int order) => HtmlBackend.Current?.PanelSetSortOrder(id, order);
         public static void Hiccup_PanelSetResolutionScale(int id, float scale) => HtmlBackend.Current?.PanelSetResolutionScale(id, scale);
         public static void Hiccup_PanelSetMipmaps(int id, int v) => HtmlBackend.Current?.PanelSetMipmaps(id, v != 0);
         public static int Hiccup_PanelTakeUpdated(int id) => 0;

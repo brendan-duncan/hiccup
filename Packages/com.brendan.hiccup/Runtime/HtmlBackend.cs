@@ -40,6 +40,8 @@ namespace Hiccup
         void PanelSetResolutionScale(int panel, float scale);
         /// <summary>Whether the panel texture carries a mip chain that is regenerated after each update.</summary>
         void PanelSetMipmaps(int panel, bool enabled);
+        /// <summary>Stacking order among overlapping panels; the higher one takes pointer input.</summary>
+        void PanelSetSortOrder(int panel, int order);
         void PanelListen(int panel, string eventType, bool enabled);
         void PanelInvalidate(int panel);
         void PanelSetGeometry(int panel, float[] pixelToClipColumnMajor);

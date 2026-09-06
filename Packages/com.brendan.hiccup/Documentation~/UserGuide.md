@@ -732,6 +732,15 @@ field work. Without it, Unity's key handling swallows the keystrokes.
 **Prevent Form Submit** (on by default) stops a `<form>` from navigating the browser away from your game when
 it is submitted. Your `submit` handlers still run.
 
+**Overlapping documents.** When two documents cover the same part of the screen, say a HUD and a pause menu on
+separate Raw Images, the browser has to know which one is on top to send the click to the right one. Each
+document has a **Sort Order** for that: the higher one wins where they overlap, and in overlay mode it is also
+the one drawn on top. A `HtmlScreenSurface` sets it for you every frame from the Raw Image's draw order (the
+canvas's sorting order, then the image's place in the canvas), so documents stack the way uGUI draws them.
+Turn off **Sync Sort Order** on the surface to set the document's **Sort Order** yourself, which is also what a
+world-space panel uses. Keyboard focus order and screen-reader reading order follow the order documents were
+created in, not the stacking order.
+
 **Game keys while typing.** Block Unity Input keeps keystrokes aimed at a text field away from Unity, but code
 that polls the keyboard directly (a movement script reading W, A, S and D, say) still sees keys go down.
 Check `HtmlRuntime.TextInputFocused` before acting on them: it is true exactly while a text field, textarea,

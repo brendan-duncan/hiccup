@@ -108,6 +108,13 @@ world-space panel viewed obliquely wants `resolutionScale = 2`.
 `<script>` in your HTML never executes, because the content is assigned through `innerHTML`. `HtmlDocument.Eval`
 is the escape hatch, and it runs with `panel` (the `.hui-panel`), `root` (the `.hui-content`) and `HUI` in scope.
 
+### Stacking
+
+Panels are positioned siblings, so where two overlap the browser hit-tests by `z-index`, and in overlay mode
+paints by it too. `Hiccup_PanelSetSortOrder` sets that from `HtmlDocument.SortOrder`, which `HtmlScreenSurface`
+derives from the Raw Image's draw order each frame. DOM order is deliberately left alone: moving a panel element
+would reload an iframe inside it and reorder focus.
+
 ### Pointer modes
 
 `HtmlPointerMode` is expressed purely in CSS on the panel's `data-hui-pointer` attribute:
