@@ -67,6 +67,10 @@ namespace Hiccup
         /// <summary>Comma-separated element handles, matching the jslib's Hiccup_QueryAll encoding.</summary>
         string QueryAll(int panel, string selector);
         int ElemQuery(int handle, string selector);
+        /// <summary>Comma-separated handles of the matching descendants.</summary>
+        string ElemQueryAll(int handle, string selector);
+        /// <summary>The element or its nearest matching ancestor inside the content root, else 0.</summary>
+        int ElemClosest(int handle, string selector);
         int ElemParent(int handle);
         void ElemRelease(int handle);
 
@@ -101,6 +105,8 @@ namespace Hiccup
         void ElemRemove(int handle);
         void ElemShowModal(int handle, bool show);
         void ElemScrollIntoView(int handle);
+        /// <summary>Calls a zero-argument DOM method on the element, if it has one.</summary>
+        void ElemCall(int handle, string method);
 
         /// <summary>Fills x, y, width, height in panel CSS pixels.</summary>
         void ElemGetBounds(int handle, float[] outXYWH);

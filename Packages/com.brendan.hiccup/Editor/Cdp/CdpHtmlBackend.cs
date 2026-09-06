@@ -670,6 +670,7 @@ namespace Hiccup.Editor.Cdp
             public string Selector;
             public int Index = -1;
             public bool Parent;
+            public string Closest;
             public ElementSpec Of;
         }
 
@@ -727,6 +728,34 @@ namespace Hiccup.Editor.Cdp
             return AddHandle(new ElementSpec { PanelId = spec.PanelId, Selector = selector, Of = spec });
         }
 
+        public string ElemQueryAll(int handle, string selector)
+        {
+            var spec = Spec(handle);
+            if (spec == null || string.IsNullOrEmpty(selector))
+                return string.Empty;
+
+            int count = (int)ReadNumber(new ElementSpec { PanelId = spec.PanelId, Selector = selector, Of = spec }, "count", null, 0);
+            if (count <= 0)
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                if (i > 0)
+                    sb.Append(',');
+                sb.Append(AddHandle(new ElementSpec { PanelId = spec.PanelId, Selector = selector, Index = i, Of = spec }));
+            }
+            return sb.ToString();
+        }
+
+        public int ElemClosest(int handle, string selector)
+        {
+            var spec = Spec(handle);
+            if (spec == null || string.IsNullOrEmpty(selector))
+                return 0;
+            return AddHandle(new ElementSpec { PanelId = spec.PanelId, Closest = selector, Of = spec });
+        }
+
         public int ElemParent(int handle)
         {
             var spec = Spec(handle);
@@ -757,6 +786,7 @@ namespace Hiccup.Editor.Cdp
         public void ElemBlur(int handle) => Write(handle, "blur");
         public void ElemClick(int handle) => Write(handle, "click");
         public void ElemScrollIntoView(int handle) => Write(handle, "scroll");
+        public void ElemCall(int handle, string method) => Write(handle, "call", method);
 
         public void ElemToggleClass(int handle, string className, int force) => Write(handle, "tglcls", className, force.ToString(CultureInfo.InvariantCulture), quoteB: false);
         public void ElemShowModal(int handle, bool show) => Write(handle, "modal", JsBool(show), quoteA: false);
@@ -871,6 +901,14 @@ namespace Hiccup.Editor.Cdp
                 if (!first)
                     sb.Append(',');
                 sb.Append("\"up\":true");
+                first = false;
+            }
+            if (spec.Closest != null)
+            {
+                if (!first)
+                    sb.Append(',');
+                sb.Append("\"c\":");
+                Json.Quote(spec.Closest, sb);
                 first = false;
             }
             if (spec.Of != null)

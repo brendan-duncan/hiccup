@@ -79,11 +79,15 @@ document's screen transform from the camera every frame so the browser hit-tests
 
 ## API sketch
 
-* Query: `doc.Q(selector)`, `doc.QAll(selector)`, `element.Q(selector)`, `element.Parent`, `element.Matches(...)`.
-* Content: `Text`, `InnerHtml`, `Append(html)`, `Prepend(html)`, `InsertHtml(where, html)`, `Remove()`.
-* State: `Value`, `Checked`, `Disabled`, `Hidden`, `GetAttribute/SetAttribute/RemoveAttribute`,
+* Query: `doc.Q(selector)`, `doc.QAll(selector)`, `element.Q/QAll(selector)`, `element.Children`, `element.Parent`,
+  `element.Closest(selector)`, `element.Matches(...)`.
+* Content: `Text`, `InnerHtml`, `Append(html)`, `Prepend(html)`, `InsertHtml(where, html)`, `Remove()`,
+  `SetOptions(...)` for a `<select>`, `Html.Escape(text)` for markup built from data.
+* State: `Value` (`ValueAsFloat`, `ValueAsInt`), `Checked`, `Disabled`, `Hidden`, `SelectedIndex`,
+  `GetData/SetData`, `ScrollTop/ScrollLeft`, `GetAttribute/SetAttribute/RemoveAttribute`,
   `GetProperty/SetProperty`, `SetStyle`, `GetComputedStyle`, `AddClass/RemoveClass/ToggleClass/EnableClass`.
-* Behavior: `Focus()`, `Blur()`, `Click()`, `ShowModal()/CloseModal()`, `ScrollIntoView()`, `Bounds`.
+* Behavior: `Focus()`, `Blur()`, `Click()`, `Select()`, `Call(method)`, `ShowModal()/CloseModal()`,
+  `ScrollIntoView()`, `Bounds`.
 * Events: `doc.On(type, h)`, `doc.On(elementId, type, h)`, `element.On(type, h)`, `doc.OnAction(name, h)`
   (for `data-action`), `doc.EventReceived`. `HtmlEvent` carries type, target id/tag/name, value, checked state,
   wheel deltas, pointer id/type/pressure, movement, key repeat and composition state, the related element, whether

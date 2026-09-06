@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Element API additions: `QAll` and `Children` on an element, `Closest(selector)`, `GetData`/`SetData` for
+  `data-*` attributes, `ScrollTop`/`ScrollLeft`, `ValueAsFloat`/`ValueAsInt`, `SelectedIndex` and
+  `SetOptions(...)` for `<select>`, `Call(method)` for zero-argument DOM methods with `Select()` as a shortcut,
+  numeric `SetAttribute` overloads, and `Html.Escape` for building markup from game data. Both bridges gained
+  the matching queries; the Editor preview's `Parent` now stops at the content root as the jslib's does.
 - Fuller event payloads. `HtmlEvent` gained `meta`, wheel `deltaX`/`deltaY`, `pointerId`/`pointerType`/`pressure`,
   `movementX`/`movementY`, key `repeat` and `isComposing`, `relatedId` (with a `RelatedTarget` element) for focus
   and pointer-over transitions, `editable` (the target takes text input) and `detail` (click count, or a

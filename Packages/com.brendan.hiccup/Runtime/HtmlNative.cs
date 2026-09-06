@@ -119,6 +119,9 @@ namespace Hiccup
         [DllImport("__Internal")] public static extern void Hiccup_ElemShowModal(int h, int show);
         [DllImport("__Internal")] public static extern void Hiccup_ElemGetBounds(int h, float[] outXYWH);
         [DllImport("__Internal")] public static extern int Hiccup_ElemQuery(int h, string selector);
+        [DllImport("__Internal")] public static extern IntPtr Hiccup_ElemQueryAll(int h, string selector);
+        [DllImport("__Internal")] public static extern int Hiccup_ElemClosest(int h, string selector);
+        [DllImport("__Internal")] public static extern void Hiccup_ElemCall(int h, string method);
         [DllImport("__Internal")] public static extern int Hiccup_ElemParent(int h);
         [DllImport("__Internal")] public static extern int Hiccup_ElemMatches(int h, string selector);
         [DllImport("__Internal")] public static extern void Hiccup_ElemScrollIntoView(int h);
@@ -249,6 +252,9 @@ namespace Hiccup
             outXYWH[0] = outXYWH[1] = outXYWH[2] = outXYWH[3] = 0;
         }
         public static int Hiccup_ElemQuery(int h, string selector) => HtmlBackend.Current?.ElemQuery(h, selector) ?? 0;
+        public static IntPtr Hiccup_ElemQueryAll(int h, string selector) => AllocUtf8(HtmlBackend.Current?.ElemQueryAll(h, selector));
+        public static int Hiccup_ElemClosest(int h, string selector) => HtmlBackend.Current?.ElemClosest(h, selector) ?? 0;
+        public static void Hiccup_ElemCall(int h, string method) => HtmlBackend.Current?.ElemCall(h, method);
         public static int Hiccup_ElemParent(int h) => HtmlBackend.Current?.ElemParent(h) ?? 0;
         public static int Hiccup_ElemMatches(int h, string selector) => (HtmlBackend.Current?.ElemMatches(h, selector) ?? false) ? 1 : 0;
         public static void Hiccup_ElemScrollIntoView(int h) => HtmlBackend.Current?.ElemScrollIntoView(h);

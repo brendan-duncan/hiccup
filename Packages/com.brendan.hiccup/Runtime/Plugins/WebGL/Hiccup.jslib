@@ -1167,6 +1167,29 @@ var HiccupLibrary = {
     try { r = e.querySelector(UTF8ToString(selPtr)); } catch (ex) {}
     return HUI.handle(r);
   },
+  Hiccup_ElemQueryAll: function (h, selPtr) {
+    var e = HUI.el(h); if (!e) return HUI.cstr('');
+    var out = [];
+    try {
+      var list = e.querySelectorAll(UTF8ToString(selPtr));
+      for (var i = 0; i < list.length; i++) out.push(HUI.handle(list[i]));
+    } catch (ex) { HUI.warnOnce('selall', 'Bad selector: ' + ex); }
+    return HUI.cstr(out.join(','));
+  },
+  // closest() may walk out of the content root; anything at or above it is not the caller's element.
+  Hiccup_ElemClosest: function (h, selPtr) {
+    var e = HUI.el(h); if (!e) return 0;
+    var r = null;
+    try { r = e.closest(UTF8ToString(selPtr)); } catch (ex) {}
+    var content = e.closest('.hui-content');
+    if (r && (!content || r === content || !content.contains(r))) r = null;
+    return HUI.handle(r);
+  },
+  Hiccup_ElemCall: function (h, mPtr) {
+    var e = HUI.el(h), m = UTF8ToString(mPtr);
+    if (!e || typeof e[m] !== 'function') return;
+    try { e[m](); } catch (ex) { HUI.warnOnce('call' + m, 'Calling ' + m + '() failed: ' + ex); }
+  },
   Hiccup_ElemParent: function (h) { var e = HUI.el(h); return HUI.handle(e && e.parentElement && !e.parentElement.classList.contains('hui-content') ? e.parentElement : null); },
   Hiccup_ElemMatches: function (h, selPtr) { var e = HUI.el(h); try { return (e && e.matches(UTF8ToString(selPtr))) ? 1 : 0; } catch (ex) { return 0; } },
   Hiccup_ElemScrollIntoView: function (h) { var e = HUI.el(h); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' }); }

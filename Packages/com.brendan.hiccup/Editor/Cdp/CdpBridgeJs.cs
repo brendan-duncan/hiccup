@@ -162,14 +162,20 @@ namespace Hiccup.Editor.Cdp
     },
 
     // ---------------------------------------------------------------- elements
-    // Unity holds handles that are descriptions, not pointers: {s: selector, i: index, up: parent, p: parent spec}.
-    // Resolving on every operation costs a querySelector and keeps the page from accumulating stale references.
+    // Unity holds handles that are descriptions, not pointers: {s: selector, i: index, up: parent, c: closest,
+    // p: parent spec}. Resolving on every operation costs a querySelector and keeps the page from accumulating
+    // stale references. The content root and anything above it are never handed out, as in the jslib.
 
     resolve: function (spec) {
       if (!spec) return null;
       var base = spec.p ? HUI.resolve(spec.p) : HUI.content;
       if (!base) return null;
-      if (spec.up) return base.parentElement;
+      if (spec.up) { var up = base.parentElement; return up && up !== HUI.content ? up : null; }
+      if (spec.c) {
+        var near = null;
+        try { near = base.closest(spec.c); } catch (e) {}
+        return near && near !== HUI.content && HUI.content.contains(near) ? near : null;
+      }
       if (!spec.s) return base;
       if (spec.i !== undefined && spec.i !== null) return base.querySelectorAll(spec.s)[spec.i] || null;
       return base.querySelector(spec.s);
@@ -204,6 +210,7 @@ namespace Hiccup.Editor.Cdp
         case 'click': if (el.click) el.click(); break;
         case 'remove': if (el.parentNode) el.parentNode.removeChild(el); break;
         case 'scroll': if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); break;
+        case 'call': if (typeof el[a] === 'function') { try { el[a](); } catch (e) {} } break;
         case 'modal':
           if (a) { if (!el.open && el.showModal) el.showModal(); }
           else if (el.open && el.close) el.close();

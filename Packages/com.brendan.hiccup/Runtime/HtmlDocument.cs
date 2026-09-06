@@ -462,18 +462,9 @@ namespace Hiccup
         /// <summary>Finds all elements matching a CSS selector.</summary>
         public List<HtmlElement> QAll(string selector)
         {
-            var list = new List<HtmlElement>();
             if (!_created)
-                return list;
-            var csv = HtmlNative.TakeString(HtmlNative.Hiccup_QueryAll(_panel, selector));
-            if (string.IsNullOrEmpty(csv))
-                return list;
-            foreach (var part in csv.Split(','))
-            {
-                if (int.TryParse(part, out var h) && h != 0)
-                    list.Add(new HtmlElement(this, h));
-            }
-            return list;
+                return new List<HtmlElement>();
+            return HtmlElement.FromCsv(this, HtmlNative.TakeString(HtmlNative.Hiccup_QueryAll(_panel, selector)));
         }
 
         /// <summary>

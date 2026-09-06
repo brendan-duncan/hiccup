@@ -335,6 +335,7 @@ at all; the backend remembers a description:
 { s: ".nav-btn", i: 1 }                       // the second match  (QAll)
 { s: "p", p: { s: "#screen-menu" } }          // nested query
 { up: true, p: { s: "#score" } }              // parentElement
+{ c: ".card", p: { s: "#buy-3" } }            // closest ancestor
 ```
 
 `__HUI.resolve` walks that on each operation. A `querySelector` is cheap, and re-resolving is what keeps handles

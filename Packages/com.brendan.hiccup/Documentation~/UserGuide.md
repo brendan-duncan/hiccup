@@ -389,6 +389,21 @@ doc.Q("#old-toast").Remove();
 string typed = doc.Q("#search").Value;
 bool on     = doc.Q("#bloom").Checked;
 Rect where  = doc.Q("#target").Bounds;         // panel CSS pixels
+
+doc.Q("#quality").SetOptions(new[] { "Low", "Medium", "High" }, current);   // <select>
+int chosen  = doc.Q("#quality").SelectedIndex;
+doc.Q("#log").ScrollTop = 1e6f;                // scroll a list to the bottom
+doc.Q("#name").Focus().Select();               // focus a field with its text selected
+foreach (var row in doc.Q("#inventory").Children)
+    row.EnableClass("owned", row.GetData("id") == ownedId);
+var card = doc.Q("#buy-3").Closest(".card");   // nearest ancestor matching a selector
+```
+
+Markup you build from game data should go through `Html.Escape`, so a player name containing `<` or `&`
+cannot break the page:
+
+```csharp
+doc.Q("#pilot").InnerHtml = $"<strong>{Html.Escape(profile.Name)}</strong>";
 ```
 
 To replace the whole document while the game runs, assign `doc.Html = otherTextAsset`. For content you generate
