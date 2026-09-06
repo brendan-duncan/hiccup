@@ -41,8 +41,10 @@ namespace Hiccup.Editor.Cdp
                         default:
                             // Everything outside printable ASCII goes out as \uXXXX. That covers the control
                             // characters and U+2028/U+2029, which would otherwise terminate a JS string literal.
-                            if (c < 0x20 || c > 0x7e) sb.Append("\\u").Append(((int)c).ToString("x4"));
-                            else sb.Append(c);
+                            if (c < 0x20 || c > 0x7e)
+                                sb.Append("\\u").Append(((int)c).ToString("x4"));
+                            else
+                                sb.Append(c);
                             break;
                     }
                 }
@@ -56,7 +58,8 @@ namespace Hiccup.Editor.Cdp
 
         public static object Parse(string json)
         {
-            if (string.IsNullOrEmpty(json)) return null;
+            if (string.IsNullOrEmpty(json))
+                return null;
             int i = 0;
             var value = ParseValue(json, ref i);
             return value;
@@ -64,13 +67,15 @@ namespace Hiccup.Editor.Cdp
 
         private static void SkipWhitespace(string s, ref int i)
         {
-            while (i < s.Length && char.IsWhiteSpace(s[i])) i++;
+            while (i < s.Length && char.IsWhiteSpace(s[i]))
+                i++;
         }
 
         private static object ParseValue(string s, ref int i)
         {
             SkipWhitespace(s, ref i);
-            if (i >= s.Length) return null;
+            if (i >= s.Length)
+                return null;
 
             switch (s[i])
             {
@@ -89,19 +94,33 @@ namespace Hiccup.Editor.Cdp
             var d = new Dictionary<string, object>();
             i++; // '{'
             SkipWhitespace(s, ref i);
-            if (i < s.Length && s[i] == '}') { i++; return d; }
+            if (i < s.Length && s[i] == '}')
+            {
+                i++;
+                return d;
+            }
 
             while (i < s.Length)
             {
                 SkipWhitespace(s, ref i);
-                if (i >= s.Length || s[i] != '"') break;
+                if (i >= s.Length || s[i] != '"')
+                    break;
                 var key = ParseString(s, ref i);
                 SkipWhitespace(s, ref i);
-                if (i < s.Length && s[i] == ':') i++;
+                if (i < s.Length && s[i] == ':')
+                    i++;
                 d[key] = ParseValue(s, ref i);
                 SkipWhitespace(s, ref i);
-                if (i < s.Length && s[i] == ',') { i++; continue; }
-                if (i < s.Length && s[i] == '}') { i++; break; }
+                if (i < s.Length && s[i] == ',')
+                {
+                    i++;
+                    continue;
+                }
+                if (i < s.Length && s[i] == '}')
+                {
+                    i++;
+                    break;
+                }
                 break;
             }
             return d;
@@ -112,14 +131,26 @@ namespace Hiccup.Editor.Cdp
             var list = new List<object>();
             i++; // '['
             SkipWhitespace(s, ref i);
-            if (i < s.Length && s[i] == ']') { i++; return list; }
+            if (i < s.Length && s[i] == ']')
+            {
+                i++;
+                return list;
+            }
 
             while (i < s.Length)
             {
                 list.Add(ParseValue(s, ref i));
                 SkipWhitespace(s, ref i);
-                if (i < s.Length && s[i] == ',') { i++; continue; }
-                if (i < s.Length && s[i] == ']') { i++; break; }
+                if (i < s.Length && s[i] == ',')
+                {
+                    i++;
+                    continue;
+                }
+                if (i < s.Length && s[i] == ']')
+                {
+                    i++;
+                    break;
+                }
                 break;
             }
             return list;
@@ -132,9 +163,15 @@ namespace Hiccup.Editor.Cdp
             while (i < s.Length)
             {
                 char c = s[i++];
-                if (c == '"') break;
-                if (c != '\\') { sb.Append(c); continue; }
-                if (i >= s.Length) break;
+                if (c == '"')
+                    break;
+                if (c != '\\')
+                {
+                    sb.Append(c);
+                    continue;
+                }
+                if (i >= s.Length)
+                    break;
 
                 char e = s[i++];
                 switch (e)
@@ -164,7 +201,8 @@ namespace Hiccup.Editor.Cdp
         private static object ParseNumber(string s, ref int i)
         {
             int start = i;
-            while (i < s.Length && (char.IsDigit(s[i]) || s[i] == '-' || s[i] == '+' || s[i] == '.' || s[i] == 'e' || s[i] == 'E')) i++;
+            while (i < s.Length && (char.IsDigit(s[i]) || s[i] == '-' || s[i] == '+' || s[i] == '.' || s[i] == 'e' || s[i] == 'E'))
+                i++;
             var span = s.Substring(start, i - start);
             return double.TryParse(span, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : (object)0d;
         }

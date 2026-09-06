@@ -69,7 +69,8 @@ namespace Hiccup.Samples
 
         public void Salvage()
         {
-            if (!IsActive) return;
+            if (!IsActive)
+                return;
             IsActive = false;
             _renderer.enabled = false;
             _respawnAt = Time.time + Random.Range(1.5f, 3f);
@@ -79,7 +80,8 @@ namespace Hiccup.Samples
         {
             if (!IsActive)
             {
-                if (Time.time >= _respawnAt) Respawn();
+                if (Time.time >= _respawnAt)
+                    Respawn();
                 return;
             }
 
@@ -87,12 +89,16 @@ namespace Hiccup.Samples
             transform.Rotate(_spinAxis, speed * Time.deltaTime, Space.World);
 
             var p = transform.position + _velocity * Time.deltaTime;
-            if (p.x < s_bounds.min.x || p.x > s_bounds.max.x) _velocity.x = -_velocity.x;
-            if (p.y < s_bounds.min.y || p.y > s_bounds.max.y) _velocity.y = -_velocity.y;
-            if (p.z < s_bounds.min.z || p.z > s_bounds.max.z) _velocity.z = -_velocity.z;
+            if (p.x < s_bounds.min.x || p.x > s_bounds.max.x)
+                _velocity.x = -_velocity.x;
+            if (p.y < s_bounds.min.y || p.y > s_bounds.max.y)
+                _velocity.y = -_velocity.y;
+            if (p.z < s_bounds.min.z || p.z > s_bounds.max.z)
+                _velocity.z = -_velocity.z;
             transform.position = s_bounds.ClosestPoint(p);
 
-            if (Game != null && Game.Glow != _appliedGlow) ApplyColor();
+            if (Game != null && Game.Glow != _appliedGlow)
+                ApplyColor();
         }
 
         private bool _appliedGlow = true;

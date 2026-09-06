@@ -40,7 +40,8 @@ namespace Hiccup.Samples
         private void Update()
         {
             var mouse = Mouse.current;
-            if (mouse == null || Camera == null) return;
+            if (mouse == null || Camera == null)
+                return;
             var ray = Camera.ScreenPointToRay(mouse.position.ReadValue());
             bool onPad = TryHitPadPlane(ray, out var hit);
 
@@ -49,7 +50,8 @@ namespace Hiccup.Samples
             if (!_sliding && mouse.rightButton.wasPressedThisFrame && onPad && (HitsMouse(ray) || InsidePad(hit, 0.02f)))
             {
                 _sliding = true;
-                if (!_pressing) _grabOffset = transform.position - hit;
+                if (!_pressing)
+                    _grabOffset = transform.position - hit;
             }
 
             // Left button: press. Starts on the mouse, or anywhere while already sliding.
@@ -57,7 +59,8 @@ namespace Hiccup.Samples
             {
                 _pressing = true;
                 _moved = false;
-                if (!_sliding) _grabOffset = transform.position - hit;
+                if (!_sliding)
+                    _grabOffset = transform.position - hit;
                 transform.localScale = new Vector3(_restScale.x, _restScale.y * 0.8f, _restScale.z);   // "pressed"
                 Screen?.Press();
             }
@@ -68,7 +71,8 @@ namespace Hiccup.Samples
                 p.x = Mathf.Clamp(p.x, Pad.xMin, Pad.xMax);
                 p.z = Mathf.Clamp(p.z, Pad.yMin, Pad.yMax);
                 p.y = transform.position.y;
-                if ((p - transform.position).sqrMagnitude > 1e-6f) _moved = true;
+                if ((p - transform.position).sqrMagnitude > 1e-6f)
+                    _moved = true;
                 transform.position = p;
                 SendPosition();
             }
@@ -85,7 +89,8 @@ namespace Hiccup.Samples
             }
 
             float wheel = mouse.scroll.ReadValue().y;
-            if (Mathf.Abs(wheel) > 0.01f) Screen?.Wheel(wheel);
+            if (Mathf.Abs(wheel) > 0.01f)
+                Screen?.Wheel(wheel);
         }
 
         private bool HitsMouse(Ray ray)
@@ -103,7 +108,8 @@ namespace Hiccup.Samples
 
         private void SendPosition()
         {
-            if (Screen == null) return;
+            if (Screen == null)
+                return;
             var p = transform.position;
             // Far edge of the pad (larger z) is the top of the screen.
             Screen.MoveTo(Mathf.InverseLerp(Pad.xMin, Pad.xMax, p.x), 1f - Mathf.InverseLerp(Pad.yMin, Pad.yMax, p.z));
@@ -112,9 +118,11 @@ namespace Hiccup.Samples
         private bool TryHitPadPlane(Ray ray, out Vector3 point)
         {
             point = default;
-            if (Mathf.Abs(ray.direction.y) < 1e-5f) return false;
+            if (Mathf.Abs(ray.direction.y) < 1e-5f)
+                return false;
             float t = (PadTop - ray.origin.y) / ray.direction.y;
-            if (t < 0f) return false;
+            if (t < 0f)
+                return false;
             point = ray.GetPoint(t);
             return true;
         }

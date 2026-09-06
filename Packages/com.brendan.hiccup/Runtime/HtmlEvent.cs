@@ -53,12 +53,15 @@ namespace Hiccup
         /// <summary>Returns the value of a data-* attribute on the target, or null.</summary>
         public string GetData(string key)
         {
-            if (string.IsNullOrEmpty(dataset)) return null;
+            if (string.IsNullOrEmpty(dataset))
+                return null;
             foreach (var line in dataset.Split('\n'))
             {
                 int eq = line.IndexOf('=');
-                if (eq <= 0) continue;
-                if (string.Equals(line.Substring(0, eq), key, StringComparison.Ordinal)) return line.Substring(eq + 1);
+                if (eq <= 0)
+                    continue;
+                if (string.Equals(line.Substring(0, eq), key, StringComparison.Ordinal))
+                    return line.Substring(eq + 1);
             }
             return null;
         }
@@ -76,7 +79,8 @@ namespace Hiccup
                 Debug.LogWarning($"[Hiccup] Could not parse event payload: {ex.Message}\n{json}");
                 return null;
             }
-            if (e == null) return null;
+            if (e == null)
+                return null;
             e.Document = doc;
             return e;
         }

@@ -32,8 +32,10 @@ namespace Hiccup
         {
             get
             {
-                if (_id != null) return _id;
-                if (!IsValid) return string.Empty;
+                if (_id != null)
+                    return _id;
+                if (!IsValid)
+                    return string.Empty;
                 _id = HtmlNative.TakeString(HtmlNative.Hiccup_ElemEnsureId(_handle));
                 return _id;
             }
@@ -44,19 +46,37 @@ namespace Hiccup
         public string Text
         {
             get => IsValid ? HtmlNative.TakeString(HtmlNative.Hiccup_ElemGetText(_handle)) : string.Empty;
-            set { if (IsValid) { HtmlNative.Hiccup_ElemSetText(_handle, value ?? string.Empty); _doc.Invalidate(); } }
+            set
+            {
+                if (IsValid)
+                {
+                    HtmlNative.Hiccup_ElemSetText(_handle, value ?? string.Empty);
+                    _doc.Invalidate();
+                }
+            }
         }
 
         public string InnerHtml
         {
             get => IsValid ? HtmlNative.TakeString(HtmlNative.Hiccup_ElemGetHtml(_handle)) : string.Empty;
-            set { if (IsValid) { HtmlNative.Hiccup_ElemSetHtml(_handle, value ?? string.Empty); _doc.Invalidate(); } }
+            set
+            {
+                if (IsValid)
+                {
+                    HtmlNative.Hiccup_ElemSetHtml(_handle, value ?? string.Empty);
+                    _doc.Invalidate();
+                }
+            }
         }
 
         /// <summary>Inserts HTML relative to this element. <paramref name="where"/> is one of beforebegin, afterbegin, beforeend, afterend.</summary>
         public HtmlElement InsertHtml(string where, string html)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemInsertHtml(_handle, where, html ?? string.Empty); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemInsertHtml(_handle, where, html ?? string.Empty);
+                _doc.Invalidate();
+            }
             return this;
         }
         public HtmlElement Append(string html) => InsertHtml("beforeend", html);
@@ -68,7 +88,11 @@ namespace Hiccup
         public bool HasAttribute(string name) => IsValid && HtmlNative.Hiccup_ElemHasAttr(_handle, name) != 0;
         public HtmlElement SetAttribute(string name, string value)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemSetAttr(_handle, name, value ?? string.Empty); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemSetAttr(_handle, name, value ?? string.Empty);
+                _doc.Invalidate();
+            }
             return this;
         }
         public HtmlElement SetAttribute(string name, bool present)
@@ -77,7 +101,11 @@ namespace Hiccup
         }
         public HtmlElement RemoveAttribute(string name)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemRemoveAttr(_handle, name); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemRemoveAttr(_handle, name);
+                _doc.Invalidate();
+            }
             return this;
         }
 
@@ -85,13 +113,21 @@ namespace Hiccup
         public string GetProperty(string name) => IsValid ? HtmlNative.TakeString(HtmlNative.Hiccup_ElemGetProp(_handle, name)) : string.Empty;
         public HtmlElement SetProperty(string name, string value)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemSetProp(_handle, name, value ?? string.Empty); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemSetProp(_handle, name, value ?? string.Empty);
+                _doc.Invalidate();
+            }
             return this;
         }
         public bool GetBoolProperty(string name) => IsValid && HtmlNative.Hiccup_ElemGetBoolProp(_handle, name) != 0;
         public HtmlElement SetBoolProperty(string name, bool value)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemSetBoolProp(_handle, name, value ? 1 : 0); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemSetBoolProp(_handle, name, value ? 1 : 0);
+                _doc.Invalidate();
+            }
             return this;
         }
 
@@ -127,48 +163,105 @@ namespace Hiccup
 
         public HtmlElement SetStyle(string property, string value)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemSetStyle(_handle, property, value ?? string.Empty); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemSetStyle(_handle, property, value ?? string.Empty);
+                _doc.Invalidate();
+            }
             return this;
         }
         public string GetComputedStyle(string property) => IsValid ? HtmlNative.TakeString(HtmlNative.Hiccup_ElemGetStyle(_handle, property)) : string.Empty;
 
         public HtmlElement AddClass(string className)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemAddClass(_handle, className); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemAddClass(_handle, className);
+                _doc.Invalidate();
+            }
             return this;
         }
         public HtmlElement RemoveClass(string className)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemRemoveClass(_handle, className); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemRemoveClass(_handle, className);
+                _doc.Invalidate();
+            }
             return this;
         }
         public HtmlElement ToggleClass(string className)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemToggleClass(_handle, className, -1); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemToggleClass(_handle, className, -1);
+                _doc.Invalidate();
+            }
             return this;
         }
         public HtmlElement EnableClass(string className, bool enabled)
         {
-            if (IsValid) { HtmlNative.Hiccup_ElemToggleClass(_handle, className, enabled ? 1 : 0); _doc.Invalidate(); }
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemToggleClass(_handle, className, enabled ? 1 : 0);
+                _doc.Invalidate();
+            }
             return this;
         }
         public bool HasClass(string className) => IsValid && HtmlNative.Hiccup_ElemHasClass(_handle, className) != 0;
 
         // ------------------------------------------------------------------ behaviour
 
-        public HtmlElement Focus() { if (IsValid) HtmlNative.Hiccup_ElemFocus(_handle); return this; }
-        public HtmlElement Blur() { if (IsValid) HtmlNative.Hiccup_ElemBlur(_handle); return this; }
-        public HtmlElement Click() { if (IsValid) HtmlNative.Hiccup_ElemClick(_handle); return this; }
-        public HtmlElement ScrollIntoView() { if (IsValid) HtmlNative.Hiccup_ElemScrollIntoView(_handle); return this; }
+        public HtmlElement Focus()
+        {
+            if (IsValid)
+                HtmlNative.Hiccup_ElemFocus(_handle);
+            return this;
+        }
+        public HtmlElement Blur()
+        {
+            if (IsValid)
+                HtmlNative.Hiccup_ElemBlur(_handle);
+            return this;
+        }
+        public HtmlElement Click()
+        {
+            if (IsValid)
+                HtmlNative.Hiccup_ElemClick(_handle);
+            return this;
+        }
+        public HtmlElement ScrollIntoView()
+        {
+            if (IsValid)
+                HtmlNative.Hiccup_ElemScrollIntoView(_handle);
+            return this;
+        }
 
         /// <summary>For &lt;dialog&gt; elements: opens as a modal (focus trapped, inert background).</summary>
-        public HtmlElement ShowModal() { if (IsValid) { HtmlNative.Hiccup_ElemShowModal(_handle, 1); _doc.Invalidate(); } return this; }
-        public HtmlElement CloseModal() { if (IsValid) { HtmlNative.Hiccup_ElemShowModal(_handle, 0); _doc.Invalidate(); } return this; }
+        public HtmlElement ShowModal()
+        {
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemShowModal(_handle, 1);
+                _doc.Invalidate();
+            }
+            return this;
+        }
+        public HtmlElement CloseModal()
+        {
+            if (IsValid)
+            {
+                HtmlNative.Hiccup_ElemShowModal(_handle, 0);
+                _doc.Invalidate();
+            }
+            return this;
+        }
 
         /// <summary>Removes the element from the DOM and releases the handle.</summary>
         public void Remove()
         {
-            if (!IsValid) return;
+            if (!IsValid)
+                return;
             HtmlNative.Hiccup_ElemRemove(_handle);
             _doc.Invalidate();
             _handle = 0;
@@ -179,7 +272,8 @@ namespace Hiccup
         {
             get
             {
-                if (!IsValid) return Rect.zero;
+                if (!IsValid)
+                    return Rect.zero;
                 HtmlNative.Hiccup_ElemGetBounds(_handle, s_bounds);
                 return new Rect(s_bounds[0], s_bounds[1], s_bounds[2], s_bounds[3]);
             }
@@ -197,12 +291,14 @@ namespace Hiccup
         /// <summary>Registers a handler for a DOM event dispatched on this element or bubbling from its descendants.</summary>
         public HtmlElement On(string eventType, Action<HtmlEvent> handler)
         {
-            if (IsValid) _doc.On(Id, eventType, handler);
+            if (IsValid)
+                _doc.On(Id, eventType, handler);
             return this;
         }
         public HtmlElement Off(string eventType, Action<HtmlEvent> handler)
         {
-            if (IsValid) _doc.Off(Id, eventType, handler);
+            if (IsValid)
+                _doc.Off(Id, eventType, handler);
             return this;
         }
         public HtmlElement OnClick(Action<HtmlEvent> handler) => On("click", handler);
@@ -214,7 +310,8 @@ namespace Hiccup
         /// <summary>Releases the JS-side handle. The DOM element is not removed.</summary>
         public void Dispose()
         {
-            if (_handle != 0 && _doc != null) HtmlNative.Hiccup_ElemRelease(_handle);
+            if (_handle != 0 && _doc != null)
+                HtmlNative.Hiccup_ElemRelease(_handle);
             _handle = 0;
         }
 

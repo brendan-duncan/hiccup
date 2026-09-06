@@ -124,7 +124,8 @@ namespace Hiccup.Editor.Cdp
 
         private void StartBrowser()
         {
-            if (_starting || _failed) return;
+            if (_starting || _failed)
+                return;
             _starting = true;
             Status = "starting Chrome";
             if (_origin == null)
@@ -146,12 +147,18 @@ namespace Hiccup.Editor.Cdp
 
                 Post(() =>
                 {
-                    if (_cancel.IsCancellationRequested) { client.Dispose(); chrome.Dispose(); return; }
+                    if (_cancel.IsCancellationRequested)
+                    {
+                        client.Dispose();
+                        chrome.Dispose();
+                        return;
+                    }
                     _chrome = chrome;
                     _client = client;
                     Status = "connected (" + System.IO.Path.GetFileName(chrome.ExecutablePath) + ")";
                     Debug.Log($"[Hiccup] Editor preview connected to {chrome.ExecutablePath}");
-                    foreach (var panel in _panels.Values) BeginPanelSetup(panel);
+                    foreach (var panel in _panels.Values)
+                        BeginPanelSetup(panel);
                 });
             }
             catch (OperationCanceledException) { }
@@ -170,15 +177,21 @@ namespace Hiccup.Editor.Cdp
         {
             try { _cancel.Cancel(); } catch { }
 
-            foreach (var panel in _panels.Values) ReleaseTextures(panel);
+            foreach (var panel in _panels.Values)
+                ReleaseTextures(panel);
             _panels.Clear();
             _bySession.Clear();
             _pendingOps.Clear();
             _handles.Clear();
             _handleAge.Clear();
 
-            if (_blit != null) { UnityEngine.Object.DestroyImmediate(_blit); _blit = null; }
-            if (_keyboardCapturing) HtmlBackend.SetKeyboardCapture(false);
+            if (_blit != null)
+            {
+                UnityEngine.Object.DestroyImmediate(_blit);
+                _blit = null;
+            }
+            if (_keyboardCapturing)
+                HtmlBackend.SetKeyboardCapture(false);
             _keyboardCapturing = false;
             _keyboardPanel = null;
             _client?.Dispose();
@@ -204,17 +217,21 @@ namespace Hiccup.Editor.Cdp
                 Height = Mathf.Max(1, height),
             };
             _panels[panel.Id] = panel;
-            if (Connected) BeginPanelSetup(panel);
+            if (Connected)
+                BeginPanelSetup(panel);
             return panel.Id;
         }
 
         public void PanelDestroy(int id)
         {
-            if (!_panels.TryGetValue(id, out var panel)) return;
+            if (!_panels.TryGetValue(id, out var panel))
+                return;
             _panels.Remove(id);
             _pendingOps.Remove(id);
-            if (panel.SessionId != null) _bySession.TryRemove(panel.SessionId, out _);
-            if (_keyboardPanel == panel) _keyboardPanel = null;
+            if (panel.SessionId != null)
+                _bySession.TryRemove(panel.SessionId, out _);
+            if (_keyboardPanel == panel)
+                _keyboardPanel = null;
             ReleaseTextures(panel);
 
             if (Connected && panel.TargetId != null)
@@ -228,14 +245,16 @@ namespace Hiccup.Editor.Cdp
         /// </summary>
         public bool PanelIsReady(int id)
         {
-            if (!_panels.TryGetValue(id, out var panel)) return true;   // unknown panel: nothing to wait for
+            if (!_panels.TryGetValue(id, out var panel))
+                return true;   // unknown panel: nothing to wait for
             return panel.Ready || panel.SetupFailed || _failed;
         }
 
         /// <summary>Creates the browser target for a panel and injects the bridge. Runs off the main thread.</summary>
         private void BeginPanelSetup(Panel panel)
         {
-            if (panel.TargetId != null || !Connected) return;
+            if (panel.TargetId != null || !Connected)
+                return;
             _ = SetUpPanelAsync(panel);
         }
 
@@ -249,12 +268,14 @@ namespace Hiccup.Editor.Cdp
                 var pageUrl = _origin != null ? _origin.Url : "about:blank";
                 var created = await client.SendAsync("Target.createTarget", "{\"url\":" + Json.Quote(pageUrl) + "}").ConfigureAwait(false);
                 var targetId = Json.Str(created, "targetId");
-                if (string.IsNullOrEmpty(targetId)) throw new CdpException("Target.createTarget returned no targetId");
+                if (string.IsNullOrEmpty(targetId))
+                    throw new CdpException("Target.createTarget returned no targetId");
 
                 var attached = await client.SendAsync("Target.attachToTarget",
                     "{\"targetId\":" + Json.Quote(targetId) + ",\"flatten\":true}").ConfigureAwait(false);
                 var sessionId = Json.Str(attached, "sessionId");
-                if (string.IsNullOrEmpty(sessionId)) throw new CdpException("Target.attachToTarget returned no sessionId");
+                if (string.IsNullOrEmpty(sessionId))
+                    throw new CdpException("Target.attachToTarget returned no sessionId");
 
                 await client.SendAsync("Page.enable", null, sessionId).ConfigureAwait(false);
                 await client.SendAsync("Runtime.enable", null, sessionId).ConfigureAwait(false);
@@ -273,12 +294,14 @@ namespace Hiccup.Editor.Cdp
 
                 // Target.createTarget returns before the served page has loaded. Everything FlushPanel evaluates
                 // must land in that document, not in the initial about:blank the navigation replaces.
-                if (_origin != null) await WaitForDocumentAsync(client, sessionId, pageUrl).ConfigureAwait(false);
+                if (_origin != null)
+                    await WaitForDocumentAsync(client, sessionId, pageUrl).ConfigureAwait(false);
                 await EvaluateAsync(client, sessionId, CdpBridgeJs.Source).ConfigureAwait(false);
 
                 Post(() =>
                 {
-                    if (!_panels.ContainsKey(panel.Id)) return;   // destroyed while we were setting it up
+                    if (!_panels.ContainsKey(panel.Id))
+                        return;   // destroyed while we were setting it up
                     panel.TargetId = targetId;
                     panel.SessionId = sessionId;
                     panel.Ready = true;
@@ -316,7 +339,8 @@ namespace Hiccup.Editor.Cdp
         /// <summary>Pushes the panel's whole authoritative state to the browser. Main thread.</summary>
         private void FlushPanel(Panel panel)
         {
-            if (!panel.Ready || !Connected) return;
+            if (!panel.Ready || !Connected)
+                return;
 
             ApplyMetrics(panel);
             Eval(panel, "window.__HUI.init(" + panel.Id + ")");
@@ -331,7 +355,8 @@ namespace Hiccup.Editor.Cdp
 
         private void ApplyMetrics(Panel panel)
         {
-            if (!panel.Ready || !Connected) return;
+            if (!panel.Ready || !Connected)
+                return;
             _client.Send("Emulation.setDeviceMetricsOverride",
                 "{\"width\":" + panel.Width +
                 ",\"height\":" + panel.Height +
@@ -341,7 +366,8 @@ namespace Hiccup.Editor.Cdp
 
         private void StartScreencast(Panel panel)
         {
-            if (!panel.Ready || !Connected) return;
+            if (!panel.Ready || !Connected)
+                return;
             panel.Screencasting = true;
             _client.Send("Page.startScreencast",
                 "{\"format\":\"png\",\"maxWidth\":" + PixelWidth(panel) +
@@ -353,7 +379,8 @@ namespace Hiccup.Editor.Cdp
 
         private void Eval(Panel panel, string expression)
         {
-            if (!panel.Ready || !Connected) return;
+            if (!panel.Ready || !Connected)
+                return;
             _client.Send("Runtime.evaluate",
                 "{\"expression\":" + Json.Quote(expression) + ",\"returnByValue\":true,\"awaitPromise\":false}",
                 panel.SessionId);
@@ -367,75 +394,94 @@ namespace Hiccup.Editor.Cdp
 
         public void PanelSetHtml(int id, string html)
         {
-            if (!_panels.TryGetValue(id, out var p)) return;
+            if (!_panels.TryGetValue(id, out var p))
+                return;
             p.Html = html ?? string.Empty;
-            if (p.Ready) Eval(p, "window.__HUI.setHtml(" + Json.Quote(p.Html) + ")");
+            if (p.Ready)
+                Eval(p, "window.__HUI.setHtml(" + Json.Quote(p.Html) + ")");
         }
 
         public void PanelSetCss(int id, string css)
         {
-            if (!_panels.TryGetValue(id, out var p)) return;
+            if (!_panels.TryGetValue(id, out var p))
+                return;
             p.Css = css ?? string.Empty;
-            if (p.Ready) Eval(p, "window.__HUI.setCss(" + Json.Quote(p.Css) + ")");
+            if (p.Ready)
+                Eval(p, "window.__HUI.setCss(" + Json.Quote(p.Css) + ")");
         }
 
         public void PanelSetSize(int id, int width, int height)
         {
-            if (!_panels.TryGetValue(id, out var p)) return;
+            if (!_panels.TryGetValue(id, out var p))
+                return;
             width = Mathf.Max(1, width);
             height = Mathf.Max(1, height);
-            if (p.Width == width && p.Height == height) return;
+            if (p.Width == width && p.Height == height)
+                return;
             p.Width = width;
             p.Height = height;
             ApplyMetrics(p);
-            if (p.Screencasting) StartScreencast(p);   // refresh the cap so the frame is not downscaled
+            if (p.Screencasting)
+                StartScreencast(p);   // refresh the cap so the frame is not downscaled
         }
 
         public void PanelSetVisible(int id, bool visible)
         {
-            if (!_panels.TryGetValue(id, out var p)) return;
+            if (!_panels.TryGetValue(id, out var p))
+                return;
             p.Visible = visible;
-            if (p.Ready) Eval(p, "window.__HUI.setVisible(" + (visible ? "true" : "false") + ")");
+            if (p.Ready)
+                Eval(p, "window.__HUI.setVisible(" + (visible ? "true" : "false") + ")");
         }
 
         public void PanelSetResolutionScale(int id, float scale)
         {
-            if (!_panels.TryGetValue(id, out var p)) return;
+            if (!_panels.TryGetValue(id, out var p))
+                return;
             scale = Mathf.Clamp(scale, 0.25f, 4f);
-            if (Mathf.Approximately(p.Scale, scale)) return;
+            if (Mathf.Approximately(p.Scale, scale))
+                return;
             p.Scale = scale;
             ApplyMetrics(p);
-            if (p.Screencasting) StartScreencast(p);
+            if (p.Screencasting)
+                StartScreencast(p);
         }
 
         public void PanelListen(int id, string eventType, bool enabled)
         {
-            if (!_panels.TryGetValue(id, out var p) || string.IsNullOrEmpty(eventType)) return;
-            if (enabled ? !p.Listened.Add(eventType) : !p.Listened.Remove(eventType)) return;
-            if (p.Ready) Eval(p, "window.__HUI.listen(" + Json.Quote(eventType) + "," + (enabled ? "true" : "false") + ")");
+            if (!_panels.TryGetValue(id, out var p) || string.IsNullOrEmpty(eventType))
+                return;
+            if (enabled ? !p.Listened.Add(eventType) : !p.Listened.Remove(eventType))
+                return;
+            if (p.Ready)
+                Eval(p, "window.__HUI.listen(" + Json.Quote(eventType) + "," + (enabled ? "true" : "false") + ")");
         }
 
         public void PanelInvalidate(int id) { /* the browser repaints on its own; nothing to force */ }
 
         public void PanelAnnounce(int id, string text, bool assertive)
         {
-            if (!_panels.TryGetValue(id, out var p) || !p.Ready) return;
+            if (!_panels.TryGetValue(id, out var p) || !p.Ready)
+                return;
             Eval(p, "window.__HUI.announce(" + Json.Quote(text ?? string.Empty) + "," + (assertive ? "true" : "false") + ")");
         }
 
         public string PanelEval(int id, string javascript)
         {
-            if (!_panels.TryGetValue(id, out var p) || !p.Ready || !Connected) return string.Empty;
+            if (!_panels.TryGetValue(id, out var p) || !p.Ready || !Connected)
+                return string.Empty;
 
             // Give the caller the same synchronous contract the jslib has, at the cost of a short block. The code is a
             // function body, exactly as Hiccup_PanelEval's `new Function('panel','root','HUI', code)` treats it: statements
             // are allowed and a value comes back only through `return`.
             var wrapped = "(function(panel,root,HUI){" + javascript + "\n})(window.__HUI.panel,window.__HUI.content,window.__HUI)";
             var task = EvaluateAsync(_client, p.SessionId, wrapped);
-            if (!task.Wait(250)) return string.Empty;
+            if (!task.Wait(250))
+                return string.Empty;
 
             var result = Json.Dict(task.Result, "result");
-            if (result == null) return string.Empty;
+            if (result == null)
+                return string.Empty;
             if (result.TryGetValue("value", out var value) && value != null)
                 return value as string ?? Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
             return Json.Str(result, "description", string.Empty);
@@ -443,11 +489,14 @@ namespace Hiccup.Editor.Cdp
 
         public void PanelSetGeometry(int id, float[] columnMajor)
         {
-            if (!_panels.TryGetValue(id, out var p) || columnMajor == null || columnMajor.Length < 16) return;
+            if (!_panels.TryGetValue(id, out var p) || columnMajor == null || columnMajor.Length < 16)
+                return;
             var m = new Matrix4x4();
             for (int c = 0; c < 4; c++)
+            {
                 for (int r = 0; r < 4; r++)
                     m[r, c] = columnMajor[c * 4 + r];
+            }
             p.PixelToClip = m;
             p.HasGeometry = true;
         }
@@ -456,7 +505,8 @@ namespace Hiccup.Editor.Cdp
 
         public void PanelGetTextureSize(int id, int[] outWidthHeight)
         {
-            if (outWidthHeight == null || outWidthHeight.Length < 2) return;
+            if (outWidthHeight == null || outWidthHeight.Length < 2)
+                return;
             if (!_panels.TryGetValue(id, out var p))
             {
                 outWidthHeight[0] = outWidthHeight[1] = 0;
@@ -496,7 +546,8 @@ namespace Hiccup.Editor.Cdp
             int handle = _nextHandle++;
             _handles[handle] = spec;
             _handleAge.Enqueue(handle);
-            while (_handleAge.Count > MaxHandles) _handles.Remove(_handleAge.Dequeue());
+            while (_handleAge.Count > MaxHandles)
+                _handles.Remove(_handleAge.Dequeue());
             return handle;
         }
 
@@ -504,21 +555,25 @@ namespace Hiccup.Editor.Cdp
 
         public int Query(int panel, string selector)
         {
-            if (!_panels.ContainsKey(panel) || string.IsNullOrEmpty(selector)) return 0;
+            if (!_panels.ContainsKey(panel) || string.IsNullOrEmpty(selector))
+                return 0;
             return AddHandle(new ElementSpec { PanelId = panel, Selector = selector });
         }
 
         public string QueryAll(int panel, string selector)
         {
-            if (!_panels.ContainsKey(panel) || string.IsNullOrEmpty(selector)) return string.Empty;
+            if (!_panels.ContainsKey(panel) || string.IsNullOrEmpty(selector))
+                return string.Empty;
 
             int count = (int)ReadNumber(new ElementSpec { PanelId = panel, Selector = selector }, "count", null, 0);
-            if (count <= 0) return string.Empty;
+            if (count <= 0)
+                return string.Empty;
 
             var sb = new StringBuilder();
             for (int i = 0; i < count; i++)
             {
-                if (i > 0) sb.Append(',');
+                if (i > 0)
+                    sb.Append(',');
                 sb.Append(AddHandle(new ElementSpec { PanelId = panel, Selector = selector, Index = i }));
             }
             return sb.ToString();
@@ -527,20 +582,23 @@ namespace Hiccup.Editor.Cdp
         public int ElemQuery(int handle, string selector)
         {
             var spec = Spec(handle);
-            if (spec == null || string.IsNullOrEmpty(selector)) return 0;
+            if (spec == null || string.IsNullOrEmpty(selector))
+                return 0;
             return AddHandle(new ElementSpec { PanelId = spec.PanelId, Selector = selector, Of = spec });
         }
 
         public int ElemParent(int handle)
         {
             var spec = Spec(handle);
-            if (spec == null) return 0;
+            if (spec == null)
+                return 0;
             return AddHandle(new ElementSpec { PanelId = spec.PanelId, Parent = true, Of = spec });
         }
 
         public void ElemRelease(int handle)
         {
-            if (handle != 0) _handles.Remove(handle);
+            if (handle != 0)
+                _handles.Remove(handle);
         }
 
         // ---- writes: queued and flushed once per frame
@@ -563,9 +621,11 @@ namespace Hiccup.Editor.Cdp
         public void ElemToggleClass(int handle, string className, int force)
         {
             var spec = Spec(handle);
-            if (spec == null) return;
+            if (spec == null)
+                return;
             var sb = BeginOp(spec, "tglcls");
-            if (sb == null) return;
+            if (sb == null)
+                return;
             sb.Append(",\"a\":");
             Json.Quote(className, sb);
             sb.Append(",\"b\":").Append(force).Append('}');
@@ -580,9 +640,11 @@ namespace Hiccup.Editor.Cdp
         public void ElemShowModal(int handle, bool show)
         {
             var spec = Spec(handle);
-            if (spec == null) return;
+            if (spec == null)
+                return;
             var sb = BeginOp(spec, "modal");
-            if (sb == null) return;
+            if (sb == null)
+                return;
             sb.Append(",\"a\":").Append(show ? "true" : "false").Append('}');
         }
 
@@ -601,15 +663,19 @@ namespace Hiccup.Editor.Cdp
 
         public void ElemGetBounds(int handle, float[] outXYWH)
         {
-            if (outXYWH == null || outXYWH.Length < 4) return;
+            if (outXYWH == null || outXYWH.Length < 4)
+                return;
             outXYWH[0] = outXYWH[1] = outXYWH[2] = outXYWH[3] = 0f;
 
             var text = ReadString(Spec(handle), "bounds", null);
-            if (string.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text))
+                return;
             var parts = text.Split(',');
             for (int i = 0; i < 4 && i < parts.Length; i++)
+            {
                 float.TryParse(parts[i], System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out outXYWH[i]);
+            }
         }
 
         // ---- op plumbing
@@ -617,9 +683,11 @@ namespace Hiccup.Editor.Cdp
         private void Write(int handle, string op, string a = null, string b = null)
         {
             var spec = Spec(handle);
-            if (spec == null) return;
+            if (spec == null)
+                return;
             var sb = BeginOp(spec, op);
-            if (sb == null) return;
+            if (sb == null)
+                return;
             if (a != null)
             {
                 sb.Append(",\"a\":");
@@ -636,9 +704,11 @@ namespace Hiccup.Editor.Cdp
         private void WriteBool(int handle, string op, string a, bool b)
         {
             var spec = Spec(handle);
-            if (spec == null) return;
+            if (spec == null)
+                return;
             var sb = BeginOp(spec, op);
-            if (sb == null) return;
+            if (sb == null)
+                return;
             sb.Append(",\"a\":");
             Json.Quote(a, sb);
             sb.Append(",\"b\":").Append(b ? "true" : "false").Append('}');
@@ -647,11 +717,13 @@ namespace Hiccup.Editor.Cdp
         /// <summary>Opens an op object in the panel's pending batch, or returns null if the panel is gone.</summary>
         private StringBuilder BeginOp(ElementSpec spec, string op)
         {
-            if (!_panels.TryGetValue(spec.PanelId, out var panel) || !panel.Ready) return null;
+            if (!_panels.TryGetValue(spec.PanelId, out var panel) || !panel.Ready)
+                return null;
 
             if (!_pendingOps.TryGetValue(spec.PanelId, out var sb))
                 _pendingOps[spec.PanelId] = sb = new StringBuilder("[");
-            if (sb.Length > 1) sb.Append(',');
+            if (sb.Length > 1)
+                sb.Append(',');
 
             sb.Append("{\"o\":");
             Json.Quote(op, sb);
@@ -672,19 +744,22 @@ namespace Hiccup.Editor.Cdp
             }
             if (spec.Index >= 0)
             {
-                if (!first) sb.Append(',');
+                if (!first)
+                    sb.Append(',');
                 sb.Append("\"i\":").Append(spec.Index);
                 first = false;
             }
             if (spec.Parent)
             {
-                if (!first) sb.Append(',');
+                if (!first)
+                    sb.Append(',');
                 sb.Append("\"up\":true");
                 first = false;
             }
             if (spec.Of != null)
             {
-                if (!first) sb.Append(',');
+                if (!first)
+                    sb.Append(',');
                 sb.Append("\"p\":");
                 AppendSpec(sb, spec.Of);
             }
@@ -694,7 +769,8 @@ namespace Hiccup.Editor.Cdp
         /// <summary>Sends every queued write for a panel. Reads call this first so they see their own writes.</summary>
         private void FlushOps(int panelId)
         {
-            if (!_pendingOps.TryGetValue(panelId, out var sb) || sb.Length <= 1) return;
+            if (!_pendingOps.TryGetValue(panelId, out var sb) || sb.Length <= 1)
+                return;
             sb.Append(']');
             var ops = sb.ToString();
             sb.Clear();
@@ -706,13 +782,16 @@ namespace Hiccup.Editor.Cdp
 
         private void FlushAllOps()
         {
-            foreach (var panelId in _pendingOps.Keys) FlushOps(panelId);
+            foreach (var panelId in _pendingOps.Keys)
+                FlushOps(panelId);
         }
 
         private Dictionary<string, object> ReadRaw(ElementSpec spec, string op, string argument)
         {
-            if (spec == null) return null;
-            if (!_panels.TryGetValue(spec.PanelId, out var panel) || !panel.Ready || !Connected) return null;
+            if (spec == null)
+                return null;
+            if (!_panels.TryGetValue(spec.PanelId, out var panel) || !panel.Ready || !Connected)
+                return null;
             FlushOps(spec.PanelId);
 
             var expression = new StringBuilder("window.__HUI.read(");
@@ -720,19 +799,24 @@ namespace Hiccup.Editor.Cdp
             expression.Append(',');
             Json.Quote(op, expression);
             expression.Append(',');
-            if (argument == null) expression.Append("null"); else Json.Quote(argument, expression);
+            if (argument == null)
+                expression.Append("null");
+            else
+                Json.Quote(argument, expression);
             expression.Append(')');
 
             var task = EvaluateAsync(_client, panel.SessionId, expression.ToString());
             // A short block: the browser is local, so this is a fraction of a millisecond in practice.
-            if (!task.Wait(100) || task.IsFaulted) return null;
+            if (!task.Wait(100) || task.IsFaulted)
+                return null;
             return Json.Dict(task.Result, "result");
         }
 
         private string ReadString(ElementSpec spec, string op, string argument)
         {
             var result = ReadRaw(spec, op, argument);
-            if (result == null || !result.TryGetValue("value", out var value) || value == null) return string.Empty;
+            if (result == null || !result.TryGetValue("value", out var value) || value == null)
+                return string.Empty;
             return value as string ?? Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
@@ -750,7 +834,8 @@ namespace Hiccup.Editor.Cdp
 
         public void GetCanvasInfo(float[] outInfo)
         {
-            if (outInfo == null || outInfo.Length < 5) return;
+            if (outInfo == null || outInfo.Length < 5)
+                return;
             outInfo[0] = Screen.width;
             outInfo[1] = Screen.height;
             outInfo[2] = 1f;
@@ -768,7 +853,8 @@ namespace Hiccup.Editor.Cdp
                 catch (Exception e) { Debug.LogException(e); }
             }
 
-            if (_client == null) return;
+            if (_client == null)
+                return;
             if (_client.Fault != null && !_failed)
             {
                 _failed = true;
@@ -777,7 +863,8 @@ namespace Hiccup.Editor.Cdp
             }
 
             // Dispatching an event can run user code that destroys a document, so snapshot before iterating.
-            while (_client.TryDequeueEvent(out var evt)) HandleEvent(evt);
+            while (_client.TryDequeueEvent(out var evt))
+                HandleEvent(evt);
 
             // Element writes queued by game code this frame go out as one batch per document.
             FlushAllOps();
@@ -796,7 +883,8 @@ namespace Hiccup.Editor.Cdp
             // A press that lands in no document takes keyboard focus away, as a click on the page would.
             if (EditorPointer.TryGetMouse(out _, out bool mouseDown))
             {
-                if (mouseDown && !_mouseWasDown && !pointerInAnyPanel) _keyboardPanel = null;
+                if (mouseDown && !_mouseWasDown && !pointerInAnyPanel)
+                    _keyboardPanel = null;
                 _mouseWasDown = mouseDown;
             }
 
@@ -818,7 +906,8 @@ namespace Hiccup.Editor.Cdp
                     byte[] image = null;
                     if (parameters != null && parameters.TryGetValue("data", out var raw))
                     {
-                        if (raw is byte[] bytes) image = bytes;
+                        if (raw is byte[] bytes)
+                            image = bytes;
                         else if (raw is string text && text.Length > 0)
                         {
                             try { image = Convert.FromBase64String(text); }
@@ -831,16 +920,20 @@ namespace Hiccup.Editor.Cdp
 
                 case "Runtime.bindingCalled":
                 {
-                    if (sessionId == null || !_bySession.TryGetValue(sessionId, out var panel)) return;
-                    if (Json.Str(parameters, "name") != CdpBridgeJs.EventBinding) return;
+                    if (sessionId == null || !_bySession.TryGetValue(sessionId, out var panel))
+                        return;
+                    if (Json.Str(parameters, "name") != CdpBridgeJs.EventBinding)
+                        return;
                     var payload = Json.Str(parameters, "payload");
-                    if (!string.IsNullOrEmpty(payload)) HtmlBackend.DispatchEvent(panel.Id, payload);
+                    if (!string.IsNullOrEmpty(payload))
+                        HtmlBackend.DispatchEvent(panel.Id, payload);
                     break;
                 }
 
                 case "Runtime.consoleAPICalled":
                 {
-                    if (!_debug) return;
+                    if (!_debug)
+                        return;
                     Debug.Log("[Hiccup/page] " + Json.Str(parameters, "type") + ": " + DescribeArgs(parameters));
                     break;
                 }
@@ -866,8 +959,10 @@ namespace Hiccup.Editor.Cdp
             foreach (var arg in args)
             {
                 var a = arg as Dictionary<string, object>;
-                if (a == null) continue;
-                if (sb.Length > 0) sb.Append(' ');
+                if (a == null)
+                    continue;
+                if (sb.Length > 0)
+                    sb.Append(' ');
                 sb.Append(a.TryGetValue("value", out var v) && v != null ? v.ToString() : Json.Str(a, "description", ""));
             }
             return sb.ToString();
@@ -881,8 +976,10 @@ namespace Hiccup.Editor.Cdp
         /// </summary>
         private void OnScreencastFrame(CdpClient client, string sessionId, int frameId, byte[] image)
         {
-            if (sessionId == null) return;
-            if (image != null && _bySession.TryGetValue(sessionId, out var panel)) SubmitFrame(panel, image);
+            if (sessionId == null)
+                return;
+            if (image != null && _bySession.TryGetValue(sessionId, out var panel))
+                SubmitFrame(panel, image);
             client.Send("Page.screencastFrameAck", "{\"sessionId\":" + frameId + "}", sessionId);
         }
 
@@ -895,7 +992,8 @@ namespace Hiccup.Editor.Cdp
             lock (panel.FrameLock)
             {
                 panel.QueuedPng = png;
-                if (panel.Decoding) return;
+                if (panel.Decoding)
+                    return;
                 panel.Decoding = true;
             }
             Task.Run(() => DecodeLoop(panel));
@@ -921,7 +1019,8 @@ namespace Hiccup.Editor.Cdp
                         panel.Decoding = false;
                         return;
                     }
-                    if (panel.FreePixels.Count > 0) pixels = panel.FreePixels.Pop();
+                    if (panel.FreePixels.Count > 0)
+                        pixels = panel.FreePixels.Pop();
                 }
 
                 var decoder = panel.Decoder ??= new PngDecoder();
@@ -937,12 +1036,14 @@ namespace Hiccup.Editor.Cdp
                         var replaced = panel.Pending;
                         panel.Pending = new DecodedFrame { Rgba = pixels, Width = width, Height = height };
                         panel.PendingFrame = null;
-                        if (replaced != null) RecyclePixels(panel, replaced.Rgba);
+                        if (replaced != null)
+                            RecyclePixels(panel, replaced.Rgba);
                     }
                     else
                     {
                         // Not a PNG this decoder handles; let LoadImage have a go on the main thread.
-                        if (pixels != null) RecyclePixels(panel, pixels);
+                        if (pixels != null)
+                            RecyclePixels(panel, pixels);
                         panel.PendingFrame = png;
                     }
                 }
@@ -952,7 +1053,8 @@ namespace Hiccup.Editor.Cdp
         /// <summary>Under <see cref="Panel.FrameLock"/>.</summary>
         private static void RecyclePixels(Panel panel, byte[] pixels)
         {
-            if (pixels != null && panel.FreePixels.Count < MaxFreePixelBuffers) panel.FreePixels.Push(pixels);
+            if (pixels != null && panel.FreePixels.Count < MaxFreePixelBuffers)
+                panel.FreePixels.Push(pixels);
         }
 
         /// <summary>Main thread. Uploads the newest decoded frame and blits it into the panel's texture.</summary>
@@ -967,34 +1069,41 @@ namespace Hiccup.Editor.Cdp
                 encoded = panel.PendingFrame;
                 panel.PendingFrame = null;
             }
-            if (frame == null && encoded == null) return;
+            if (frame == null && encoded == null)
+                return;
 
             if (frame != null)
             {
                 EnsureStaging(panel, frame.Width, frame.Height);
                 panel.Staging.LoadRawTextureData(frame.Rgba);
                 panel.Staging.Apply(false, false);
-                lock (panel.FrameLock) RecyclePixels(panel, frame.Rgba);
+                lock (panel.FrameLock)
+                    RecyclePixels(panel, frame.Rgba);
             }
             else
             {
                 // LoadImage resizes and reformats the texture itself; EnsureStaging puts it back next time.
                 EnsureStaging(panel, panel.TextureWidth > 0 ? panel.TextureWidth : 2, panel.TextureHeight > 0 ? panel.TextureHeight : 2);
-                if (!panel.Staging.LoadImage(encoded, false)) return;
+                if (!panel.Staging.LoadImage(encoded, false))
+                    return;
             }
             panel.LastFrameTime = NowSeconds();
 
             EnsureTarget(panel, panel.Staging.width, panel.Staging.height);
-            if (panel.Target == null) return;
+            if (panel.Target == null)
+                return;
 
             var material = BlitMaterialForThisFrame();
             bool previousSrgbWrite = GL.sRGBWrite;
             GL.sRGBWrite = false;   // write the premultiplied encoded values through unchanged
-            if (material != null) Graphics.Blit(panel.Staging, panel.Target, material);
-            else Graphics.Blit(panel.Staging, panel.Target);
+            if (material != null)
+                Graphics.Blit(panel.Staging, panel.Target, material);
+            else
+                Graphics.Blit(panel.Staging, panel.Target);
             GL.sRGBWrite = previousSrgbWrite;
 
-            if (panel.Target.useMipMap) panel.Target.GenerateMips();
+            if (panel.Target.useMipMap)
+                panel.Target.GenerateMips();
         }
 
         /// <summary>
@@ -1021,7 +1130,8 @@ namespace Hiccup.Editor.Cdp
 
         private void EnsureTarget(Panel panel, int width, int height)
         {
-            if (panel.Target != null && panel.TextureWidth == width && panel.TextureHeight == height) return;
+            if (panel.Target != null && panel.TextureWidth == width && panel.TextureHeight == height)
+                return;
 
             if (panel.Target != null)
             {
@@ -1046,7 +1156,8 @@ namespace Hiccup.Editor.Cdp
 
         private Material EnsureBlitMaterial()
         {
-            if (_blit != null) return _blit;
+            if (_blit != null)
+                return _blit;
             var shader = Shader.Find(BlitShaderName);
             if (shader == null)
             {
@@ -1096,18 +1207,21 @@ namespace Hiccup.Editor.Cdp
         /// </summary>
         private void PumpCaptureFallback(Panel panel, double now)
         {
-            if (!panel.Ready || !Connected) return;
+            if (!panel.Ready || !Connected)
+                return;
 
             if (!panel.UseCapturePolling)
             {
-                if (panel.LastFrameTime > 0 || now - panel.ReadyTime < CaptureFallbackDelay) return;
+                if (panel.LastFrameTime > 0 || now - panel.ReadyTime < CaptureFallbackDelay)
+                    return;
                 panel.UseCapturePolling = true;
                 Debug.Log("[Hiccup] Editor preview: no screencast frames, falling back to screenshot polling.");
                 _client.Send("Page.stopScreencast", null, panel.SessionId);
                 panel.Screencasting = false;
             }
 
-            if (panel.CaptureInFlight || now - panel.LastCaptureRequest < CapturePollInterval) return;
+            if (panel.CaptureInFlight || now - panel.LastCaptureRequest < CapturePollInterval)
+                return;
             panel.CaptureInFlight = true;
             panel.LastCaptureRequest = now;
 
@@ -1134,8 +1248,10 @@ namespace Hiccup.Editor.Cdp
         /// <summary>Returns whether the pointer is over the panel this frame.</summary>
         private bool PumpPointer(Panel panel)
         {
-            if (!panel.Ready || !Connected || !panel.HasGeometry || !panel.Visible) return false;
-            if (!EditorPointer.TryGetMouse(out var screenPosition, out bool buttonDown)) return false;
+            if (!panel.Ready || !Connected || !panel.HasGeometry || !panel.Visible)
+                return false;
+            if (!EditorPointer.TryGetMouse(out var screenPosition, out bool buttonDown))
+                return false;
 
             bool inside = TryProjectToPanel(panel, screenPosition, out var documentPoint);
             documentPoint.x = Mathf.Clamp(documentPoint.x, 0, panel.Width);
@@ -1192,7 +1308,8 @@ namespace Hiccup.Editor.Cdp
         {
             if (!_keyboardCapturing)
             {
-                if (!Application.isPlaying) return;
+                if (!Application.isPlaying)
+                    return;
                 HtmlBackend.SetKeyboardCapture(true);
                 _keyboardCapturing = true;
                 return;
@@ -1200,11 +1317,15 @@ namespace Hiccup.Editor.Cdp
 
             _keys.Clear();
             HtmlBackend.DrainKeyPresses(_keys);
-            if (_keys.Count == 0) return;
+            if (_keys.Count == 0)
+                return;
 
             var panel = _keyboardPanel;
             if (panel != null && panel.Ready && Connected && _panels.ContainsKey(panel.Id))
-                foreach (var press in _keys) DispatchKey(panel, press);
+            {
+                foreach (var press in _keys)
+                    DispatchKey(panel, press);
+            }
             _keys.Clear();
         }
 
@@ -1263,11 +1384,31 @@ namespace Hiccup.Editor.Cdp
 
         private static void DescribeCharacter(char c, out string code, out int virtualKey)
         {
-            if (c >= 'a' && c <= 'z') { code = "Key" + char.ToUpperInvariant(c); virtualKey = char.ToUpperInvariant(c); }
-            else if (c >= 'A' && c <= 'Z') { code = "Key" + c; virtualKey = c; }
-            else if (c >= '0' && c <= '9') { code = "Digit" + c; virtualKey = c; }
-            else if (c == ' ') { code = "Space"; virtualKey = 32; }
-            else { code = string.Empty; virtualKey = 0; }
+            if (c >= 'a' && c <= 'z')
+            {
+                code = "Key" + char.ToUpperInvariant(c);
+                virtualKey = char.ToUpperInvariant(c);
+            }
+            else if (c >= 'A' && c <= 'Z')
+            {
+                code = "Key" + c;
+                virtualKey = c;
+            }
+            else if (c >= '0' && c <= '9')
+            {
+                code = "Digit" + c;
+                virtualKey = c;
+            }
+            else if (c == ' ')
+            {
+                code = "Space";
+                virtualKey = 32;
+            }
+            else
+            {
+                code = string.Empty;
+                virtualKey = 0;
+            }
         }
 
         /// <summary>Keys that produce no character but that pages and form controls react to.</summary>
@@ -1315,7 +1456,8 @@ namespace Hiccup.Editor.Cdp
             float a21 = c0.y - ndcY * c0.w, a22 = c1.y - ndcY * c1.w, b2 = ndcY * c3.w - c3.y;
 
             float det = a11 * a22 - a12 * a21;
-            if (Mathf.Abs(det) < 1e-12f) return false;
+            if (Mathf.Abs(det) < 1e-12f)
+                return false;
 
             float px = (b1 * a22 - a12 * b2) / det;
             float py = (a11 * b2 - b1 * a21) / det;

@@ -12,7 +12,8 @@ namespace Hiccup.Editor
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            if (report.summary.platform != BuildTarget.WebGL) return;
+            if (report.summary.platform != BuildTarget.WebGL)
+                return;
 
             var template = PlayerSettings.WebGL.template;
             if (!template.Contains("Hiccup"))

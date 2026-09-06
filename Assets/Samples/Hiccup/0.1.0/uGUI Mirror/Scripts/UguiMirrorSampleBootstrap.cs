@@ -78,7 +78,8 @@ namespace Hiccup.Samples
             mode.onValueChanged.AddListener(on =>
             {
                 // Disabling the mirror shows the canvas again and removes the document; enabling rebuilds it.
-                if (_mirror != null) _mirror.enabled = on;
+                if (_mirror != null)
+                    _mirror.enabled = on;
                 _modeLabel.text = on ? "Rendering: HTML mirror" : "Rendering: native uGUI";
                 _modeLabel.color = on ? Accent : new Color(0.98f, 0.6f, 0.36f);
             });
@@ -135,8 +136,10 @@ namespace Hiccup.Samples
 
         private void Update()
         {
-            if (_ring != null) _ring.fillAmount = Mathf.Repeat(Time.time * 0.25f, 1f);
-            if (_spinner != null) _spinner.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 60f);
+            if (_ring != null)
+                _ring.fillAmount = Mathf.Repeat(Time.time * 0.25f, 1f);
+            if (_spinner != null)
+                _spinner.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 60f);
         }
 
         // ------------------------------------------------------------------ widgets
@@ -287,7 +290,8 @@ namespace Hiccup.Samples
 
             dropdown.captionText = caption;
             dropdown.options.Clear();
-            foreach (var o in options) dropdown.options.Add(new Dropdown.OptionData(o));
+            foreach (var o in options)
+                dropdown.options.Add(new Dropdown.OptionData(o));
 
             // List template for native mode. uGUI clones it when the dropdown opens; it stays inactive otherwise,
             // so the mirror never sees it — in HTML mode the browser's <select> shows the list instead.
@@ -414,9 +418,12 @@ namespace Hiccup.Samples
         private static void Prefer(GameObject go, float width, float height)
         {
             var le = go.GetComponent<LayoutElement>();
-            if (le == null) le = go.AddComponent<LayoutElement>();
-            if (width >= 0f) le.preferredWidth = width;
-            if (height >= 0f) le.preferredHeight = height;
+            if (le == null)
+                le = go.AddComponent<LayoutElement>();
+            if (width >= 0f)
+                le.preferredWidth = width;
+            if (height >= 0f)
+                le.preferredHeight = height;
         }
 
         private static void Stretch(RectTransform rt, float horizontal, float vertical)

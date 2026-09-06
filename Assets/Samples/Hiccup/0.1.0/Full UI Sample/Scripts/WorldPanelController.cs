@@ -16,20 +16,26 @@ namespace Hiccup.Samples
 
         private void OnEnable()
         {
-            if (Document == null) Document = GetComponent<HtmlDocument>();
-            if (Document == null) return;
-            if (Document.IsCreated) Wire(Document);
-            else Document.Created += Wire;
+            if (Document == null)
+                Document = GetComponent<HtmlDocument>();
+            if (Document == null)
+                return;
+            if (Document.IsCreated)
+                Wire(Document);
+            else
+                Document.Created += Wire;
         }
 
         private void OnDisable()
         {
-            if (Document != null) Document.Created -= Wire;
+            if (Document != null)
+                Document.Created -= Wire;
         }
 
         private void Wire(HtmlDocument doc)
         {
-            if (_wired) return;
+            if (_wired)
+                return;
             _wired = true;
 
             doc.On("cmd-form", "submit", e =>
@@ -57,7 +63,8 @@ namespace Hiccup.Samples
 
             doc.On("lights", "change", e =>
             {
-                if (Game.Sun != null) Game.Sun.enabled = e.isChecked;
+                if (Game.Sun != null)
+                    Game.Sun.enabled = e.isChecked;
                 Log(e.isChecked ? "Lights on" : "Lights off", e.isChecked ? "ok" : "warn");
             });
 
@@ -67,12 +74,18 @@ namespace Hiccup.Samples
 
         private void Update()
         {
-            if (!_wired || Game == null) return;
+            if (!_wired || Game == null)
+                return;
             _statusTimer += Time.deltaTime;
-            if (_statusTimer < 1f) return;
+            if (_statusTimer < 1f)
+                return;
             _statusTimer = 0f;
             int active = 0;
-            foreach (var t in Game.Targets) if (t.IsActive) active++;
+            foreach (var t in Game.Targets)
+            {
+                if (t.IsActive)
+                active++;
+            }
             SetStatus(Game.Current == SampleGame.State.Playing
                 ? $"Tracking {active} targets · score {Game.Score} · {Mathf.CeilToInt(Game.TimeLeft)}s"
                 : $"{Game.Current} · {active} targets in range");
@@ -80,7 +93,8 @@ namespace Hiccup.Samples
 
         private void Run(string cmd)
         {
-            if (string.IsNullOrEmpty(cmd)) return;
+            if (string.IsNullOrEmpty(cmd))
+                return;
             Log("> " + cmd, "");
             switch (cmd.ToLowerInvariant())
             {
@@ -93,7 +107,8 @@ namespace Hiccup.Samples
                     var cam = Game.Camera != null ? Game.Camera.transform.position : Vector3.zero;
                     foreach (var t in Game.Targets)
                     {
-                        if (!t.IsActive) continue;
+                        if (!t.IsActive)
+                            continue;
                         count++;
                         nearest = Mathf.Min(nearest, Vector3.Distance(cam, t.transform.position));
                     }
@@ -125,7 +140,10 @@ namespace Hiccup.Samples
             var lines = Document.QAll("#log li");
             for (int i = 0; i < lines.Count; i++)
             {
-                if (i >= MaxLogLines) lines[i].Remove(); else lines[i].Dispose();
+                if (i >= MaxLogLines)
+                    lines[i].Remove();
+                else
+                    lines[i].Dispose();
             }
             log.Dispose();
         }
@@ -134,7 +152,8 @@ namespace Hiccup.Samples
 
         private static string Escape(string s)
         {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
             return s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
         }
     }

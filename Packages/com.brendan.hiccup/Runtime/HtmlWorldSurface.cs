@@ -40,22 +40,33 @@ namespace Hiccup
         {
             _renderer = GetComponent<MeshRenderer>();
             _filter = GetComponent<MeshFilter>();
-            if (document == null) document = GetComponent<HtmlDocument>();
+            if (document == null)
+                document = GetComponent<HtmlDocument>();
             _material = CreateMaterial("Hiccup/Unlit Premultiplied", "Hiccup Unlit Premultiplied (instance)");
             _usingCutout = false;
-            if (_material != null) _renderer.material = _material;
+            if (_material != null)
+                _renderer.material = _material;
         }
 
         private void OnDisable()
         {
-            if (_material != null) { Destroy(_material); _material = null; }
-            if (_cutout != null) { Destroy(_cutout); _cutout = null; }
+            if (_material != null)
+            {
+                Destroy(_material);
+                _material = null;
+            }
+            if (_cutout != null)
+            {
+                Destroy(_cutout);
+                _cutout = null;
+            }
         }
 
         private Material CreateMaterial(string shaderName, string instanceName)
         {
             var shader = Shader.Find(shaderName);
-            if (shader == null) return null;
+            if (shader == null)
+                return null;
             var m = new Material(shader) { name = instanceName, hideFlags = HideFlags.HideAndDontSave };
             m.SetFloat(s_Cull, doubleSided ? 0f : 2f);
             return m;
@@ -63,21 +74,25 @@ namespace Hiccup
 
         private void LateUpdate()
         {
-            if (document == null || !document.IsCreated) return;
+            if (document == null || !document.IsCreated)
+                return;
             var cam = targetCamera != null ? targetCamera : Camera.main;
             var mesh = _filter.sharedMesh;
-            if (cam == null || mesh == null) return;
+            if (cam == null || mesh == null)
+                return;
 
             var b = mesh.bounds;
             var sizeLocal = b.size;
-            if (sizeLocal.x <= 0f || sizeLocal.y <= 0f) return;
+            if (sizeLocal.x <= 0f || sizeLocal.y <= 0f)
+                return;
 
             if (pixelsPerUnit > 0f)
             {
                 var ls = transform.lossyScale;
                 int w = Mathf.Max(1, Mathf.RoundToInt(sizeLocal.x * ls.x * pixelsPerUnit));
                 int h = Mathf.Max(1, Mathf.RoundToInt(sizeLocal.y * ls.y * pixelsPerUnit));
-                if (w != document.Size.x || h != document.Size.y) document.SetSize(w, h);
+                if (w != document.Size.x || h != document.Size.y)
+                    document.SetSize(w, h);
             }
 
             var docSize = document.Size;
@@ -95,9 +110,11 @@ namespace Hiccup
             if (cutout != _usingCutout)
             {
                 _usingCutout = cutout;
-                if (cutout && _cutout == null) _cutout = CreateMaterial("Hiccup/Overlay Cutout", "Hiccup Overlay Cutout (instance)");
+                if (cutout && _cutout == null)
+                    _cutout = CreateMaterial("Hiccup/Overlay Cutout", "Hiccup Overlay Cutout (instance)");
                 var m = cutout ? _cutout : _material;
-                if (m != null) _renderer.material = m;
+                if (m != null)
+                    _renderer.material = m;
             }
             if (!cutout && _material != null)
             {

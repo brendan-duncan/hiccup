@@ -40,8 +40,10 @@ namespace Hiccup.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Reload content")) doc.Reload();
-                if (GUILayout.Button("Invalidate")) doc.Invalidate();
+                if (GUILayout.Button("Reload content"))
+                    doc.Reload();
+                if (GUILayout.Button("Invalidate"))
+                    doc.Invalidate();
             }
         }
     }

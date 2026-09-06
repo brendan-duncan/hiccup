@@ -81,7 +81,12 @@ namespace Hiccup
         public static HtmlUpdateMode UpdateMode
         {
             get => s_updateMode;
-            set { s_updateMode = value; if (s_instance != null) HtmlNative.Hiccup_SetUpdateMode((int)value); }
+            set
+            {
+                s_updateMode = value;
+                if (s_instance != null)
+                    HtmlNative.Hiccup_SetUpdateMode((int)value);
+            }
         }
 
         private static HtmlGeometryMode s_geometryMode = HtmlGeometryMode.Auto;
@@ -89,7 +94,12 @@ namespace Hiccup
         public static HtmlGeometryMode GeometryMode
         {
             get => s_geometryMode;
-            set { s_geometryMode = value; if (s_instance != null) HtmlNative.Hiccup_SetGeometryMode((int)value); }
+            set
+            {
+                s_geometryMode = value;
+                if (s_instance != null)
+                    HtmlNative.Hiccup_SetGeometryMode((int)value);
+            }
         }
 
         /// <summary>True in WebGL/WebGPU player builds, false in the Editor and on other platforms.</summary>
@@ -167,8 +177,10 @@ namespace Hiccup
         /// <summary>Routes a DOM event payload from a bridge to the document that owns the panel.</summary>
         internal static void DispatchToPanel(int panel, string json)
         {
-            if (s_instance == null) return;
-            if (!s_instance._documents.TryGetValue(panel, out var doc) || doc == null) return;
+            if (s_instance == null)
+                return;
+            if (!s_instance._documents.TryGetValue(panel, out var doc) || doc == null)
+                return;
             try { doc.DispatchNative(json); }
             catch (Exception ex) { Debug.LogException(ex); }
         }
@@ -187,7 +199,8 @@ namespace Hiccup
         [MonoPInvokeCallback(typeof(HtmlNative.EventCallback))]
         private static void OnNativeEvent(int panel, IntPtr json)
         {
-            if (s_instance == null) return;
+            if (s_instance == null)
+                return;
             DispatchToPanel(panel, HtmlNative.ReadUtf8(json));
         }
 
@@ -199,14 +212,18 @@ namespace Hiccup
             _updating.Clear();
             _updating.AddRange(_documents.Values);
             foreach (var doc in _updating)
-                if (doc != null) doc.AfterBridgeUpdate();
+            {
+                if (doc != null)
+                    doc.AfterBridgeUpdate();
+            }
         }
 
         private void OnApplicationQuit() => s_quitting = true;
 
         private void OnDestroy()
         {
-            if (s_instance == this) s_instance = null;
+            if (s_instance == this)
+                s_instance = null;
         }
     }
 }

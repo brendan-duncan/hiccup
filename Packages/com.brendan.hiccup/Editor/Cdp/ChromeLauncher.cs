@@ -36,7 +36,8 @@ namespace Hiccup.Editor.Cdp
             foreach (var variable in new[] { "HICCUP_CHROME", "CHROME_PATH" })
             {
                 var fromEnv = Environment.GetEnvironmentVariable(variable);
-                if (!string.IsNullOrEmpty(fromEnv) && File.Exists(fromEnv)) return fromEnv;
+                if (!string.IsNullOrEmpty(fromEnv) && File.Exists(fromEnv))
+                    return fromEnv;
             }
 
             string[] candidates;
@@ -73,7 +74,10 @@ namespace Hiccup.Editor.Cdp
             };
 #endif
             foreach (var path in candidates)
-                if (!string.IsNullOrEmpty(path) && File.Exists(path)) return path;
+            {
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                    return path;
+            }
             return null;
         }
 
@@ -105,8 +109,10 @@ namespace Hiccup.Editor.Cdp
             // (the Three.js Desk sample's nested build, for one) need the API in this Chrome too. Equivalent to
             // chrome://flags/#canvas-draw-element; unknown feature names are ignored by older builds.
             args.Append(" --enable-features=CanvasDrawElement --enable-blink-features=CanvasDrawElement");
-            if (headless) args.Append(" --headless=new");
-            else args.Append(" --window-position=-32000,-32000 --window-size=100,100");
+            if (headless)
+                args.Append(" --headless=new");
+            else
+                args.Append(" --window-position=-32000,-32000 --window-size=100,100");
             args.Append(" about:blank");
 
             var info = new ProcessStartInfo(ExecutablePath, args.ToString())
@@ -119,7 +125,11 @@ namespace Hiccup.Editor.Cdp
 
             _process = Process.Start(info) ?? throw new Exception("Chrome failed to start.");
             // Draining the pipes keeps Chrome from blocking on a full stderr buffer.
-            _process.ErrorDataReceived += (_, e) => { if (debugLogging && !string.IsNullOrEmpty(e.Data)) UnityEngine.Debug.Log("[Hiccup/chrome] " + e.Data); };
+            _process.ErrorDataReceived += (_, e) =>
+            {
+                if (debugLogging && !string.IsNullOrEmpty(e.Data))
+                    UnityEngine.Debug.Log("[Hiccup/chrome] " + e.Data);
+            };
             _process.OutputDataReceived += (_, __) => { };
             _process.BeginErrorReadLine();
             _process.BeginOutputReadLine();
@@ -135,7 +145,8 @@ namespace Hiccup.Editor.Cdp
             while (DateTime.UtcNow < deadline)
             {
                 ct.ThrowIfCancellationRequested();
-                if (!IsRunning) throw new Exception("Chrome exited before it published a DevTools port.");
+                if (!IsRunning)
+                    throw new Exception("Chrome exited before it published a DevTools port.");
 
                 if (File.Exists(portFile))
                 {
@@ -143,12 +154,14 @@ namespace Hiccup.Editor.Cdp
                     {
                         // Two lines: the port, then the browser-level web socket path.
                         using (var stream = new FileStream(portFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        using (var reader = new StreamReader(stream))
                         {
-                            var port = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
-                            var path = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
-                            if (!string.IsNullOrEmpty(port) && !string.IsNullOrEmpty(path))
-                                return $"ws://127.0.0.1:{port}{path}";
+                            using (var reader = new StreamReader(stream))
+                            {
+                                var port = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
+                                var path = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
+                                if (!string.IsNullOrEmpty(port) && !string.IsNullOrEmpty(path))
+                                    return $"ws://127.0.0.1:{port}{path}";
+                            }
                         }
                     }
                     catch (IOException)

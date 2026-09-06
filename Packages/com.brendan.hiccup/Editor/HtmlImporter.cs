@@ -22,11 +22,14 @@ namespace Hiccup.Editor
     {
         private void OnPreprocessAsset()
         {
-            if (assetImporter is HtmlImporter) return;
+            if (assetImporter is HtmlImporter)
+                return;
             if (!assetPath.EndsWith(".html", StringComparison.OrdinalIgnoreCase) &&
-                !assetPath.EndsWith(".htm", StringComparison.OrdinalIgnoreCase)) return;
+                !assetPath.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
+                return;
             // WebGL template pages are whole documents read by the build pipeline, not UI fragments.
-            if (assetPath.IndexOf("/WebGLTemplates/", StringComparison.OrdinalIgnoreCase) >= 0) return;
+            if (assetPath.IndexOf("/WebGLTemplates/", StringComparison.OrdinalIgnoreCase) >= 0)
+                return;
             AssetDatabase.SetImporterOverride<HtmlImporter>(assetPath);
         }
     }

@@ -93,9 +93,36 @@ namespace Hiccup
         /// <summary>True: the texture's first row is the top of the page, so sample with a flipped V (surfaces do this for you).</summary>
         public bool TextureIsTopDown => true;
 
-        public TextAsset Html { get => html; set { html = value; if (_created) SetHtml(value != null ? value.text : string.Empty); } }
-        public TextAsset[] StyleSheets { get => styleSheets; set { styleSheets = value; if (_created) SetCss(BuildCss()); } }
-        public string ExtraCss { get => extraCss; set { extraCss = value; if (_created) SetCss(BuildCss()); } }
+        public TextAsset Html
+        {
+            get => html;
+            set
+            {
+                html = value;
+                if (_created)
+                    SetHtml(value != null ? value.text : string.Empty);
+            }
+        }
+        public TextAsset[] StyleSheets
+        {
+            get => styleSheets;
+            set
+            {
+                styleSheets = value;
+                if (_created)
+                    SetCss(BuildCss());
+            }
+        }
+        public string ExtraCss
+        {
+            get => extraCss;
+            set
+            {
+                extraCss = value;
+                if (_created)
+                    SetCss(BuildCss());
+            }
+        }
 
         /// <summary>Document size in CSS pixels.</summary>
         public Vector2Int Size
@@ -110,26 +137,42 @@ namespace Hiccup
             set
             {
                 visible = value;
-                if (_created) HtmlNative.Hiccup_PanelSetVisible(_panel, value ? 1 : 0);
+                if (_created)
+                    HtmlNative.Hiccup_PanelSetVisible(_panel, value ? 1 : 0);
             }
         }
 
         public HtmlPointerMode PointerMode
         {
             get => pointerMode;
-            set { pointerMode = value; if (_created) HtmlNative.Hiccup_PanelSetPointerMode(_panel, (int)value); }
+            set
+            {
+                pointerMode = value;
+                if (_created)
+                    HtmlNative.Hiccup_PanelSetPointerMode(_panel, (int)value);
+            }
         }
 
         public bool BlockUnityInput
         {
             get => blockUnityInput;
-            set { blockUnityInput = value; if (_created) HtmlNative.Hiccup_PanelSetBlockInput(_panel, value ? 1 : 0); }
+            set
+            {
+                blockUnityInput = value;
+                if (_created)
+                    HtmlNative.Hiccup_PanelSetBlockInput(_panel, value ? 1 : 0);
+            }
         }
 
         public bool PremultipliedAlpha
         {
             get => premultipliedAlpha;
-            set { premultipliedAlpha = value; if (_created) HtmlNative.Hiccup_PanelSetPremultiplied(_panel, value ? 1 : 0); }
+            set
+            {
+                premultipliedAlpha = value;
+                if (_created)
+                    HtmlNative.Hiccup_PanelSetPremultiplied(_panel, value ? 1 : 0);
+            }
         }
 
         /// <summary>Texture pixels per CSS pixel, on top of the device pixel ratio. 2 supersamples the document.</summary>
@@ -139,9 +182,11 @@ namespace Hiccup
             set
             {
                 value = Mathf.Clamp(value, 0.25f, 4f);
-                if (Mathf.Approximately(resolutionScale, value)) return;
+                if (Mathf.Approximately(resolutionScale, value))
+                    return;
                 resolutionScale = value;
-                if (!_created) return;
+                if (!_created)
+                    return;
                 HtmlNative.Hiccup_PanelSetResolutionScale(_panel, value);
                 HtmlNative.Hiccup_PanelSetSize(_panel, size.x, size.y);
                 CreateTexture();
@@ -154,9 +199,11 @@ namespace Hiccup
             get => mipmaps;
             set
             {
-                if (mipmaps == value) return;
+                if (mipmaps == value)
+                    return;
                 mipmaps = value;
-                if (!_created) return;
+                if (!_created)
+                    return;
                 HtmlNative.Hiccup_PanelSetMipmaps(_panel, value ? 1 : 0);
                 CreateTexture();
             }
@@ -166,13 +213,16 @@ namespace Hiccup
 
         private void OnEnable()
         {
-            if (createOnEnable) Create();
-            else if (_created) HtmlNative.Hiccup_PanelSetVisible(_panel, visible ? 1 : 0);
+            if (createOnEnable)
+                Create();
+            else if (_created)
+                HtmlNative.Hiccup_PanelSetVisible(_panel, visible ? 1 : 0);
         }
 
         private void OnDisable()
         {
-            if (_created) HtmlNative.Hiccup_PanelSetVisible(_panel, 0);
+            if (_created)
+                HtmlNative.Hiccup_PanelSetVisible(_panel, 0);
         }
 
         private void OnDestroy() => DestroyPanel();
@@ -180,9 +230,11 @@ namespace Hiccup
         /// <summary>Creates the browser-side panel, loads the content and allocates the texture.</summary>
         public void Create()
         {
-            if (_created) return;
+            if (_created)
+                return;
             var runtime = HtmlRuntime.Instance;
-            if (runtime == null) return;
+            if (runtime == null)
+                return;
 
             size = new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
             _panel = HtmlNative.Hiccup_PanelCreate(size.x, size.y);
@@ -197,7 +249,8 @@ namespace Hiccup
             HtmlNative.Hiccup_PanelSetResolutionScale(_panel, resolutionScale);
             HtmlNative.Hiccup_PanelSetSize(_panel, size.x, size.y);
             HtmlNative.Hiccup_PanelSetVisible(_panel, visible && isActiveAndEnabled ? 1 : 0);
-            foreach (var type in _listened) HtmlNative.Hiccup_PanelListen(_panel, type, 1);
+            foreach (var type in _listened)
+                HtmlNative.Hiccup_PanelListen(_panel, type, 1);
 
             SetCss(BuildCss());
             SetHtml(html != null ? html.text : string.Empty);
@@ -205,7 +258,8 @@ namespace Hiccup
 
             // The jslib's DOM exists at once. A backend that starts a browser reports ready later, and
             // AfterBridgeUpdate raises Created when it does; until then IsCreated stays false.
-            if (HtmlNative.Hiccup_PanelIsReady(_panel) != 0) RaiseCreated();
+            if (HtmlNative.Hiccup_PanelIsReady(_panel) != 0)
+                RaiseCreated();
         }
 
         private void RaiseCreated()
@@ -218,10 +272,12 @@ namespace Hiccup
         /// <summary>Removes the panel from the page and releases the texture.</summary>
         public void DestroyPanel()
         {
-            if (!_created) return;
+            if (!_created)
+                return;
             ReleaseTexture();
             HtmlNative.Hiccup_PanelDestroy(_panel);
-            if (HtmlRuntime.HasInstance) HtmlRuntime.Instance.Unregister(_panel);
+            if (HtmlRuntime.HasInstance)
+                HtmlRuntime.Instance.Unregister(_panel);
             _created = false;
             _ready = false;
             _panel = 0;
@@ -230,7 +286,11 @@ namespace Hiccup
         /// <summary>Re-applies the serialized HTML and style sheets.</summary>
         public void Reload()
         {
-            if (!_created) { Create(); return; }
+            if (!_created)
+            {
+                Create();
+                return;
+            }
             SetCss(BuildCss());
             SetHtml(html != null ? html.text : string.Empty);
         }
@@ -239,9 +299,15 @@ namespace Hiccup
         {
             var sb = new StringBuilder();
             if (styleSheets != null)
+            {
                 foreach (var s in styleSheets)
-                    if (s != null) sb.Append(s.text).Append('\n');
-            if (!string.IsNullOrEmpty(extraCss)) sb.Append(extraCss);
+                {
+                    if (s != null)
+                        sb.Append(s.text).Append('\n');
+                }
+            }
+            if (!string.IsNullOrEmpty(extraCss))
+                sb.Append(extraCss);
             return sb.ToString();
         }
 
@@ -250,24 +316,34 @@ namespace Hiccup
         /// <summary>Replaces the document body with an HTML fragment.</summary>
         public void SetHtml(string fragment)
         {
-            if (!_created) { Create(); }
-            if (_created) HtmlNative.Hiccup_PanelSetHtml(_panel, fragment ?? string.Empty);
+            if (!_created)
+            {
+                Create();
+            }
+            if (_created)
+                HtmlNative.Hiccup_PanelSetHtml(_panel, fragment ?? string.Empty);
         }
 
         /// <summary>Replaces the document's style sheet.</summary>
         public void SetCss(string css)
         {
-            if (!_created) { Create(); }
-            if (_created) HtmlNative.Hiccup_PanelSetCss(_panel, css ?? string.Empty);
+            if (!_created)
+            {
+                Create();
+            }
+            if (_created)
+                HtmlNative.Hiccup_PanelSetCss(_panel, css ?? string.Empty);
         }
 
         public void SetSize(int width, int height)
         {
             width = Mathf.Max(1, width);
             height = Mathf.Max(1, height);
-            if (size.x == width && size.y == height && (_texture != null || !_created)) return;
+            if (size.x == width && size.y == height && (_texture != null || !_created))
+                return;
             size = new Vector2Int(width, height);
-            if (!_created) return;
+            if (!_created)
+                return;
             HtmlNative.Hiccup_PanelSetSize(_panel, width, height);
             CreateTexture();
         }
@@ -278,23 +354,28 @@ namespace Hiccup
         /// </summary>
         public void SetGeometry(Matrix4x4 pixelToClip)
         {
-            if (!_created) return;
+            if (!_created)
+                return;
             for (int c = 0; c < 4; c++)
+            {
                 for (int r = 0; r < 4; r++)
                     _matrix[c * 4 + r] = pixelToClip[r, c];
+            }
             HtmlNative.Hiccup_PanelSetGeometry(_panel, _matrix);
         }
 
         /// <summary>Marks the texture dirty (the bridge normally tracks this through paint events).</summary>
         public void Invalidate()
         {
-            if (_created) HtmlNative.Hiccup_PanelInvalidate(_panel);
+            if (_created)
+                HtmlNative.Hiccup_PanelInvalidate(_panel);
         }
 
         /// <summary>Finds the first element matching a CSS selector.</summary>
         public HtmlElement Q(string selector)
         {
-            if (!_created) return HtmlElement.None;
+            if (!_created)
+                return HtmlElement.None;
             return new HtmlElement(this, HtmlNative.Hiccup_Query(_panel, selector));
         }
 
@@ -302,11 +383,16 @@ namespace Hiccup
         public List<HtmlElement> QAll(string selector)
         {
             var list = new List<HtmlElement>();
-            if (!_created) return list;
+            if (!_created)
+                return list;
             var csv = HtmlNative.TakeString(HtmlNative.Hiccup_QueryAll(_panel, selector));
-            if (string.IsNullOrEmpty(csv)) return list;
+            if (string.IsNullOrEmpty(csv))
+                return list;
             foreach (var part in csv.Split(','))
-                if (int.TryParse(part, out var h) && h != 0) list.Add(new HtmlElement(this, h));
+            {
+                if (int.TryParse(part, out var h) && h != 0)
+                    list.Add(new HtmlElement(this, h));
+            }
             return list;
         }
 
@@ -316,14 +402,16 @@ namespace Hiccup
         /// </summary>
         public string Eval(string javascript)
         {
-            if (!_created) return string.Empty;
+            if (!_created)
+                return string.Empty;
             return HtmlNative.TakeString(HtmlNative.Hiccup_PanelEval(_panel, javascript ?? string.Empty));
         }
 
         /// <summary>Announces text to screen readers through an aria-live region.</summary>
         public void Announce(string text, bool assertive = false)
         {
-            if (_created) HtmlNative.Hiccup_PanelAnnounce(_panel, text ?? string.Empty, assertive ? 1 : 0);
+            if (_created)
+                HtmlNative.Hiccup_PanelAnnounce(_panel, text ?? string.Empty, assertive ? 1 : 0);
         }
 
         // ------------------------------------------------------------------ events
@@ -358,26 +446,32 @@ namespace Hiccup
         /// <summary>Forward an additional DOM event type (e.g. "pointerover", "keyup", "wheel").</summary>
         public void Listen(string eventType)
         {
-            if (string.IsNullOrEmpty(eventType) || !_listened.Add(eventType)) return;
-            if (_created) HtmlNative.Hiccup_PanelListen(_panel, eventType, 1);
+            if (string.IsNullOrEmpty(eventType) || !_listened.Add(eventType))
+                return;
+            if (_created)
+                HtmlNative.Hiccup_PanelListen(_panel, eventType, 1);
         }
 
         private static void AddHandler(Dictionary<string, List<Action<HtmlEvent>>> map, string key, Action<HtmlEvent> handler)
         {
-            if (handler == null) return;
-            if (!map.TryGetValue(key, out var list)) map[key] = list = new List<Action<HtmlEvent>>();
+            if (handler == null)
+                return;
+            if (!map.TryGetValue(key, out var list))
+                map[key] = list = new List<Action<HtmlEvent>>();
             list.Add(handler);
         }
 
         private static void RemoveHandler(Dictionary<string, List<Action<HtmlEvent>>> map, string key, Action<HtmlEvent> handler)
         {
-            if (map.TryGetValue(key, out var list)) list.Remove(handler);
+            if (map.TryGetValue(key, out var list))
+                list.Remove(handler);
         }
 
         internal void DispatchNative(string json)
         {
             var e = HtmlEvent.Parse(json, this);
-            if (e != null) Dispatch(e);
+            if (e != null)
+                Dispatch(e);
         }
 
         /// <summary>Dispatches an event through the C# handlers (target, ancestors, data-action, then type handlers).</summary>
@@ -387,26 +481,32 @@ namespace Hiccup
             try { EventReceived?.Invoke(e); }
             catch (Exception ex) { Debug.LogException(ex, this); }
 
-            if (!e.Handled && !string.IsNullOrEmpty(e.id)) Invoke(_elementHandlers, e.id + "|" + e.type, e);
+            if (!e.Handled && !string.IsNullOrEmpty(e.id))
+                Invoke(_elementHandlers, e.id + "|" + e.type, e);
             if (!e.Handled && !string.IsNullOrEmpty(e.path))
             {
                 foreach (var id in e.path.Split(' '))
                 {
-                    if (e.Handled) break;
+                    if (e.Handled)
+                        break;
                     Invoke(_elementHandlers, id + "|" + e.type, e);
                 }
             }
-            if (!e.Handled && e.type == "click" && !string.IsNullOrEmpty(e.action)) Invoke(_actionHandlers, e.action, e);
-            if (!e.Handled) Invoke(_typeHandlers, e.type, e);
+            if (!e.Handled && e.type == "click" && !string.IsNullOrEmpty(e.action))
+                Invoke(_actionHandlers, e.action, e);
+            if (!e.Handled)
+                Invoke(_typeHandlers, e.type, e);
         }
 
         private void Invoke(Dictionary<string, List<Action<HtmlEvent>>> map, string key, HtmlEvent e)
         {
-            if (!map.TryGetValue(key, out var list) || list.Count == 0) return;
+            if (!map.TryGetValue(key, out var list) || list.Count == 0)
+                return;
             var snapshot = list.ToArray();
             foreach (var h in snapshot)
             {
-                if (e.Handled) return;
+                if (e.Handled)
+                    return;
                 try { h(e); }
                 catch (Exception ex) { Debug.LogException(ex, this); }
             }
@@ -481,11 +581,13 @@ namespace Hiccup
         /// <summary>Called by <see cref="HtmlRuntime"/> right after the bridge uploaded textures for this frame.</summary>
         internal void AfterBridgeUpdate()
         {
-            if (!_created) return;
+            if (!_created)
+                return;
 
             // A backend that brings its page up asynchronously (the Editor preview) becomes ready some frames
             // after Create(); this is where the deferred Created fires, so wiring code sees a working page.
-            if (!_ready && HtmlNative.Hiccup_PanelIsReady(_panel) != 0) RaiseCreated();
+            if (!_ready && HtmlNative.Hiccup_PanelIsReady(_panel) != 0)
+                RaiseCreated();
 
             var backend = HtmlBackend.Current;
             if (backend != null)
@@ -511,21 +613,25 @@ namespace Hiccup
                 bool hadTexture = !ReferenceEquals(_texture, null);
                 _texture = null;
                 _ownsTexture = true;
-                if (hadTexture) TextureChanged?.Invoke(this);
+                if (hadTexture)
+                    TextureChanged?.Invoke(this);
                 return;
             }
 
-            if (!mipmaps) return;
+            if (!mipmaps)
+                return;
             if (_texture is RenderTexture rt && rt != null && rt.useMipMap && HtmlNative.Hiccup_PanelTakeUpdated(_panel) != 0)
                 rt.GenerateMips();
         }
 
         private void ReleaseTexture()
         {
-            if (_texture == null) return;
+            if (_texture == null)
+                return;
             if (_ownsTexture)
             {
-                if (_texture is RenderTexture rt) rt.Release();
+                if (_texture is RenderTexture rt)
+                    rt.Release();
                 Destroy(_texture);
             }
             _texture = null;
@@ -539,8 +645,10 @@ namespace Hiccup
             var edge = new Color(0.45f, 0.75f, 1.00f, 0.90f);
             var px = new Color[Res * Res];
             for (int y = 0; y < Res; y++)
+            {
                 for (int x = 0; x < Res; x++)
                     px[y * Res + x] = (x < 2 || y < 2 || x >= Res - 2 || y >= Res - 2) ? edge : fill;
+            }
             tex.SetPixels(px);
             tex.Apply(false, true);
             return tex;

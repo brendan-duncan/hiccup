@@ -142,7 +142,8 @@ namespace Hiccup.Ugui
 
         private void OnEnable()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying)
+                return;
             _canvas = GetComponent<Canvas>();
             _canvasRect = (RectTransform)transform;
             _textures = new UguiTextureCache();
@@ -156,7 +157,8 @@ namespace Hiccup.Ugui
             var _ = CanvasUpdateRegistry.instance;   // subscribes uGUI's layout rebuild ahead of us
             Canvas.willRenderCanvases += OnWillRenderCanvases;
             _doc.Created += Wire;
-            if (_doc.IsCreated) Wire(_doc);
+            if (_doc.IsCreated)
+                Wire(_doc);
         }
 
         private void OnDisable()
@@ -171,7 +173,11 @@ namespace Hiccup.Ugui
             ClearNodes();
             _textures?.Dispose();
             _textures = null;
-            if (_ownedDocument != null) { Destroy(_ownedDocument); _ownedDocument = null; }
+            if (_ownedDocument != null)
+            {
+                Destroy(_ownedDocument);
+                _ownedDocument = null;
+            }
             _doc = null;
             _wired = false;
         }
@@ -203,10 +209,12 @@ namespace Hiccup.Ugui
         {
             if (hide)
             {
-                if (_group != null) return;
+                if (_group != null)
+                    return;
                 _group = GetComponent<CanvasGroup>();
                 _groupAdded = _group == null;
-                if (_groupAdded) _group = gameObject.AddComponent<CanvasGroup>();
+                if (_groupAdded)
+                    _group = gameObject.AddComponent<CanvasGroup>();
                 _groupAlpha = _group.alpha;
                 _groupBlocks = _group.blocksRaycasts;
                 _group.alpha = 0f;
@@ -214,8 +222,13 @@ namespace Hiccup.Ugui
             }
             else if (_group != null)
             {
-                if (_groupAdded) Destroy(_group);
-                else { _group.alpha = _groupAlpha; _group.blocksRaycasts = _groupBlocks; }
+                if (_groupAdded)
+                    Destroy(_group);
+                else
+                {
+                    _group.alpha = _groupAlpha;
+                    _group.blocksRaycasts = _groupBlocks;
+                }
                 _group = null;
             }
         }
@@ -243,7 +256,8 @@ namespace Hiccup.Ugui
 
         private void RemoveHandlers()
         {
-            if (!_handlers) return;
+            if (!_handlers)
+                return;
             _handlers = false;
             _doc.Off("click", OnClick);
             _doc.Off("input", OnInput);
@@ -277,7 +291,8 @@ namespace Hiccup.Ugui
 
         private void OnWillRenderCanvases()
         {
-            if (!_wired || _doc == null || !_doc.IsCreated || !isActiveAndEnabled || _textures == null) return;
+            if (!_wired || _doc == null || !_doc.IsCreated || !isActiveAndEnabled || _textures == null)
+                return;
             _frame++;
             _scrollWrites.Clear();
 
@@ -288,7 +303,11 @@ namespace Hiccup.Ugui
 
             // Stale nodes are found by key: their RectTransform may already be destroyed, so it cannot be asked for its id.
             _stale.Clear();
-            foreach (var kv in _nodes) if (kv.Value.Visit != _frame) _stale.Add(kv.Key);
+            foreach (var kv in _nodes)
+            {
+                if (kv.Value.Visit != _frame)
+                    _stale.Add(kv.Key);
+            }
             foreach (var key in _stale)
             {
                 var n = _nodes[key];
@@ -328,9 +347,11 @@ namespace Hiccup.Ugui
               .Append("px;width:").Append(F(r.width)).Append("px;height:").Append(F(r.height))
               .Append("px;transform:scale(").Append(F(sx)).Append(',').Append(F(sy)).Append(')');
             var style = sb.ToString();
-            if (style == _rootStyle) return;
+            if (style == _rootStyle)
+                return;
             _rootStyle = style;
-            using (var el = _doc.Q("#ugroot")) el.SetAttribute("style", style);
+            using (var el = _doc.Q("#ugroot"))
+                el.SetAttribute("style", style);
         }
 
         private void SyncNode(RectTransform rt, Node parent, string parentId, ref int order, ref string prevSibling, StringBuilder emit)
@@ -357,7 +378,11 @@ namespace Hiccup.Ugui
             }
             else if (recreate)
             {
-                if (node.Created) using (var old = _doc.Q("#" + node.Id)) old.Remove();
+                if (node.Created)
+                {
+                    using (var old = _doc.Q("#" + node.Id))
+                    old.Remove();
+                }
                 var sb = _html;
                 sb.Clear();
                 EmitOpen(node, d, sb);
@@ -367,11 +392,13 @@ namespace Hiccup.Ugui
                 var html = sb.ToString();
                 if (prevSibling == null)
                 {
-                    using (var kids = _doc.Q("#" + (parentId == "ugroot" ? "ugroot" : parentId + "k"))) kids.Prepend(html);
+                    using (var kids = _doc.Q("#" + (parentId == "ugroot" ? "ugroot" : parentId + "k")))
+                        kids.Prepend(html);
                 }
                 else
                 {
-                    using (var before = _doc.Q("#" + prevSibling)) before.InsertHtml("afterend", html);
+                    using (var before = _doc.Q("#" + prevSibling))
+                        before.InsertHtml("afterend", html);
                 }
             }
             else
@@ -392,8 +419,10 @@ namespace Hiccup.Ugui
             for (int i = 0; i < rt.childCount; i++)
             {
                 var child = rt.GetChild(i) as RectTransform;
-                if (child == null || !child.gameObject.activeSelf || child == node.SkipChild) continue;
-                if (child.GetComponent<HtmlScreenSurface>() != null) continue;   // a document inside the canvas is not a picture to copy
+                if (child == null || !child.gameObject.activeSelf || child == node.SkipChild)
+                    continue;
+                if (child.GetComponent<HtmlScreenSurface>() != null)
+                    continue;   // a document inside the canvas is not a picture to copy
                 SyncNode(child, node, node.Id, ref order, ref prev, emit);
             }
         }
@@ -414,19 +443,27 @@ namespace Hiccup.Ugui
             {
                 using (var el = _doc.Q("#" + n.Id))
                 {
-                    if (d.Style != n.Style) el.SetAttribute("style", d.Style);
-                    if (d.Class != n.Class) el.SetAttribute("class", d.Class);
-                    if (isButton && d.Disabled != n.Disabled) el.Disabled = d.Disabled;
+                    if (d.Style != n.Style)
+                        el.SetAttribute("style", d.Style);
+                    if (d.Class != n.Class)
+                        el.SetAttribute("class", d.Class);
+                    if (isButton && d.Disabled != n.Disabled)
+                        el.Disabled = d.Disabled;
                 }
             }
             if (n.HasBg && d.BgStyle != n.BgStyle)
-                using (var el = _doc.Q("#" + n.Id + "b")) el.SetAttribute("style", d.BgStyle ?? "display:none");
+            {
+                using (var el = _doc.Q("#" + n.Id + "b"))
+                    el.SetAttribute("style", d.BgStyle ?? "display:none");
+            }
             if (n.HasText && (d.Text != n.Text || d.TextStyle != n.TextStyle))
             {
                 using (var el = _doc.Q("#" + n.Id + "t"))
                 {
-                    if (d.TextStyle != n.TextStyle) el.SetAttribute("style", d.TextStyle);
-                    if (d.Text != n.Text) el.InnerHtml = d.Text ?? string.Empty;
+                    if (d.TextStyle != n.TextStyle)
+                        el.SetAttribute("style", d.TextStyle);
+                    if (d.Text != n.Text)
+                        el.InnerHtml = d.Text ?? string.Empty;
                 }
             }
             if (n.ControlTag != null)
@@ -436,11 +473,16 @@ namespace Hiccup.Ugui
                 {
                     using (var el = _doc.Q("#" + n.Id + "c"))
                     {
-                        if (d.ControlHtml != n.ControlHtml) el.InnerHtml = d.ControlHtml ?? string.Empty;
-                        if (d.ControlStyle != n.ControlStyle) el.SetAttribute("style", d.ControlStyle ?? string.Empty);
-                        if (d.ControlValue != n.ControlValue) el.SetProperty("value", d.ControlValue ?? string.Empty);
-                        if (d.ControlChecked != n.ControlChecked) el.Checked = d.ControlChecked;
-                        if (disabled) el.Disabled = d.Disabled;
+                        if (d.ControlHtml != n.ControlHtml)
+                            el.InnerHtml = d.ControlHtml ?? string.Empty;
+                        if (d.ControlStyle != n.ControlStyle)
+                            el.SetAttribute("style", d.ControlStyle ?? string.Empty);
+                        if (d.ControlValue != n.ControlValue)
+                            el.SetProperty("value", d.ControlValue ?? string.Empty);
+                        if (d.ControlChecked != n.ControlChecked)
+                            el.Checked = d.ControlChecked;
+                        if (disabled)
+                            el.Disabled = d.Disabled;
                     }
                 }
             }
@@ -454,9 +496,12 @@ namespace Hiccup.Ugui
             _byElement.Remove(n.Id + "t");
             _byElement.Remove(n.Id + "c");
             _byElement.Remove(n.Id + "k");
-            if (_hovered == n.Selectable) _hovered = null;
-            if (_pressed == n.Selectable) _pressed = null;
-            using (var el = _doc.Q("#" + n.Id)) el.Remove();   // a no-op when it went with its parent
+            if (_hovered == n.Selectable)
+                _hovered = null;
+            if (_pressed == n.Selectable)
+                _pressed = null;
+            using (var el = _doc.Q("#" + n.Id))
+                el.Remove();   // a no-op when it went with its parent
         }
 
         // ------------------------------------------------------------------ node creation
@@ -519,7 +564,8 @@ namespace Hiccup.Ugui
                 var vp = scroll.viewport != null ? scroll.viewport : rt;
                 _viewports[vp.GetEntityId()] = scroll;
             }
-            if (_viewports.TryGetValue(iid, out var owner)) n.Viewport = owner;
+            if (_viewports.TryGetValue(iid, out var owner))
+                n.Viewport = owner;
 
             _byElement[n.Id] = n;
             _byElement[n.Id + "b"] = n;
@@ -545,8 +591,10 @@ namespace Hiccup.Ugui
                 if (type == "text" && n.Selectable is InputField f && (f.contentType == InputField.ContentType.IntegerNumber || f.contentType == InputField.ContentType.DecimalNumber))
                     sb.Append(" inputmode=\"").Append(f.contentType == InputField.ContentType.IntegerNumber ? "numeric" : "decimal").Append('"');
             }
-            if (limit > 0) sb.Append(" maxlength=\"").Append(limit).Append('"');
-            if (readOnly) sb.Append(" readonly");
+            if (limit > 0)
+                sb.Append(" maxlength=\"").Append(limit).Append('"');
+            if (readOnly)
+                sb.Append(" readonly");
             sb.Append(" autocomplete=\"off\" spellcheck=\"false\"");
             n.ControlOpen = sb.ToString();
         }
@@ -613,12 +661,15 @@ namespace Hiccup.Ugui
             // carry their transforms here.
             var s = parent != null ? rt.localScale : Vector3.one;
             float rot = parent != null ? rt.localEulerAngles.z : 0f;
-            if (rot > 180f) rot -= 360f;
+            if (rot > 180f)
+                rot -= 360f;
             if (Mathf.Abs(rot) > 0.001f || Mathf.Abs(s.x - 1f) > 0.0001f || Mathf.Abs(s.y - 1f) > 0.0001f)
             {
                 sb.Append("transform-origin:").Append(F(rt.pivot.x * 100f)).Append("% ").Append(F((1f - rt.pivot.y) * 100f)).Append("%;transform:");
-                if (Mathf.Abs(rot) > 0.001f) sb.Append("rotate(").Append(F(-rot)).Append("deg) ");   // CSS turns clockwise, Unity anticlockwise
-                if (Mathf.Abs(s.x - 1f) > 0.0001f || Mathf.Abs(s.y - 1f) > 0.0001f) sb.Append("scale(").Append(F(s.x)).Append(',').Append(F(s.y)).Append(')');
+                if (Mathf.Abs(rot) > 0.001f)
+                    sb.Append("rotate(").Append(F(-rot)).Append("deg) ");   // CSS turns clockwise, Unity anticlockwise
+                if (Mathf.Abs(s.x - 1f) > 0.0001f || Mathf.Abs(s.y - 1f) > 0.0001f)
+                    sb.Append("scale(").Append(F(s.x)).Append(',').Append(F(s.y)).Append(')');
                 sb.Append(';');
             }
 
@@ -634,8 +685,10 @@ namespace Hiccup.Ugui
             {
                 float alpha = group == _group ? _groupAlpha : group.alpha;
                 bool blocks = group == _group ? _groupBlocks : group.blocksRaycasts;
-                if (alpha < 1f) sb.Append("opacity:").Append(F(alpha)).Append(';');
-                if (!group.interactable || !blocks) cls += " ug-noinput";
+                if (alpha < 1f)
+                    sb.Append("opacity:").Append(F(alpha)).Append(';');
+                if (!group.interactable || !blocks)
+                    cls += " ug-noinput";
             }
 
             bool clip = rt.GetComponent<RectMask2D>() != null;
@@ -655,13 +708,15 @@ namespace Hiccup.Ugui
                 cls += " ug-scroll";
                 sb.Append("overflow-x:").Append(node.Viewport.horizontal ? "auto" : "hidden").Append(";overflow-y:").Append(node.Viewport.vertical ? "auto" : "hidden").Append(';');
             }
-            else if (clip) sb.Append("overflow:hidden;");
+            else if (clip)
+                sb.Append("overflow:hidden;");
 
             // ---- graphic
             var g = node.Graphic;
             if (node.HasBg)
             {
-                if (g == null || !g.enabled || hideMaskGraphic) d.BgStyle = "display:none";
+                if (g == null || !g.enabled || hideMaskGraphic)
+                    d.BgStyle = "display:none";
                 else
                 {
                     var color = g.color * g.canvasRenderer.GetColor();
@@ -671,19 +726,26 @@ namespace Hiccup.Ugui
                         case RawImage raw: d.BgStyle = RawImageStyle(node, raw, color); break;
                         default:
                             d.BgStyle = "display:none";
-                            if (outlineUnsupported) cls += " ug-unsupported";
+                            if (outlineUnsupported)
+                                cls += " ug-unsupported";
                             break;
                     }
                 }
             }
             else if (node.HasText)
             {
-                if (g == null || !g.enabled) { d.TextStyle = "display:none"; d.Text = string.Empty; }
+                if (g == null || !g.enabled)
+                {
+                    d.TextStyle = "display:none";
+                    d.Text = string.Empty;
+                }
                 else
                 {
                     var color = g.color * g.canvasRenderer.GetColor();
-                    if (g is Text t) TextDesc(t, color, rt, d, sb);
-                    else if (g is TMP_Text tmp) TmpDesc(tmp, color, rt, d, sb);
+                    if (g is Text t)
+                        TextDesc(t, color, rt, d, sb);
+                    else if (g is TMP_Text tmp)
+                        TmpDesc(tmp, color, rt, d, sb);
                 }
             }
 
@@ -712,7 +774,11 @@ namespace Hiccup.Ugui
                     break;
                 case Control.Dropdown:
                     d.Disabled = !sel.IsInteractable();
-                    if (node.ControlTag == null) { d.Tag = "button"; break; }   // uGUI list mode: click opens the template list
+                    if (node.ControlTag == null)
+                    {
+                        d.Tag = "button";
+                        break;
+                    }   // uGUI list mode: click opens the template list
                     d.ControlHtml = OptionsHtml(sel, out int selected);
                     d.ControlValue = selected.ToString(Inv);
                     d.ControlStyle = SelectStyle(node);
@@ -751,7 +817,8 @@ namespace Hiccup.Ugui
         private string InputStyle(Node n, RectTransform rt)
         {
             var g = n.InputText;
-            if (g == null) return null;
+            if (g == null)
+                return null;
             g.rectTransform.GetWorldCorners(_corners);
             var tl = rt.InverseTransformPoint(_corners[1]);
             var br = rt.InverseTransformPoint(_corners[3]);
@@ -770,8 +837,10 @@ namespace Hiccup.Ugui
                         (t.fontStyle & FontStyles.Italic) != 0, t.color, HAlign(t.horizontalAlignment));
                     break;
             }
-            if (n.Selectable is InputField f && f.customCaretColor) sb.Append("caret-color:").Append(Rgba(f.caretColor)).Append(';');
-            else if (n.Selectable is TMP_InputField tf && tf.customCaretColor) sb.Append("caret-color:").Append(Rgba(tf.caretColor)).Append(';');
+            if (n.Selectable is InputField f && f.customCaretColor)
+                sb.Append("caret-color:").Append(Rgba(f.caretColor)).Append(';');
+            else if (n.Selectable is TMP_InputField tf && tf.customCaretColor)
+                sb.Append("caret-color:").Append(Rgba(tf.caretColor)).Append(';');
             return sb.ToString();
         }
 
@@ -781,7 +850,8 @@ namespace Hiccup.Ugui
             var sb = _ctl;
             sb.Clear();
             Graphic caption = n.Selectable is Dropdown dd ? dd.captionText : (n.Selectable as TMP_Dropdown)?.captionText;
-            if (caption == null) caption = null;   // a destroyed caption is Unity-null but would still match a type pattern
+            if (caption == null)
+                caption = null;   // a destroyed caption is Unity-null but would still match a type pattern
             switch (caption)
             {
                 case Text t:
@@ -793,16 +863,20 @@ namespace Hiccup.Ugui
                         (t.fontStyle & FontStyles.Italic) != 0, t.color, HAlign(t.horizontalAlignment));
                     break;
             }
-            if (n.Graphic != null) sb.Append("--ug-bg:").Append(Rgb(n.Graphic.color)).Append(';');
-            if (caption != null) sb.Append("--ug-fg:").Append(Rgb(caption.color)).Append(';');
+            if (n.Graphic != null)
+                sb.Append("--ug-bg:").Append(Rgb(n.Graphic.color)).Append(';');
+            if (caption != null)
+                sb.Append("--ug-fg:").Append(Rgb(caption.color)).Append(';');
             return sb.ToString();
         }
 
         private void AppendFont(StringBuilder sb, string fontName, float size, bool bold, bool italic, Color color, string align)
         {
             sb.Append("font-family:").Append(FontFamily(fontName)).Append(";font-size:").Append(F(size)).Append("px;");
-            if (bold) sb.Append("font-weight:bold;");
-            if (italic) sb.Append("font-style:italic;");
+            if (bold)
+                sb.Append("font-weight:bold;");
+            if (italic)
+                sb.Append("font-style:italic;");
             sb.Append("color:").Append(Rgba(color)).Append(";text-align:").Append(align).Append(';');
         }
 
@@ -823,14 +897,16 @@ namespace Hiccup.Ugui
             int lines = t.cachedTextGenerator != null ? t.cachedTextGenerator.lineCount : 1;
             bool wrap = t.horizontalOverflow == HorizontalWrapMode.Wrap && lines > 1;
             ts.Append("white-space:").Append(wrap ? "pre-wrap" : "pre").Append(';');
-            if (Mathf.Abs(t.lineSpacing - 1f) > 0.001f) ts.Append("line-height:").Append(F(1.2f * t.lineSpacing)).Append(';');
+            if (Mathf.Abs(t.lineSpacing - 1f) > 0.001f)
+                ts.Append("line-height:").Append(F(1.2f * t.lineSpacing)).Append(';');
             AppendEffects(rt, ts);
             d.TextStyle = ts.ToString();
             d.Text = t.supportRichText ? UguiRichText.Convert(t.text) : UguiRichText.Escape(t.text);
 
             nodeStyle.Append("display:flex;align-items:").Append(VAlign(t.alignment)).Append(';');
             // Truncate clips vertically only; a slightly wider line may run past the rectangle instead of losing its end.
-            if (t.verticalOverflow == VerticalWrapMode.Truncate) nodeStyle.Append("overflow-x:visible;overflow-y:clip;");
+            if (t.verticalOverflow == VerticalWrapMode.Truncate)
+                nodeStyle.Append("overflow-x:visible;overflow-y:clip;");
         }
 
         private void TmpDesc(TMP_Text t, Color color, RectTransform rt, Desc d, StringBuilder nodeStyle)
@@ -839,28 +915,38 @@ namespace Hiccup.Ugui
             ts.Clear();
             var fs = t.fontStyle;
             ts.Append("font-family:").Append(FontFamily(t.font != null ? StripSdf(t.font.name) : null)).Append(";font-size:").Append(F(t.fontSize)).Append("px;");
-            if ((fs & FontStyles.Bold) != 0) ts.Append("font-weight:bold;");
-            else if (t.fontWeight != FontWeight.Regular) ts.Append("font-weight:").Append((int)t.fontWeight).Append(';');
-            if ((fs & FontStyles.Italic) != 0) ts.Append("font-style:italic;");
+            if ((fs & FontStyles.Bold) != 0)
+                ts.Append("font-weight:bold;");
+            else if (t.fontWeight != FontWeight.Regular)
+                ts.Append("font-weight:").Append((int)t.fontWeight).Append(';');
+            if ((fs & FontStyles.Italic) != 0)
+                ts.Append("font-style:italic;");
             if ((fs & FontStyles.Underline) != 0 || (fs & FontStyles.Strikethrough) != 0)
                 ts.Append("text-decoration:").Append((fs & FontStyles.Underline) != 0 ? "underline " : "").Append((fs & FontStyles.Strikethrough) != 0 ? "line-through" : "").Append(';');
-            if ((fs & FontStyles.UpperCase) != 0) ts.Append("text-transform:uppercase;");
-            else if ((fs & FontStyles.LowerCase) != 0) ts.Append("text-transform:lowercase;");
-            else if ((fs & FontStyles.SmallCaps) != 0) ts.Append("font-variant:small-caps;");
+            if ((fs & FontStyles.UpperCase) != 0)
+                ts.Append("text-transform:uppercase;");
+            else if ((fs & FontStyles.LowerCase) != 0)
+                ts.Append("text-transform:lowercase;");
+            else if ((fs & FontStyles.SmallCaps) != 0)
+                ts.Append("font-variant:small-caps;");
             ts.Append("color:").Append(Rgba(color)).Append(";text-align:").Append(HAlign(t.horizontalAlignment)).Append(';');
             int lines = t.textInfo != null ? t.textInfo.lineCount : 1;   // see TextDesc: wrap only where TMP wrapped
             bool wrap = t.textWrappingMode != TextWrappingModes.NoWrap && lines > 1;
             ts.Append("white-space:").Append(wrap ? "pre-wrap" : "pre").Append(';');
-            if (Mathf.Abs(t.characterSpacing) > 0.001f) ts.Append("letter-spacing:").Append(F(t.characterSpacing * 0.01f)).Append("em;");
-            if (Mathf.Abs(t.lineSpacing) > 0.001f) ts.Append("line-height:").Append(F(1.2f + t.lineSpacing * 0.01f)).Append(';');
+            if (Mathf.Abs(t.characterSpacing) > 0.001f)
+                ts.Append("letter-spacing:").Append(F(t.characterSpacing * 0.01f)).Append("em;");
+            if (Mathf.Abs(t.lineSpacing) > 0.001f)
+                ts.Append("line-height:").Append(F(1.2f + t.lineSpacing * 0.01f)).Append(';');
             var m = t.margin;
-            if (m != Vector4.zero) ts.Append("padding:").Append(F(m.y)).Append("px ").Append(F(m.z)).Append("px ").Append(F(m.w)).Append("px ").Append(F(m.x)).Append("px;");
+            if (m != Vector4.zero)
+                ts.Append("padding:").Append(F(m.y)).Append("px ").Append(F(m.z)).Append("px ").Append(F(m.w)).Append("px ").Append(F(m.x)).Append("px;");
             AppendEffects(rt, ts);
             d.TextStyle = ts.ToString();
             d.Text = t.richText ? UguiRichText.Convert(t.text) : UguiRichText.Escape(t.text);
 
             nodeStyle.Append("display:flex;align-items:").Append(VAlign(t.verticalAlignment)).Append(';');
-            if (t.overflowMode != TextOverflowModes.Overflow) nodeStyle.Append("overflow-x:visible;overflow-y:clip;");
+            if (t.overflowMode != TextOverflowModes.Overflow)
+                nodeStyle.Append("overflow-x:visible;overflow-y:clip;");
         }
 
         private static void AppendEffects(RectTransform rt, StringBuilder ts)
@@ -887,7 +973,8 @@ namespace Hiccup.Ugui
         {
             var bs = _bg;
             bs.Clear();
-            if (color.a < 0.999f) bs.Append("opacity:").Append(F(color.a)).Append(';');
+            if (color.a < 0.999f)
+                bs.Append("opacity:").Append(F(color.a)).Append(';');
             var sprite = img.overrideSprite;
             string url = sprite != null ? SpriteUrl(sprite, color) : null;
             if (url == null)
@@ -909,11 +996,22 @@ namespace Hiccup.Ugui
                     float unitsPerPixel = 1f / Mathf.Max(0.001f, ppu * img.pixelsPerUnitMultiplier);
                     float l = b.x * unitsPerPixel * scale, bo = b.y * unitsPerPixel * scale, rt = b.z * unitsPerPixel * scale, t = b.w * unitsPerPixel * scale;
                     // Image.GetAdjustedBorders: borders that do not fit are scaled down together.
-                    if (l + rt > outW && l + rt > 0f) { float f = outW / (l + rt); l *= f; rt *= f; }
-                    if (bo + t > outH && bo + t > 0f) { float f = outH / (bo + t); bo *= f; t *= f; }
+                    if (l + rt > outW && l + rt > 0f)
+                    {
+                        float f = outW / (l + rt);
+                        l *= f;
+                        rt *= f;
+                    }
+                    if (bo + t > outH && bo + t > 0f)
+                    {
+                        float f = outH / (bo + t);
+                        bo *= f;
+                        t *= f;
+                    }
                     string sliced = _textures.SlicedDataUrl(sprite.texture, ToRectInt(SpriteRect(sprite)), b, outW, outH,
                         Mathf.RoundToInt(l), Mathf.RoundToInt(bo), Mathf.RoundToInt(rt), Mathf.RoundToInt(t), img.fillCenter, color);
-                    if (sliced == null) goto default;
+                    if (sliced == null)
+                        goto default;
                     bs.Append("background-image:url(").Append(sliced).Append(");background-size:100% 100%;");
                     break;
                 }
@@ -964,7 +1062,8 @@ namespace Hiccup.Ugui
         {
             var bs = _bg;
             bs.Clear();
-            if (color.a < 0.999f) bs.Append("opacity:").Append(F(color.a)).Append(';');
+            if (color.a < 0.999f)
+                bs.Append("opacity:").Append(F(color.a)).Append(';');
             var tex = raw.texture;
             if (tex == null)
             {
@@ -976,14 +1075,16 @@ namespace Hiccup.Ugui
                 bool first = n.TextureTime == 0f;
                 if (first || (renderTextureRefresh > 0f && Time.unscaledTime - n.TextureTime >= renderTextureRefresh))
                 {
-                    if (!first) _textures.Invalidate(tex);
+                    if (!first)
+                        _textures.Invalidate(tex);
                     n.TextureTime = Mathf.Max(Time.unscaledTime, 0.0001f);
                 }
             }
             string url = _textures.DataUrl(tex, new RectInt(0, 0, tex.width, tex.height), color);
             var uv = raw.uvRect;
             bs.Append("background-image:url(").Append(url).Append(");");
-            if (uv.x == 0f && uv.y == 0f && uv.width == 1f && uv.height == 1f) bs.Append("background-size:100% 100%;");
+            if (uv.x == 0f && uv.y == 0f && uv.width == 1f && uv.height == 1f)
+                bs.Append("background-size:100% 100%;");
             else
             {
                 var rr = raw.rectTransform.rect;
@@ -1006,7 +1107,8 @@ namespace Hiccup.Ugui
         private string SpriteUrl(Sprite sprite, Color tint)
         {
             var tex = sprite.texture;
-            if (tex == null) return null;
+            if (tex == null)
+                return null;
             return _textures.DataUrl(tex, ToRectInt(SpriteRect(sprite)), tint);
         }
 
@@ -1018,26 +1120,36 @@ namespace Hiccup.Ugui
             if (d.Tag == "button")
             {
                 sb.Append(" type=\"button\"");
-                if (d.Disabled) sb.Append(" disabled");
+                if (d.Disabled)
+                    sb.Append(" disabled");
             }
             sb.Append('>');
 
-            if (n.HasBg) sb.Append("<div id=\"").Append(n.Id).Append("b\" class=\"ug-bg\" style=\"").Append(d.BgStyle ?? "display:none").Append("\"></div>");
+            if (n.HasBg)
+                sb.Append("<div id=\"").Append(n.Id).Append("b\" class=\"ug-bg\" style=\"").Append(d.BgStyle ?? "display:none").Append("\"></div>");
 
             if (n.ControlOpen != null)
             {
                 sb.Append(n.ControlOpen);
-                if (d.ControlStyle != null) sb.Append(" style=\"").Append(d.ControlStyle).Append('"');
-                if (d.Disabled) sb.Append(" disabled");
-                if (d.ControlChecked) sb.Append(" checked");
-                if (n.ControlTag == "input" && d.ControlValue != null) sb.Append(" value=\"").Append(UguiRichText.Escape(d.ControlValue)).Append('"');
+                if (d.ControlStyle != null)
+                    sb.Append(" style=\"").Append(d.ControlStyle).Append('"');
+                if (d.Disabled)
+                    sb.Append(" disabled");
+                if (d.ControlChecked)
+                    sb.Append(" checked");
+                if (n.ControlTag == "input" && d.ControlValue != null)
+                    sb.Append(" value=\"").Append(UguiRichText.Escape(d.ControlValue)).Append('"');
                 sb.Append('>');
-                if (n.ControlTag == "textarea") sb.Append(UguiRichText.Escape(d.ControlValue));
-                else if (d.ControlHtml != null) sb.Append(d.ControlHtml);
-                if (n.ControlClose != null) sb.Append(n.ControlClose);
+                if (n.ControlTag == "textarea")
+                    sb.Append(UguiRichText.Escape(d.ControlValue));
+                else if (d.ControlHtml != null)
+                    sb.Append(d.ControlHtml);
+                if (n.ControlClose != null)
+                    sb.Append(n.ControlClose);
             }
 
-            if (n.HasText) sb.Append("<span id=\"").Append(n.Id).Append("t\" class=\"ug-txt\" style=\"").Append(d.TextStyle).Append("\">").Append(d.Text).Append("</span>");
+            if (n.HasText)
+                sb.Append("<span id=\"").Append(n.Id).Append("t\" class=\"ug-txt\" style=\"").Append(d.TextStyle).Append("\">").Append(d.Text).Append("</span>");
             sb.Append("<div id=\"").Append(n.Id).Append("k\" class=\"ug-kids\">");
         }
 
@@ -1051,17 +1163,23 @@ namespace Hiccup.Ugui
         private Node NodeOnPath(HtmlEvent e, Func<Node, bool> pred)
         {
             var n = NodeFor(e);
-            if (n != null && pred(n)) return n;
-            if (string.IsNullOrEmpty(e.path)) return null;
+            if (n != null && pred(n))
+                return n;
+            if (string.IsNullOrEmpty(e.path))
+                return null;
             foreach (var id in e.path.Split(' '))
-                if (_byElement.TryGetValue(id, out var p) && pred(p)) return p;
+            {
+                if (_byElement.TryGetValue(id, out var p) && pred(p))
+                    return p;
+            }
             return null;
         }
 
         private void OnClick(HtmlEvent e)
         {
             var n = NodeOnPath(e, x => x.Control == Control.Button || (x.Control == Control.Dropdown && x.ControlTag == null));
-            if (n == null || n.Selectable == null || !n.Selectable.IsInteractable()) return;
+            if (n == null || n.Selectable == null || !n.Selectable.IsInteractable())
+                return;
             switch (n.Selectable)
             {
                 case Button b:
@@ -1082,7 +1200,8 @@ namespace Hiccup.Ugui
         private void OnInput(HtmlEvent e)
         {
             var n = NodeFor(e);
-            if (n == null) return;
+            if (n == null)
+                return;
             switch (n.Control)
             {
                 case Control.Slider:
@@ -1091,8 +1210,16 @@ namespace Hiccup.Ugui
                     e.Handled = true;
                     break;
                 case Control.InputField:
-                    if (n.Selectable is InputField f) { f.text = e.value; n.ControlValue = f.text; }
-                    else if (n.Selectable is TMP_InputField tf) { tf.text = e.value; n.ControlValue = tf.text; }
+                    if (n.Selectable is InputField f)
+                    {
+                        f.text = e.value;
+                        n.ControlValue = f.text;
+                    }
+                    else if (n.Selectable is TMP_InputField tf)
+                    {
+                        tf.text = e.value;
+                        n.ControlValue = tf.text;
+                    }
                     e.Handled = true;
                     break;
             }
@@ -1101,7 +1228,8 @@ namespace Hiccup.Ugui
         private void OnChange(HtmlEvent e)
         {
             var n = NodeFor(e);
-            if (n == null) return;
+            if (n == null)
+                return;
             switch (n.Control)
             {
                 case Control.Toggle:
@@ -1110,13 +1238,17 @@ namespace Hiccup.Ugui
                     e.Handled = true;
                     break;
                 case Control.Dropdown:
-                    if (n.Selectable is Dropdown dd) dd.value = e.ValueAsInt;
-                    else if (n.Selectable is TMP_Dropdown td) td.value = e.ValueAsInt;
+                    if (n.Selectable is Dropdown dd)
+                        dd.value = e.ValueAsInt;
+                    else if (n.Selectable is TMP_Dropdown td)
+                        td.value = e.ValueAsInt;
                     e.Handled = true;
                     break;
                 case Control.InputField:
-                    if (n.Selectable is InputField f) f.onEndEdit.Invoke(f.text);
-                    else if (n.Selectable is TMP_InputField tf) tf.onEndEdit.Invoke(tf.text);
+                    if (n.Selectable is InputField f)
+                        f.onEndEdit.Invoke(f.text);
+                    else if (n.Selectable is TMP_InputField tf)
+                        tf.onEndEdit.Invoke(tf.text);
                     e.Handled = true;
                     break;
             }
@@ -1125,11 +1257,14 @@ namespace Hiccup.Ugui
         private void OnScroll(HtmlEvent e)
         {
             var n = NodeFor(e);
-            if (n == null || n.Viewport == null || n.Viewport.content == null) return;
+            if (n == null || n.Viewport == null || n.Viewport.content == null)
+                return;
             var parts = (e.GetData("scroll") ?? string.Empty).Split(',');
-            if (parts.Length < 2 || !float.TryParse(parts[0], NumberStyles.Float, Inv, out float top) || !float.TryParse(parts[1], NumberStyles.Float, Inv, out float left)) return;
+            if (parts.Length < 2 || !float.TryParse(parts[0], NumberStyles.Float, Inv, out float top) || !float.TryParse(parts[1], NumberStyles.Float, Inv, out float left))
+                return;
             n.ScrollPushed = new Vector2(left, top);
-            if (!_nodes.TryGetValue(n.Viewport.content.GetEntityId(), out var content)) return;
+            if (!_nodes.TryGetValue(n.Viewport.content.GetEntityId(), out var content))
+                return;
             var ap = n.Viewport.content.anchoredPosition;
             // Content top must end up at -scrollTop: CSS top grows downward, anchoredPosition.y upward.
             n.Viewport.content.anchoredPosition = new Vector2(ap.x - left - content.Left, ap.y + content.Top + top);
@@ -1141,36 +1276,43 @@ namespace Hiccup.Ugui
         {
             var n = NodeOnPath(e, x => x.Selectable != null);
             var sel = n?.Selectable;
-            if (sel == _hovered) return;
-            if (_hovered != null) Pointer(_hovered, ExecuteEvents.pointerExitHandler);
+            if (sel == _hovered)
+                return;
+            if (_hovered != null)
+                Pointer(_hovered, ExecuteEvents.pointerExitHandler);
             _hovered = sel;
-            if (sel != null) Pointer(sel, ExecuteEvents.pointerEnterHandler);
+            if (sel != null)
+                Pointer(sel, ExecuteEvents.pointerEnterHandler);
         }
 
         private void OnPointerDown(HtmlEvent e)
         {
             var n = NodeOnPath(e, x => x.Selectable != null);
-            if (n == null) return;
+            if (n == null)
+                return;
             _pressed = n.Selectable;
             Pointer(_pressed, ExecuteEvents.pointerDownHandler);
         }
 
         private void OnPointerUp(HtmlEvent e)
         {
-            if (_pressed == null) return;
+            if (_pressed == null)
+                return;
             Pointer(_pressed, ExecuteEvents.pointerUpHandler);
             _pressed = null;
         }
 
         private void OnPointerLeave(HtmlEvent e)
         {
-            if (_hovered != null) Pointer(_hovered, ExecuteEvents.pointerExitHandler);
+            if (_hovered != null)
+                Pointer(_hovered, ExecuteEvents.pointerExitHandler);
             _hovered = null;
         }
 
         private static void Pointer<T>(Selectable sel, ExecuteEvents.EventFunction<T> handler) where T : IEventSystemHandler
         {
-            if (sel == null) return;
+            if (sel == null)
+                return;
             var data = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
             ExecuteEvents.Execute(sel.gameObject, data, handler);
         }
@@ -1184,9 +1326,11 @@ namespace Hiccup.Ugui
             {
                 foreach (var f in fonts)
                 {
-                    if (f.file == null || string.IsNullOrEmpty(f.family)) continue;
+                    if (f.file == null || string.IsNullOrEmpty(f.family))
+                        continue;
                     var bytes = f.file.bytes;
-                    if (bytes == null || bytes.Length < 4) continue;
+                    if (bytes == null || bytes.Length < 4)
+                        continue;
                     string mime = bytes[0] == 'w' && bytes[1] == 'O' && bytes[2] == 'F' && bytes[3] == '2' ? "font/woff2"
                         : bytes[0] == 'O' && bytes[1] == 'T' && bytes[2] == 'T' && bytes[3] == 'O' ? "font/otf" : "font/ttf";
                     sb.Append("@font-face{font-family:'").Append(f.family.Replace("'", string.Empty)).Append("';src:url(data:").Append(mime)
@@ -1225,16 +1369,19 @@ select.ug-ctl option::checkmark{display:none}
 
         private string FontFamily(string unityFont)
         {
-            if (string.IsNullOrEmpty(unityFont)) return fallbackFonts;
+            if (string.IsNullOrEmpty(unityFont))
+                return fallbackFonts;
             // Unity's built-in LegacyRuntime is Liberation Sans, which shares Arial's metrics; prefer those so line
             // widths match what uGUI measured before falling back to the UI font stack.
-            if (unityFont == "LegacyRuntime" || unityFont == "Arial") return "'Liberation Sans', Arial, Helvetica, " + fallbackFonts;
+            if (unityFont == "LegacyRuntime" || unityFont == "Arial")
+                return "'Liberation Sans', Arial, Helvetica, " + fallbackFonts;
             return "'" + unityFont.Replace("'", string.Empty) + "', " + fallbackFonts;
         }
 
         private static string StripSdf(string fontAsset)
         {
-            if (string.IsNullOrEmpty(fontAsset)) return fontAsset;
+            if (string.IsNullOrEmpty(fontAsset))
+                return fontAsset;
             int i = fontAsset.IndexOf(" SDF", StringComparison.OrdinalIgnoreCase);
             return i > 0 ? fontAsset.Substring(0, i) : fontAsset;
         }

@@ -89,7 +89,8 @@ namespace Hiccup.Editor.Cdp
             var sb = new StringBuilder(128 + (paramsJson?.Length ?? 0));
             sb.Append("{\"id\":").Append(id).Append(",\"method\":");
             Json.Quote(method, sb);
-            if (!string.IsNullOrEmpty(paramsJson)) sb.Append(",\"params\":").Append(paramsJson);
+            if (!string.IsNullOrEmpty(paramsJson))
+                sb.Append(",\"params\":").Append(paramsJson);
             if (!string.IsNullOrEmpty(sessionId))
             {
                 sb.Append(",\"sessionId\":");
@@ -101,14 +102,16 @@ namespace Hiccup.Editor.Cdp
 
         private async Task SendRawAsync(string text)
         {
-            if (_closed) return;
+            if (_closed)
+                return;
             var bytes = Encoding.UTF8.GetBytes(text);
             try { await _sendLock.WaitAsync(_cancel.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) { return; }
 
             try
             {
-                if (_socket.State != WebSocketState.Open) return;
+                if (_socket.State != WebSocketState.Open)
+                    return;
                 await _socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _cancel.Token)
                     .ConfigureAwait(false);
             }
@@ -139,12 +142,14 @@ namespace Hiccup.Editor.Cdp
                     do
                     {
                         result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), _cancel.Token).ConfigureAwait(false);
-                        if (result.MessageType == WebSocketMessageType.Close) return;
+                        if (result.MessageType == WebSocketMessageType.Close)
+                            return;
                         message.Write(buffer, 0, result.Count);
                     }
                     while (!result.EndOfMessage);
 
-                    if (TryDispatchScreencastFrame(message.GetBuffer(), (int)message.Length)) continue;
+                    if (TryDispatchScreencastFrame(message.GetBuffer(), (int)message.Length))
+                        continue;
                     var text = Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
                     Dispatch(text);
                 }
@@ -162,20 +167,24 @@ namespace Hiccup.Editor.Cdp
 
         private void Dispatch(string text)
         {
-            if (!(Json.Parse(text) is Dictionary<string, object> msg)) return;
+            if (!(Json.Parse(text) is Dictionary<string, object> msg))
+                return;
 
             if (msg.TryGetValue("id", out var rawId) && rawId is double idNum)
             {
                 if (_pending.TryRemove((int)idNum, out var tcs))
                 {
                     var error = Json.Dict(msg, "error");
-                    if (error != null) tcs.TrySetException(new CdpException(Json.Str(error, "message", "CDP error")));
-                    else tcs.TrySetResult(Json.Dict(msg, "result") ?? new Dictionary<string, object>());
+                    if (error != null)
+                        tcs.TrySetException(new CdpException(Json.Str(error, "message", "CDP error")));
+                    else
+                        tcs.TrySetResult(Json.Dict(msg, "result") ?? new Dictionary<string, object>());
                 }
                 return;
             }
 
-            if (msg.ContainsKey("method")) _events.Enqueue(msg);
+            if (msg.ContainsKey("method"))
+                _events.Enqueue(msg);
         }
 
         /// <summary>
@@ -188,20 +197,25 @@ namespace Hiccup.Editor.Cdp
         {
             // The method name is at the front of the message; a bounded search keeps every other message cheap.
             int methodAt = IndexOf(buffer, ScreencastMethod, 0, Math.Min(length, 128));
-            if (methodAt < 0) return false;
+            if (methodAt < 0)
+                return false;
 
             int dataAt = IndexOf(buffer, DataKey, methodAt, length);
-            if (dataAt < 0) return false;
+            if (dataAt < 0)
+                return false;
             int start = dataAt + DataKey.Length;
             // Base64 never contains a quote or a backslash, so the first quote ends the payload.
             int end = Array.IndexOf(buffer, (byte)'"', start, length - start);
-            if (end < 0) return false;
+            if (end < 0)
+                return false;
 
             var image = Base64.Decode(buffer, start, end - start);
-            if (image == null) return false;
+            if (image == null)
+                return false;
 
             var rest = Encoding.UTF8.GetString(buffer, 0, start) + Encoding.UTF8.GetString(buffer, end, length - end);
-            if (!(Json.Parse(rest) is Dictionary<string, object> msg)) return false;
+            if (!(Json.Parse(rest) is Dictionary<string, object> msg))
+                return false;
             var parameters = Json.Dict(msg, "params");
 
             var handler = ScreencastFrameHandler;
@@ -211,7 +225,8 @@ namespace Hiccup.Editor.Cdp
                 return true;
             }
 
-            if (parameters != null) parameters["data"] = image;
+            if (parameters != null)
+                parameters["data"] = image;
             _events.Enqueue(msg);
             return true;
         }
@@ -221,10 +236,13 @@ namespace Hiccup.Editor.Cdp
             int last = end - needle.Length;
             for (int i = start; i <= last; i++)
             {
-                if (haystack[i] != needle[0]) continue;
+                if (haystack[i] != needle[0])
+                    continue;
                 int j = 1;
-                while (j < needle.Length && haystack[i + j] == needle[j]) j++;
-                if (j == needle.Length) return i;
+                while (j < needle.Length && haystack[i + j] == needle[j])
+                    j++;
+                if (j == needle.Length)
+                    return i;
             }
             return -1;
         }
@@ -235,14 +253,18 @@ namespace Hiccup.Editor.Cdp
         private void FailPending(Exception e)
         {
             foreach (var key in new List<int>(_pending.Keys))
-                if (_pending.TryRemove(key, out var tcs)) tcs.TrySetException(e);
+            {
+                if (_pending.TryRemove(key, out var tcs))
+                    tcs.TrySetException(e);
+            }
         }
 
         // ------------------------------------------------------------------ teardown
 
         public void Dispose()
         {
-            if (_closed) return;
+            if (_closed)
+                return;
             _closed = true;
             try { _cancel.Cancel(); } catch { /* already gone */ }
             try
@@ -271,17 +293,21 @@ namespace Hiccup.Editor.Cdp
         private static sbyte[] BuildTable()
         {
             var table = new sbyte[256];
-            for (int i = 0; i < table.Length; i++) table[i] = -1;
+            for (int i = 0; i < table.Length; i++)
+                table[i] = -1;
             const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-            for (int i = 0; i < alphabet.Length; i++) table[alphabet[i]] = (sbyte)i;
+            for (int i = 0; i < alphabet.Length; i++)
+                table[alphabet[i]] = (sbyte)i;
             return table;
         }
 
         /// <summary>Decodes <paramref name="count"/> bytes of standard base64 at <paramref name="offset"/>. Null when malformed.</summary>
         public static byte[] Decode(byte[] source, int offset, int count)
         {
-            if (count == 0) return Array.Empty<byte>();
-            if ((count & 3) != 0) return null;
+            if (count == 0)
+                return Array.Empty<byte>();
+            if ((count & 3) != 0)
+                return null;
 
             int end = offset + count;
             int padding = source[end - 1] == '=' ? (source[end - 2] == '=' ? 2 : 1) : 0;
@@ -292,7 +318,8 @@ namespace Hiccup.Editor.Cdp
             for (int i = offset; i < full; i += 4)
             {
                 int a = Table[source[i]], b = Table[source[i + 1]], c = Table[source[i + 2]], d = Table[source[i + 3]];
-                if ((a | b | c | d) < 0) return null;
+                if ((a | b | c | d) < 0)
+                    return null;
                 output[o++] = (byte)((a << 2) | (b >> 4));
                 output[o++] = (byte)((b << 4) | (c >> 2));
                 output[o++] = (byte)((c << 6) | d);
@@ -301,12 +328,14 @@ namespace Hiccup.Editor.Cdp
             if (padding > 0)
             {
                 int a = Table[source[full]], b = Table[source[full + 1]];
-                if ((a | b) < 0) return null;
+                if ((a | b) < 0)
+                    return null;
                 output[o++] = (byte)((a << 2) | (b >> 4));
                 if (padding == 1)
                 {
                     int c = Table[source[full + 2]];
-                    if (c < 0) return null;
+                    if (c < 0)
+                        return null;
                     output[o] = (byte)((b << 4) | (c >> 2));
                 }
             }

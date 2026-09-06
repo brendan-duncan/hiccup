@@ -34,9 +34,13 @@ namespace Hiccup.Editor.Cdp
         public bool TryDecode(byte[] png, int length, ref byte[] rgba, out int width, out int height)
         {
             width = height = 0;
-            if (png == null || length < Signature.Length + 8) return false;
+            if (png == null || length < Signature.Length + 8)
+                return false;
             for (int i = 0; i < Signature.Length; i++)
-                if (png[i] != Signature[i]) return false;
+            {
+                if (png[i] != Signature[i])
+                    return false;
+            }
 
             int pos = Signature.Length;
             int colorType = -1;
@@ -47,29 +51,37 @@ namespace Hiccup.Editor.Cdp
             while (pos + 8 <= length)
             {
                 int chunkLength = ReadInt32(png, pos);
-                if (chunkLength < 0 || pos + 12 + chunkLength > length) return false;
+                if (chunkLength < 0 || pos + 12 + chunkLength > length)
+                    return false;
                 uint type = ReadUInt32(png, pos + 4);
                 int data = pos + 8;
 
                 switch (type)
                 {
                     case 0x49484452: // IHDR
-                        if (chunkLength != 13) return false;
+                        if (chunkLength != 13)
+                            return false;
                         width = ReadInt32(png, data);
                         height = ReadInt32(png, data + 4);
                         int bitDepth = png[data + 8];
                         colorType = png[data + 9];
                         int interlace = png[data + 12];
-                        if (width <= 0 || height <= 0 || bitDepth != 8 || interlace != 0) return false;
-                        if (colorType == 6) channels = 4;
-                        else if (colorType == 2) channels = 3;
-                        else return false;
+                        if (width <= 0 || height <= 0 || bitDepth != 8 || interlace != 0)
+                            return false;
+                        if (colorType == 6)
+                            channels = 4;
+                        else if (colorType == 2)
+                            channels = 3;
+                        else
+                            return false;
                         // A frame beyond this is not a viewport; refuse rather than allocate absurdly.
-                        if ((long)width * height > 64L * 1024 * 1024) return false;
+                        if ((long)width * height > 64L * 1024 * 1024)
+                            return false;
                         break;
 
                     case 0x49444154: // IDAT
-                        if (channels == 0) return false;
+                        if (channels == 0)
+                            return false;
                         _idat.Write(png, data, chunkLength);
                         break;
 
@@ -80,17 +92,22 @@ namespace Hiccup.Editor.Cdp
                 pos = data + chunkLength + 4;   // skip the CRC; Chrome's output is trusted and the cost is real
             }
 
-            if (channels == 0 || _idat.Length < 2) return false;
+            if (channels == 0 || _idat.Length < 2)
+                return false;
 
             int stride = 1 + width * channels;
             long filteredSize = (long)stride * height;
-            if (filteredSize > int.MaxValue) return false;
-            if (_filtered == null || _filtered.Length < filteredSize) _filtered = new byte[filteredSize];
+            if (filteredSize > int.MaxValue)
+                return false;
+            if (_filtered == null || _filtered.Length < filteredSize)
+                _filtered = new byte[filteredSize];
 
-            if (!Inflate(_idat, _filtered, (int)filteredSize)) return false;
+            if (!Inflate(_idat, _filtered, (int)filteredSize))
+                return false;
 
             int outputSize = OutputSize(width, height);
-            if (rgba == null || rgba.Length != outputSize) rgba = new byte[outputSize];
+            if (rgba == null || rgba.Length != outputSize)
+                rgba = new byte[outputSize];
 
             Unfilter(_filtered, rgba, width, height, channels);
             return true;
@@ -108,7 +125,8 @@ namespace Hiccup.Editor.Cdp
                     while (total < count)
                     {
                         int read = deflate.Read(destination, total, count - total);
-                        if (read <= 0) return false;
+                        if (read <= 0)
+                            return false;
                         total += read;
                     }
                 }
@@ -147,8 +165,10 @@ namespace Hiccup.Editor.Cdp
                         break;
                     case 2: // Up
                         if (y > 0)
+                        {
                             for (int i = 0; i < rowBytes; i++)
                                 filtered[cur + i] += filtered[prev + i];
+                        }
                         break;
                     case 3: // Average
                         if (y == 0)

@@ -66,7 +66,8 @@ namespace Hiccup.Editor
             EditorApplication.quitting += Stop;
             EditorApplication.playModeStateChanged += change =>
             {
-                if (change == PlayModeStateChange.ExitingPlayMode) Stop();
+                if (change == PlayModeStateChange.ExitingPlayMode)
+                    Stop();
             };
         }
 
@@ -77,12 +78,14 @@ namespace Hiccup.Editor
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void StartForPlayMode()
         {
-            if (Enabled) Start();
+            if (Enabled)
+                Start();
         }
 
         public static void Start()
         {
-            if (s_backend != null) return;
+            if (s_backend != null)
+                return;
             if (ChromeLauncher.FindChrome() == null)
             {
                 Debug.LogWarning("[Hiccup] Editor preview needs Chrome. Install it, or point HICCUP_CHROME at an executable.");
@@ -94,7 +97,8 @@ namespace Hiccup.Editor
 
         public static void Stop()
         {
-            if (s_backend == null) return;
+            if (s_backend == null)
+                return;
             HtmlBackend.Unregister(s_backend);
             s_backend = null;
         }
@@ -105,8 +109,10 @@ namespace Hiccup.Editor
         private static void ToggleEnabled()
         {
             Enabled = !Enabled;
-            if (!Enabled) Stop();
-            else if (EditorApplication.isPlaying) Start();
+            if (!Enabled)
+                Stop();
+            else if (EditorApplication.isPlaying)
+                Start();
         }
 
         [MenuItem(MenuEnabled, true)]
@@ -159,7 +165,8 @@ namespace Hiccup.Editor
         {
             bool wasRunning = s_backend != null;
             Stop();
-            if (wasRunning && Enabled && EditorApplication.isPlaying) Start();
+            if (wasRunning && Enabled && EditorApplication.isPlaying)
+                Start();
         }
     }
 }

@@ -16,7 +16,8 @@ namespace Hiccup
         /// <summary>Reads a UTF8 string returned by the bridge and frees it.</summary>
         public static string TakeString(IntPtr ptr)
         {
-            if (ptr == IntPtr.Zero) return string.Empty;
+            if (ptr == IntPtr.Zero)
+                return string.Empty;
             try
             {
                 return ReadUtf8(ptr);
@@ -29,10 +30,13 @@ namespace Hiccup
 
         public static string ReadUtf8(IntPtr ptr)
         {
-            if (ptr == IntPtr.Zero) return string.Empty;
+            if (ptr == IntPtr.Zero)
+                return string.Empty;
             int len = 0;
-            while (Marshal.ReadByte(ptr, len) != 0) len++;
-            if (len == 0) return string.Empty;
+            while (Marshal.ReadByte(ptr, len) != 0)
+                len++;
+            if (len == 0)
+                return string.Empty;
             var bytes = new byte[len];
             Marshal.Copy(ptr, bytes, 0, len);
             return Encoding.UTF8.GetString(bytes);
@@ -119,7 +123,8 @@ namespace Hiccup
         /// <summary>Non-null string returned by an unimplemented backend getter, so callers never see null.</summary>
         private static IntPtr AllocUtf8(string s)
         {
-            if (string.IsNullOrEmpty(s)) return IntPtr.Zero;
+            if (string.IsNullOrEmpty(s))
+                return IntPtr.Zero;
             var bytes = Encoding.UTF8.GetBytes(s);
             var ptr = Marshal.AllocHGlobal(bytes.Length + 1);
             Marshal.Copy(bytes, 0, ptr, bytes.Length);
@@ -133,14 +138,22 @@ namespace Hiccup
         public static void Hiccup_GetCanvasInfo(float[] outInfo)
         {
             var b = HtmlBackend.Current;
-            if (b != null) { b.GetCanvasInfo(outInfo); return; }
+            if (b != null)
+            {
+                b.GetCanvasInfo(outInfo);
+                return;
+            }
             outInfo[0] = UnityEngine.Screen.width; outInfo[1] = UnityEngine.Screen.height; outInfo[2] = 1f;
             outInfo[3] = UnityEngine.Screen.width; outInfo[4] = UnityEngine.Screen.height;
         }
         public static void Hiccup_SetUpdateMode(int mode) { }
         public static void Hiccup_SetGeometryMode(int mode) { }
         public static void Hiccup_Update() => HtmlBackend.Current?.Update();
-        public static void Hiccup_Free(IntPtr ptr) { if (ptr != IntPtr.Zero) Marshal.FreeHGlobal(ptr); }
+        public static void Hiccup_Free(IntPtr ptr)
+        {
+            if (ptr != IntPtr.Zero)
+                Marshal.FreeHGlobal(ptr);
+        }
 
         public static int Hiccup_PanelCreate(int w, int h) => HtmlBackend.Current?.PanelCreate(w, h) ?? _nextPanel++;
         public static void Hiccup_PanelDestroy(int id) => HtmlBackend.Current?.PanelDestroy(id);
@@ -163,7 +176,11 @@ namespace Hiccup
         public static void Hiccup_PanelGetTextureSize(int id, int[] outWH)
         {
             var b = HtmlBackend.Current;
-            if (b != null) { b.PanelGetTextureSize(id, outWH); return; }
+            if (b != null)
+            {
+                b.PanelGetTextureSize(id, outWH);
+                return;
+            }
             outWH[0] = 0; outWH[1] = 0;
         }
         public static int Hiccup_PanelCreateGLTexture(int id) => 0;
@@ -202,7 +219,11 @@ namespace Hiccup
         public static void Hiccup_ElemGetBounds(int h, float[] outXYWH)
         {
             var b = HtmlBackend.Current;
-            if (b != null) { b.ElemGetBounds(h, outXYWH); return; }
+            if (b != null)
+            {
+                b.ElemGetBounds(h, outXYWH);
+                return;
+            }
             outXYWH[0] = outXYWH[1] = outXYWH[2] = outXYWH[3] = 0;
         }
         public static int Hiccup_ElemQuery(int h, string selector) => HtmlBackend.Current?.ElemQuery(h, selector) ?? 0;

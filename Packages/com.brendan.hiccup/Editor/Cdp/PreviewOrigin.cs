@@ -39,7 +39,12 @@ namespace Hiccup.Editor.Cdp
                 TcpClient client;
                 try { client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false); }
                 catch (ObjectDisposedException) { return; }
-                catch (SocketException) { if (_cancel.IsCancellationRequested) return; continue; }
+                catch (SocketException)
+                {
+                    if (_cancel.IsCancellationRequested)
+                        return;
+                    continue;
+                }
                 _ = ServeAsync(client);
             }
         }
@@ -57,9 +62,11 @@ namespace Hiccup.Editor.Cdp
                     while (total < buf.Length)
                     {
                         int n = await stream.ReadAsync(buf, total, buf.Length - total).ConfigureAwait(false);
-                        if (n <= 0) break;
+                        if (n <= 0)
+                            break;
                         total += n;
-                        if (EndOfHeaders(buf, total)) break;
+                        if (EndOfHeaders(buf, total))
+                            break;
                     }
                     bool favicon = Encoding.ASCII.GetString(buf, 0, Math.Min(total, 32)).StartsWith("GET /favicon.ico", StringComparison.Ordinal);
                     var body = favicon ? Array.Empty<byte>() : Page;
@@ -70,7 +77,8 @@ namespace Hiccup.Editor.Cdp
                         "Cache-Control: no-store\r\n" +
                         "Connection: close\r\n\r\n");
                     await stream.WriteAsync(head, 0, head.Length).ConfigureAwait(false);
-                    if (body.Length > 0) await stream.WriteAsync(body, 0, body.Length).ConfigureAwait(false);
+                    if (body.Length > 0)
+                        await stream.WriteAsync(body, 0, body.Length).ConfigureAwait(false);
                     await stream.FlushAsync().ConfigureAwait(false);
                 }
                 catch (Exception) { /* a dropped connection; Chrome simply retries */ }
@@ -80,7 +88,10 @@ namespace Hiccup.Editor.Cdp
         private static bool EndOfHeaders(byte[] b, int len)
         {
             for (int i = 3; i < len; i++)
-                if (b[i - 3] == (byte)'\r' && b[i - 2] == (byte)'\n' && b[i - 1] == (byte)'\r' && b[i] == (byte)'\n') return true;
+            {
+                if (b[i - 3] == (byte)'\r' && b[i - 2] == (byte)'\n' && b[i - 1] == (byte)'\r' && b[i] == (byte)'\n')
+                    return true;
+            }
             return false;
         }
 

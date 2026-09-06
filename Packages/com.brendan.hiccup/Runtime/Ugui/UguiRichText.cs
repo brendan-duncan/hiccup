@@ -14,7 +14,8 @@ namespace Hiccup.Ugui
 
         public static string Escape(string s)
         {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
             var sb = new StringBuilder(s.Length + 16);
             Escape(s, 0, s.Length, sb);
             return sb.ToString();
@@ -38,7 +39,8 @@ namespace Hiccup.Ugui
 
         public static string Convert(string s)
         {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
             var sb = new StringBuilder(s.Length + 32);
             int last = 0;
             int open = 0;   // spans we emitted and still owe a close for
@@ -56,26 +58,71 @@ namespace Hiccup.Ugui
                         sb.Append(closing ? "</" : "<").Append(name).Append('>');
                         break;
                     case "br":
-                        if (!closing) sb.Append("<br>");
+                        if (!closing)
+                            sb.Append("<br>");
                         break;
                     case "color":
-                        if (closing) { if (open > 0) { sb.Append("</span>"); open--; } }
-                        else { sb.Append("<span style=\"color:").Append(CssColor(arg)).Append("\">"); open++; }
+                        if (closing)
+                        {
+                            if (open > 0)
+                            {
+                                sb.Append("</span>");
+                                open--;
+                            }
+                        }
+                        else
+                        {
+                            sb.Append("<span style=\"color:").Append(CssColor(arg)).Append("\">");
+                            open++;
+                        }
                         break;
                     case "size":
-                        if (closing) { if (open > 0) { sb.Append("</span>"); open--; } }
-                        else { sb.Append("<span style=\"font-size:").Append(CssSize(arg)).Append("\">"); open++; }
+                        if (closing)
+                        {
+                            if (open > 0)
+                            {
+                                sb.Append("</span>");
+                                open--;
+                            }
+                        }
+                        else
+                        {
+                            sb.Append("<span style=\"font-size:").Append(CssSize(arg)).Append("\">");
+                            open++;
+                        }
                         break;
                     case "mark":
-                        if (closing) { if (open > 0) { sb.Append("</span>"); open--; } }
-                        else { sb.Append("<span style=\"background:").Append(CssColor(arg)).Append("\">"); open++; }
+                        if (closing)
+                        {
+                            if (open > 0)
+                            {
+                                sb.Append("</span>");
+                                open--;
+                            }
+                        }
+                        else
+                        {
+                            sb.Append("<span style=\"background:").Append(CssColor(arg)).Append("\">");
+                            open++;
+                        }
                         break;
                     case "sup": case "sub":
                         sb.Append(closing ? "</" : "<").Append(name).Append('>');
                         break;
                     case "nobr":
-                        if (closing) { if (open > 0) { sb.Append("</span>"); open--; } }
-                        else { sb.Append("<span style=\"white-space:nowrap\">"); open++; }
+                        if (closing)
+                        {
+                            if (open > 0)
+                            {
+                                sb.Append("</span>");
+                                open--;
+                            }
+                        }
+                        else
+                        {
+                            sb.Append("<span style=\"white-space:nowrap\">");
+                            open++;
+                        }
                         break;
                     default:
                         // sprite, material, link, align, indent, voffset, cspace, font, ...: no HTML equivalent here.
@@ -83,13 +130,15 @@ namespace Hiccup.Ugui
                 }
             }
             Escape(s, last, s.Length, sb);
-            while (open-- > 0) sb.Append("</span>");
+            while (open-- > 0)
+                sb.Append("</span>");
             return sb.ToString();
         }
 
         private static string CssColor(string arg)
         {
-            if (string.IsNullOrEmpty(arg)) return "inherit";
+            if (string.IsNullOrEmpty(arg))
+                return "inherit";
             if (arg[0] == '#')
             {
                 // Unity: #RGB, #RGBA, #RRGGBB, #RRGGBBAA. CSS accepts the same four forms.
@@ -109,9 +158,12 @@ namespace Hiccup.Ugui
 
         private static string CssSize(string arg)
         {
-            if (string.IsNullOrEmpty(arg)) return "inherit";
-            if (arg.EndsWith("%")) return arg;
-            if (arg.EndsWith("em")) return arg;
+            if (string.IsNullOrEmpty(arg))
+                return "inherit";
+            if (arg.EndsWith("%"))
+                return arg;
+            if (arg.EndsWith("em"))
+                return arg;
             if (arg[0] == '+' || arg[0] == '-')
             {
                 // TMP relative sizes are in points; approximate as pixels on top of the inherited size.

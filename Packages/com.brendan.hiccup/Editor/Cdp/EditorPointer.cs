@@ -30,9 +30,11 @@ namespace Hiccup.Editor.Cdp
         {
             position = Vector2.zero;
             leftButtonDown = false;
-            if (!Application.isPlaying) return false;
+            if (!Application.isPlaying)
+                return false;
 
-            if (!s_resolved) Resolve();
+            if (!s_resolved)
+                Resolve();
 
             if (s_mouseCurrent != null)
             {

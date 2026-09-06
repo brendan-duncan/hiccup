@@ -57,7 +57,8 @@ namespace Hiccup.Samples
             Material Lit(Color color)
             {
                 var m = litShader != null ? new Material(litShader) : litTemplate != null ? new Material(litTemplate) : null;
-                if (m != null) m.color = color;
+                if (m != null)
+                    m.color = color;
                 return m;
             }
 
@@ -81,13 +82,15 @@ namespace Hiccup.Samples
             Paint(top, wood);
             var legMat = Lit(new Color(0.2f, 0.2f, 0.22f));
             foreach (var sx in new[] { -0.85f, 0.85f })
-            foreach (var sz in new[] { 0f, 0.7f })
             {
-                var leg = Primitive("Cylinder");
-                leg.name = "Leg";
-                leg.transform.position = new Vector3(sx, 0.36f, sz);
-                leg.transform.localScale = new Vector3(0.03f, 0.36f, 0.03f);   // a cylinder is 2 units tall at scale 1
-                Paint(leg, legMat);
+                foreach (var sz in new[] { 0f, 0.7f })
+                {
+                    var leg = Primitive("Cylinder");
+                    leg.name = "Leg";
+                    leg.transform.position = new Vector3(sx, 0.36f, sz);
+                    leg.transform.localScale = new Vector3(0.03f, 0.36f, 0.03f);   // a cylinder is 2 units tall at scale 1
+                    Paint(leg, legMat);
+                }
             }
 
             // ---- Monitor: base, neck, bezel, then the screen itself
@@ -170,7 +173,8 @@ namespace Hiccup.Samples
 
         private static void Paint(GameObject go, Material material)
         {
-            if (material != null) go.GetComponent<Renderer>().sharedMaterial = material;
+            if (material != null)
+                go.GetComponent<Renderer>().sharedMaterial = material;
         }
 
         // GameObject.CreatePrimitive attaches a Collider, which needs the Physics module; the sample uses no

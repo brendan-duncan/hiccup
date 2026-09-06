@@ -60,15 +60,20 @@ namespace Hiccup.Samples
 
         private void OnEnable()
         {
-            if (Document == null) Document = GetComponent<HtmlDocument>();
-            if (Document == null) return;
-            if (Document.IsCreated) Wire(Document);
-            else Document.Created += Wire;
+            if (Document == null)
+                Document = GetComponent<HtmlDocument>();
+            if (Document == null)
+                return;
+            if (Document.IsCreated)
+                Wire(Document);
+            else
+                Document.Created += Wire;
         }
 
         private void OnDisable()
         {
-            if (Document != null) Document.Created -= Wire;
+            if (Document != null)
+                Document.Created -= Wire;
             if (Game != null)
             {
                 Game.StateChanged -= OnStateChanged;
@@ -80,7 +85,8 @@ namespace Hiccup.Samples
 
         private void Wire(HtmlDocument doc)
         {
-            if (_wired) return;
+            if (_wired)
+                return;
             _wired = true;
 
             // ---- Navigation and menu actions (data-action="...")
@@ -100,10 +106,13 @@ namespace Hiccup.Samples
             // ---- Live settings feedback
             doc.On("input", e =>
             {
-                if (e.tag != "input") return;
+                if (e.tag != "input")
+                    return;
                 doc.Q("#" + e.id + "-out").Text = e.value;   // <output> next to every range slider
-                if (e.id == "spin") Game.SpinSpeed = e.ValueAsFloat;
-                if (e.id == "player-name") doc.Q("#pilot").Text = string.IsNullOrWhiteSpace(e.value) ? "Pilot" : e.value;
+                if (e.id == "spin")
+                    Game.SpinSpeed = e.ValueAsFloat;
+                if (e.id == "player-name")
+                    doc.Q("#pilot").Text = string.IsNullOrWhiteSpace(e.value) ? "Pilot" : e.value;
             });
             doc.On("change", e =>
             {
@@ -111,12 +120,16 @@ namespace Hiccup.Samples
                 {
                     case "theme": ApplyTheme(e.value); break;
                     case "quality": QualitySettings.SetQualityLevel(Mathf.Clamp(e.ValueAsInt, 0, QualitySettings.names.Length - 1), true); break;
-                    case "fov": if (Game.Camera != null) Game.Camera.fieldOfView = Mathf.Clamp(e.ValueAsFloat, 40f, 110f); break;
+                    case "fov":
+                        if (Game.Camera != null)
+                            Game.Camera.fieldOfView = Mathf.Clamp(e.ValueAsFloat, 40f, 110f);
+                        break;
                     case "bloom": Game.Glow = e.isChecked; break;
                     case "mute": AudioListener.volume = e.isChecked ? 0f : 1f; Toast(e.isChecked ? "Audio muted" : "Audio on"); break;
                     case "inv-filter": FilterInventory(); break;
                 }
-                if (e.name == "fps") Application.targetFrameRate = e.ValueAsInt <= 0 ? -1 : e.ValueAsInt;
+                if (e.name == "fps")
+                    Application.targetFrameRate = e.ValueAsInt <= 0 ? -1 : e.ValueAsInt;
             });
             doc.On("inv-search", "input", e => FilterInventory());
             doc.On("settings-form", "submit", e =>
@@ -130,43 +143,65 @@ namespace Hiccup.Samples
             doc.On("settings-tabs", "keydown", e =>
             {
                 int i = Array.IndexOf(s_tabs, e.id);
-                if (i < 0) return;
+                if (i < 0)
+                    return;
                 int n = i;
-                if (e.IsKey("ArrowRight")) n = (i + 1) % s_tabs.Length;
-                else if (e.IsKey("ArrowLeft")) n = (i + s_tabs.Length - 1) % s_tabs.Length;
-                else if (e.IsKey("Home")) n = 0;
-                else if (e.IsKey("End")) n = s_tabs.Length - 1;
-                else return;
+                if (e.IsKey("ArrowRight"))
+                    n = (i + 1) % s_tabs.Length;
+                else if (e.IsKey("ArrowLeft"))
+                    n = (i + s_tabs.Length - 1) % s_tabs.Length;
+                else if (e.IsKey("Home"))
+                    n = 0;
+                else if (e.IsKey("End"))
+                    n = s_tabs.Length - 1;
+                else
+                    return;
                 SelectTab(s_tabs[n], true);
                 e.Handled = true;
             });
             doc.On("inv-grid", "click", e =>
             {
                 var id = FindItemId(e);
-                if (id != null) SelectItem(id, false);
+                if (id != null)
+                    SelectItem(id, false);
             });
             doc.On("inv-grid", "keydown", e =>
             {
                 var id = FindItemId(e);
-                if (id == null) return;
+                if (id == null)
+                    return;
                 var visible = VisibleItemIds();
                 int i = visible.IndexOf(id);
-                if (i < 0) return;
+                if (i < 0)
+                    return;
                 int n = i;
-                if (e.IsKey("ArrowRight") || e.IsKey("ArrowDown")) n = Mathf.Min(visible.Count - 1, i + 1);
-                else if (e.IsKey("ArrowLeft") || e.IsKey("ArrowUp")) n = Mathf.Max(0, i - 1);
-                else if (e.IsKey("Home")) n = 0;
-                else if (e.IsKey("End")) n = visible.Count - 1;
-                else if (e.IsKey("Enter") || e.IsKey(" ")) { SelectItem(id, false); e.Handled = true; return; }
-                else return;
+                if (e.IsKey("ArrowRight") || e.IsKey("ArrowDown"))
+                    n = Mathf.Min(visible.Count - 1, i + 1);
+                else if (e.IsKey("ArrowLeft") || e.IsKey("ArrowUp"))
+                    n = Mathf.Max(0, i - 1);
+                else if (e.IsKey("Home"))
+                    n = 0;
+                else if (e.IsKey("End"))
+                    n = visible.Count - 1;
+                else if (e.IsKey("Enter") || e.IsKey(" "))
+                {
+                    SelectItem(id, false);
+                    e.Handled = true;
+                    return;
+                }
+                else
+                    return;
                 SelectItem(visible[n], true);
                 e.Handled = true;
             });
             doc.On("keydown", e =>
             {
-                if (!e.IsKey("Escape")) return;
-                if (Game.Current == SampleGame.State.Paused) Game.Resume();
-                else if (Game.Current == SampleGame.State.Playing) Game.Pause();
+                if (!e.IsKey("Escape"))
+                    return;
+                if (Game.Current == SampleGame.State.Paused)
+                    Game.Resume();
+                else if (Game.Current == SampleGame.State.Playing)
+                    Game.Pause();
             });
 
             // ---- Tooltip dismissal (WAI-ARIA: Escape hides a tooltip; it comes back on the next hover/focus).
@@ -189,13 +224,18 @@ namespace Hiccup.Samples
 
         private void ShowScreen(string name)
         {
-            if (Array.IndexOf(s_screens, name) < 0) name = "menu";
+            if (Array.IndexOf(s_screens, name) < 0)
+                name = "menu";
             _screen = name;
-            foreach (var s in s_screens) Document.Q("#screen-" + s).Hidden = s != name;
+            foreach (var s in s_screens)
+                Document.Q("#screen-" + s).Hidden = s != name;
             foreach (var btn in Document.QAll(".nav-btn"))
             {
                 bool current = btn.GetAttribute("data-screen") == name;
-                if (current) btn.SetAttribute("aria-current", "page"); else btn.RemoveAttribute("aria-current");
+                if (current)
+                    btn.SetAttribute("aria-current", "page");
+                else
+                    btn.RemoveAttribute("aria-current");
                 btn.Dispose();
             }
             if (name != "hud")
@@ -218,7 +258,8 @@ namespace Hiccup.Samples
                     break;
                 case SampleGame.State.Playing:
                     Document.Q("#pause-dialog").CloseModal();
-                    if (_screen != "hud") ShowScreen("hud");
+                    if (_screen != "hud")
+                        ShowScreen("hud");
                     break;
                 case SampleGame.State.Ended:
                     Document.Announce($"Mission over. Final score {Game.Score}.", true);
@@ -239,7 +280,8 @@ namespace Hiccup.Samples
         private void UpdateHud()
         {
             var doc = Document;
-            if (doc == null || !doc.IsCreated) return;
+            if (doc == null || !doc.IsCreated)
+                return;
             doc.Q("#score").Text = Game.Score.ToString(CultureInfo.InvariantCulture);
             doc.Q("#timer").Text = Mathf.CeilToInt(Game.TimeLeft).ToString(CultureInfo.InvariantCulture);
             doc.Q("#targets").Text = Game.SalvagedCount.ToString(CultureInfo.InvariantCulture);
@@ -274,7 +316,8 @@ namespace Hiccup.Samples
 
         private void Toast(string message, string kind = "")
         {
-            if (Document == null || !Document.IsCreated) return;
+            if (Document == null || !Document.IsCreated)
+                return;
             string id = "toast-" + (++_toastId);
             Document.Q("#toasts").Append($"<div class=\"toast {kind}\" id=\"{id}\">{Escape(message)}</div>");
             StartCoroutine(RemoveLater(id, 3.5f));
@@ -283,7 +326,8 @@ namespace Hiccup.Samples
         private IEnumerator RemoveLater(string id, float seconds)
         {
             yield return new WaitForSeconds(seconds);
-            if (Document != null && Document.IsCreated) Document.Q("#" + id).Remove();
+            if (Document != null && Document.IsCreated)
+                Document.Q("#" + id).Remove();
         }
 
         // ------------------------------------------------------------------ inventory
@@ -313,7 +357,8 @@ namespace Hiccup.Samples
             {
                 bool match = (cat == "all" || cat == it.Category) && (search.Length == 0 || it.Name.ToLowerInvariant().Contains(search));
                 Document.Q("#item-" + it.Id).Hidden = !match;
-                if (match) shown++;
+                if (match)
+                    shown++;
             }
             Document.Q("#inv-count").Text = $"{shown} of {s_items.Length} items";
         }
@@ -322,16 +367,24 @@ namespace Hiccup.Samples
         {
             var list = new List<string>();
             foreach (var it in s_items)
-                if (!Document.Q("#item-" + it.Id).Hidden) list.Add(it.Id);
+            {
+                if (!Document.Q("#item-" + it.Id).Hidden)
+                    list.Add(it.Id);
+            }
             return list;
         }
 
         private static string FindItemId(HtmlEvent e)
         {
-            if (e.id != null && e.id.StartsWith("item-", StringComparison.Ordinal)) return e.id.Substring(5);
-            if (string.IsNullOrEmpty(e.path)) return null;
+            if (e.id != null && e.id.StartsWith("item-", StringComparison.Ordinal))
+                return e.id.Substring(5);
+            if (string.IsNullOrEmpty(e.path))
+                return null;
             foreach (var id in e.path.Split(' '))
-                if (id.StartsWith("item-", StringComparison.Ordinal)) return id.Substring(5);
+            {
+                if (id.StartsWith("item-", StringComparison.Ordinal))
+                    return id.Substring(5);
+            }
             return null;
         }
 
@@ -344,7 +397,8 @@ namespace Hiccup.Samples
                 var el = Document.Q("#item-" + it.Id);
                 el.SetAttribute("aria-selected", sel ? "true" : "false");
                 el.SetAttribute("tabindex", sel ? "0" : "-1");
-                if (sel && focus) el.Focus();
+                if (sel && focus)
+                    el.Focus();
                 el.Dispose();
             }
             Document.Q("#inv-grid").SetAttribute("aria-activedescendant", "item-" + id);
@@ -361,7 +415,8 @@ namespace Hiccup.Samples
         {
             var id = e.GetData("item");
             var item = Array.Find(s_items, i => i.Id == id);
-            if (item.Id == null) return;
+            if (item.Id == null)
+                return;
             Toast($"Used {item.Name}. Nothing happened, but it felt good.", "ok");
             Document.Announce($"Used {item.Name}");
         }
@@ -376,7 +431,8 @@ namespace Hiccup.Samples
                 var tab = Document.Q("#" + t);
                 tab.SetAttribute("aria-selected", selected ? "true" : "false");
                 tab.SetAttribute("tabindex", selected ? "0" : "-1");
-                if (selected && focus) tab.Focus();
+                if (selected && focus)
+                    tab.Focus();
                 var panel = Document.Q("#" + tab.GetAttribute("aria-controls"));
                 panel.Hidden = !selected;
                 tab.Dispose();
@@ -417,7 +473,8 @@ namespace Hiccup.Samples
 
         private static string Escape(string s)
         {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
             return s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
         }
     }

@@ -34,8 +34,10 @@ namespace Hiccup
         private void OnGUI()
         {
             var e = Event.current;
-            if (e == null || e.type != EventType.KeyDown) return;
-            if (e.keyCode == KeyCode.None && e.character == '\0') return;
+            if (e == null || e.type != EventType.KeyDown)
+                return;
+            if (e.keyCode == KeyCode.None && e.character == '\0')
+                return;
 
             Pending.Add(new HtmlKeyPress
             {

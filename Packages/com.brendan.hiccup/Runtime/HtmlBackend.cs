@@ -110,7 +110,8 @@ namespace Hiccup
 
         public static void Register(IHtmlBackend backend)
         {
-            if (ReferenceEquals(s_current, backend)) return;
+            if (ReferenceEquals(s_current, backend))
+                return;
             s_current?.Shutdown();
             s_current = backend;
             Changed?.Invoke();
@@ -118,7 +119,8 @@ namespace Hiccup
 
         public static void Unregister(IHtmlBackend backend)
         {
-            if (!ReferenceEquals(s_current, backend)) return;
+            if (!ReferenceEquals(s_current, backend))
+                return;
             s_current?.Shutdown();
             s_current = null;
             Changed?.Invoke();
@@ -140,13 +142,16 @@ namespace Hiccup
         {
             if (enabled)
             {
-                if (s_keyboard != null || !HtmlRuntime.HasInstance) return;
+                if (s_keyboard != null || !HtmlRuntime.HasInstance)
+                    return;
                 s_keyboard = HtmlRuntime.Instance.gameObject.AddComponent<HtmlKeyboardRelay>();
             }
             else if (s_keyboard != null)
             {
-                if (Application.isPlaying) UnityEngine.Object.Destroy(s_keyboard);
-                else UnityEngine.Object.DestroyImmediate(s_keyboard);
+                if (Application.isPlaying)
+                    UnityEngine.Object.Destroy(s_keyboard);
+                else
+                    UnityEngine.Object.DestroyImmediate(s_keyboard);
                 s_keyboard = null;
             }
         }
@@ -154,7 +159,8 @@ namespace Hiccup
         /// <summary>Appends the key presses seen since the last call to <paramref name="into"/>. Nothing unless capture is on.</summary>
         public static void DrainKeyPresses(List<HtmlKeyPress> into)
         {
-            if (s_keyboard == null || into == null) return;
+            if (s_keyboard == null || into == null)
+                return;
             into.AddRange(s_keyboard.Pending);
             s_keyboard.Pending.Clear();
         }

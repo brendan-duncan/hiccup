@@ -25,20 +25,26 @@ namespace Hiccup.Samples
 
         private void OnEnable()
         {
-            if (Document == null) Document = GetComponent<HtmlDocument>();
-            if (Document == null) return;
-            if (Document.IsCreated) Wire(Document);
-            else Document.Created += Wire;
+            if (Document == null)
+                Document = GetComponent<HtmlDocument>();
+            if (Document == null)
+                return;
+            if (Document.IsCreated)
+                Wire(Document);
+            else
+                Document.Created += Wire;
         }
 
         private void OnDisable()
         {
-            if (Document != null) Document.Created -= Wire;
+            if (Document != null)
+                Document.Created -= Wire;
         }
 
         private void Wire(HtmlDocument doc)
         {
-            if (_wired) return;
+            if (_wired)
+                return;
             _wired = true;
             using (var frame = doc.Q("#screen"))
                 frame.SetAttribute("srcdoc", ScenePage != null ? ScenePage.text : "<p>ThreeScene.html is missing.</p>");
@@ -48,12 +54,19 @@ namespace Hiccup.Samples
         /// <summary>Cursor position, 0..1 from the screen's top-left.</summary>
         public void MoveTo(float x, float y) { _x = Mathf.Clamp01(x); _y = Mathf.Clamp01(y); _dirty = true; }
         public void Press() { _down = true; _dirty = true; }
-        public void Release(bool click) { _down = false; if (click) _clicks++; _dirty = true; }
+        public void Release(bool click)
+        {
+            _down = false;
+            if (click)
+                _clicks++;
+            _dirty = true;
+        }
         public void Wheel(float delta) { _wheel += delta; _dirty = true; }
 
         private void LateUpdate()
         {
-            if (!_wired || !_dirty || Document == null || !Document.IsCreated) return;
+            if (!_wired || !_dirty || Document == null || !Document.IsCreated)
+                return;
             _dirty = false;
             using (var frame = Document.Q("#screen"))
             {

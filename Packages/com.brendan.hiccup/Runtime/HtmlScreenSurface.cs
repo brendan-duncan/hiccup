@@ -42,34 +42,54 @@ namespace Hiccup
             _rawImage = GetComponent<RawImage>();
             _rect = GetComponent<RectTransform>();
             _rawImage.raycastTarget = false;
-            if (document == null) document = GetComponent<HtmlDocument>();
+            if (document == null)
+                document = GetComponent<HtmlDocument>();
             _usingCutout = false;
-            if (Application.isPlaying) ApplyMaterial(false);
+            if (Application.isPlaying)
+                ApplyMaterial(false);
         }
 
         private void OnDisable()
         {
-            if (_rawImage != null && (_rawImage.material == _material || _rawImage.material == _cutout)) _rawImage.material = null;
-            if (_material != null) { Destroy(_material); _material = null; }
-            if (_cutout != null) { Destroy(_cutout); _cutout = null; }
+            if (_rawImage != null && (_rawImage.material == _material || _rawImage.material == _cutout))
+                _rawImage.material = null;
+            if (_material != null)
+            {
+                Destroy(_material);
+                _material = null;
+            }
+            if (_cutout != null)
+            {
+                Destroy(_cutout);
+                _cutout = null;
+            }
         }
 
         private void ApplyMaterial(bool cutout)
         {
-            if (document == null) return;
+            if (document == null)
+                return;
             Material m;
             if (cutout)
             {
-                if (_cutout == null) _cutout = Create("Hiccup/UI Overlay Cutout", "Hiccup UI Overlay Cutout (instance)");
+                if (_cutout == null)
+                    _cutout = Create("Hiccup/UI Overlay Cutout", "Hiccup UI Overlay Cutout (instance)");
                 m = _cutout;
             }
             else
             {
-                if (!document.PremultipliedAlpha) { _rawImage.material = null; _usingCutout = false; return; }
-                if (_material == null) _material = Create("Hiccup/UI Premultiplied", "Hiccup UI Premultiplied (instance)");
+                if (!document.PremultipliedAlpha)
+                {
+                    _rawImage.material = null;
+                    _usingCutout = false;
+                    return;
+                }
+                if (_material == null)
+                    _material = Create("Hiccup/UI Premultiplied", "Hiccup UI Premultiplied (instance)");
                 m = _material;
             }
-            if (m != null) _rawImage.material = m;
+            if (m != null)
+                _rawImage.material = m;
             _usingCutout = cutout;
         }
 
@@ -81,13 +101,17 @@ namespace Hiccup
 
         private void LateUpdate()
         {
-            if (!Application.isPlaying || document == null) return;
-            if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
-            if (!document.IsCreated) return;
+            if (!Application.isPlaying || document == null)
+                return;
+            if (_canvas == null)
+                _canvas = GetComponentInParent<Canvas>();
+            if (!document.IsCreated)
+                return;
 
             var runtime = HtmlRuntime.Instance;
             bool cutout = document.RenderMode == HtmlRenderMode.Overlay && runtime.OverlayCutout;
-            if (cutout != _usingCutout || (!cutout && _material == null && document.PremultipliedAlpha)) ApplyMaterial(cutout);
+            if (cutout != _usingCutout || (!cutout && _material == null && document.PremultipliedAlpha))
+                ApplyMaterial(cutout);
 
             var cam = (_canvas != null && _canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? (_canvas.worldCamera != null ? _canvas.worldCamera : uiCamera) : null;
 
@@ -102,7 +126,8 @@ namespace Hiccup
                 float css = runtime.CssPerScreenPixel;
                 int w = Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(tl, tr) * css));
                 int h = Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(tl, bl) * css));
-                if (w != document.Size.x || h != document.Size.y) document.SetSize(w, h);
+                if (w != document.Size.x || h != document.Size.y)
+                    document.SetSize(w, h);
             }
 
             // Screen pixels -> Unity clip space (y up).

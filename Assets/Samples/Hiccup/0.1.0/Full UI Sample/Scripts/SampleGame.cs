@@ -35,27 +35,50 @@ namespace Hiccup.Samples
         public void StartMission()
         {
             Score = 0; SalvagedCount = 0; TimeLeft = 60f; Health = 100f; Energy = 80f;
-            foreach (var t in Targets) t.Respawn();
+            foreach (var t in Targets)
+                t.Respawn();
             SetState(State.Playing);
             Notify?.Invoke("Mission started. Salvage the cubes!", "ok");
             StatsChanged?.Invoke();
         }
 
-        public void Pause() { if (Current == State.Playing) SetState(State.Paused); }
-        public void Resume() { if (Current == State.Paused) SetState(State.Playing); }
-        public void TogglePause() { if (Current == State.Playing) Pause(); else if (Current == State.Paused) Resume(); }
+        public void Pause()
+        {
+            if (Current == State.Playing)
+                SetState(State.Paused);
+        }
+        public void Resume()
+        {
+            if (Current == State.Paused)
+                SetState(State.Playing);
+        }
+        public void TogglePause()
+        {
+            if (Current == State.Playing)
+                Pause(); else if (Current == State.Paused)
+                Resume();
+        }
 
         public void Abandon()
         {
-            if (Current == State.Menu) return;
+            if (Current == State.Menu)
+                return;
             SetState(State.Menu);
             Notify?.Invoke("Mission abandoned.", "warn");
         }
 
         public void Repair()
         {
-            if (Current != State.Playing) { Notify?.Invoke("Start a mission first.", "warn"); return; }
-            if (Energy < 20f) { Notify?.Invoke("Not enough energy to repair.", "danger"); return; }
+            if (Current != State.Playing)
+            {
+                Notify?.Invoke("Start a mission first.", "warn");
+                return;
+            }
+            if (Energy < 20f)
+            {
+                Notify?.Invoke("Not enough energy to repair.", "danger");
+                return;
+            }
             Energy -= 20f;
             Health = Mathf.Min(100f, Health + 25f);
             Notify?.Invoke("Hull repaired.", "ok");
@@ -64,20 +87,24 @@ namespace Hiccup.Samples
 
         public void RandomizeColors()
         {
-            foreach (var t in Targets) t.RandomizeColor();
+            foreach (var t in Targets)
+                t.RandomizeColor();
         }
 
         private void SetState(State s)
         {
-            if (Current == s) return;
+            if (Current == s)
+                return;
             Current = s;
             StateChanged?.Invoke(s);
         }
 
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) TogglePause();
-            if (Current != State.Playing) return;
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                TogglePause();
+            if (Current != State.Playing)
+                return;
 
             float dt = Time.deltaTime;
             TimeLeft -= dt;
@@ -96,21 +123,33 @@ namespace Hiccup.Samples
             HandleClick();
 
             _statsTimer += dt;
-            if (_statsTimer >= 0.25f) { _statsTimer = 0f; StatsChanged?.Invoke(); }
+            if (_statsTimer >= 0.25f)
+            {
+                _statsTimer = 0f;
+                StatsChanged?.Invoke();
+            }
         }
 
         private void HandleClick()
         {
             var pointer = Pointer.current;
-            if (pointer == null || Camera == null || !pointer.press.wasPressedThisFrame) return;
+            if (pointer == null || Camera == null || !pointer.press.wasPressedThisFrame)
+                return;
 
             // No Physics module: test the ray against each target's bounds ourselves and take the nearest.
             var ray = Camera.ScreenPointToRay(pointer.position.ReadValue());
             SalvageTarget target = null;
             float nearest = 200f;
             foreach (var t in Targets)
-                if (t.TryHit(ray, out float d) && d < nearest) { nearest = d; target = t; }
-            if (target == null) return;
+            {
+                if (t.TryHit(ray, out float d) && d < nearest)
+                {
+                    nearest = d;
+                    target = t;
+                }
+            }
+            if (target == null)
+                return;
 
             target.Salvage();
             Score += target.Value;

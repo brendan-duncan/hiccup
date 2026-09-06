@@ -59,12 +59,18 @@ namespace Hiccup.Ugui
         /// <summary>Returns a data URL for <paramref name="rect"/> (texture pixels, origin bottom-left) of <paramref name="texture"/>, multiplied by <paramref name="tint"/>'s RGB.</summary>
         public string DataUrl(Texture texture, RectInt rect, Color tint)
         {
-            if (texture == null) return null;
+            if (texture == null)
+                return null;
             int q = QuantizeTint(tint);
             var key = new Key { Texture = texture.GetEntityId(), X = rect.x, Y = rect.y, W = rect.width, H = rect.height, Tint = q };
-            if (_urls.TryGetValue(key, out var url)) return url;
+            if (_urls.TryGetValue(key, out var url))
+                return url;
             url = Export(texture, rect, TintFromKey(q));
-            if (url != null) { Trim(); _urls[key] = url; }
+            if (url != null)
+            {
+                Trim();
+                _urls[key] = url;
+            }
             return url;
         }
 
@@ -76,17 +82,20 @@ namespace Hiccup.Ugui
         /// </summary>
         public string SlicedDataUrl(Texture texture, RectInt rect, Vector4 sourceBorder, int outW, int outH, int left, int bottom, int right, int top, bool fillCenter, Color tint)
         {
-            if (texture == null) return null;
+            if (texture == null)
+                return null;
             outW = Mathf.Max(1, outW);
             outH = Mathf.Max(1, outH);
             int q = QuantizeTint(tint);
             var source = new Key { Texture = texture.GetEntityId(), X = rect.x, Y = rect.y, W = rect.width, H = rect.height, Tint = 0 };
             var key = new SlicedKey { Source = source, OutW = outW, OutH = outH, L = left, B = bottom, R = right, T = top, Fill = fillCenter };
             key.Source.Tint = q;
-            if (_sliced.TryGetValue(key, out var url)) return url;
+            if (_sliced.TryGetValue(key, out var url))
+                return url;
 
             var src = Source(texture, rect, source);
-            if (src == null) return null;
+            if (src == null)
+                return null;
             int sw = Mathf.Max(1, rect.width), sh = Mathf.Max(1, rect.height);
             var px = Compose(src, sw, sh, outW, outH,
                 left, bottom, right, top,
@@ -105,22 +114,39 @@ namespace Hiccup.Ugui
         /// <summary>Drops every export of a texture so the next request re-reads it (RenderTextures that change).</summary>
         public void Invalidate(Texture texture)
         {
-            if (texture == null) return;
+            if (texture == null)
+                return;
             var id = texture.GetEntityId();
             var dead = new List<Key>();
-            foreach (var k in _urls.Keys) if (k.Texture.Equals(id)) dead.Add(k);
-            foreach (var k in dead) _urls.Remove(k);
+            foreach (var k in _urls.Keys)
+            {
+                if (k.Texture.Equals(id))
+                dead.Add(k);
+            }
+            foreach (var k in dead)
+                _urls.Remove(k);
             dead.Clear();
-            foreach (var k in _sources.Keys) if (k.Texture.Equals(id)) dead.Add(k);
-            foreach (var k in dead) _sources.Remove(k);
+            foreach (var k in _sources.Keys)
+            {
+                if (k.Texture.Equals(id))
+                dead.Add(k);
+            }
+            foreach (var k in dead)
+                _sources.Remove(k);
             var deadSliced = new List<SlicedKey>();
-            foreach (var k in _sliced.Keys) if (k.Source.Texture.Equals(id)) deadSliced.Add(k);
-            foreach (var k in deadSliced) _sliced.Remove(k);
+            foreach (var k in _sliced.Keys)
+            {
+                if (k.Source.Texture.Equals(id))
+                deadSliced.Add(k);
+            }
+            foreach (var k in deadSliced)
+                _sliced.Remove(k);
         }
 
         private void Trim()
         {
-            if (_urls.Count + _sliced.Count < MaxEntries) return;
+            if (_urls.Count + _sliced.Count < MaxEntries)
+                return;
             _urls.Clear();
             _sliced.Clear();
             _sources.Clear();
@@ -129,16 +155,19 @@ namespace Hiccup.Ugui
         /// <summary>The untinted pixels of a texture rectangle, bottom row first, read once and kept.</summary>
         private Color32[] Source(Texture texture, RectInt rect, Key source)
         {
-            if (_sources.TryGetValue(source, out var px)) return px;
+            if (_sources.TryGetValue(source, out var px))
+                return px;
             int w = Mathf.Max(1, rect.width), h = Mathf.Max(1, rect.height);
             px = ReadDirect(texture, rect, w, h) ?? ReadThroughBlit(texture, rect, w, h);
-            if (px != null && !(texture is RenderTexture)) _sources[source] = px;
+            if (px != null && !(texture is RenderTexture))
+                _sources[source] = px;
             return px;
         }
 
         private static void Tint(Color32[] px, Color tint)
         {
-            if (tint == Color.white) return;
+            if (tint == Color.white)
+                return;
             for (int i = 0; i < px.Length; i++)
             {
                 px[i].r = (byte)Mathf.RoundToInt(px[i].r * tint.r);
@@ -159,7 +188,11 @@ namespace Hiccup.Ugui
                 for (int x = 0; x < ow; x++)
                 {
                     int xr = Map(x, ow, dl, dr, sw, sl, sr, out float sx, out int xlo, out int xhi);
-                    if (!fill && region == 1 && xr == 1) { dst[y * ow + x] = clear; continue; }
+                    if (!fill && region == 1 && xr == 1)
+                    {
+                        dst[y * ow + x] = clear;
+                        continue;
+                    }
                     dst[y * ow + x] = Sample(src, sw, sx, sy, xlo, xhi, ylo, yhi);
                 }
             }
@@ -220,7 +253,8 @@ namespace Hiccup.Ugui
             int w = Mathf.Max(1, rect.width), h = Mathf.Max(1, rect.height);
             var source = new Key { Texture = texture.GetEntityId(), X = rect.x, Y = rect.y, W = rect.width, H = rect.height, Tint = 0 };
             var px = Source(texture, rect, source);
-            if (px == null) return null;
+            if (px == null)
+                return null;
             if (tint != Color.white)
             {
                 px = (Color32[])px.Clone();   // the cached source stays untinted
@@ -235,10 +269,12 @@ namespace Hiccup.Ugui
         /// <summary>Readable textures (everything created at runtime, and imported ones with Read/Write on) are copied on the CPU: no render target, no colour-space round trip.</summary>
         private static Color32[] ReadDirect(Texture texture, RectInt rect, int w, int h)
         {
-            if (!(texture is Texture2D t2) || !t2.isReadable) return null;
+            if (!(texture is Texture2D t2) || !t2.isReadable)
+                return null;
             try
             {
-                if (rect.x == 0 && rect.y == 0 && w == t2.width && h == t2.height) return t2.GetPixels32();
+                if (rect.x == 0 && rect.y == 0 && w == t2.width && h == t2.height)
+                    return t2.GetPixels32();
                 var all = t2.GetPixels32();
                 var px = new Color32[w * h];
                 int tw = t2.width;
@@ -280,7 +316,8 @@ namespace Hiccup.Ugui
         {
             if (_scratch == null || _scratch.width != w || _scratch.height != h)
             {
-                if (_scratch != null) UnityEngine.Object.Destroy(_scratch);
+                if (_scratch != null)
+                    UnityEngine.Object.Destroy(_scratch);
                 _scratch = new Texture2D(w, h, TextureFormat.RGBA32, false) { name = "Hiccup uGUI export", hideFlags = HideFlags.HideAndDontSave };
             }
             return _scratch;
@@ -289,12 +326,14 @@ namespace Hiccup.Ugui
         private void Dump(byte[] png, Texture texture, Color tint)
         {
 #if !UNITY_WEBGL || UNITY_EDITOR
-            if (string.IsNullOrEmpty(DumpDirectory)) return;
+            if (string.IsNullOrEmpty(DumpDirectory))
+                return;
             try
             {
                 System.IO.Directory.CreateDirectory(DumpDirectory);
                 var name = $"{_dumped++:000}_{texture.name}_{ColorUtility.ToHtmlStringRGB(tint)}.png";
-                foreach (var c in System.IO.Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+                foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+                    name = name.Replace(c, '_');
                 System.IO.File.WriteAllBytes(System.IO.Path.Combine(DumpDirectory, name), png);
             }
             catch (Exception e) { Debug.LogWarning("[Hiccup] Could not dump a uGUI texture export: " + e.Message); }
@@ -306,7 +345,11 @@ namespace Hiccup.Ugui
             _urls.Clear();
             _sliced.Clear();
             _sources.Clear();
-            if (_scratch != null) { UnityEngine.Object.Destroy(_scratch); _scratch = null; }
+            if (_scratch != null)
+            {
+                UnityEngine.Object.Destroy(_scratch);
+                _scratch = null;
+            }
         }
     }
 }
