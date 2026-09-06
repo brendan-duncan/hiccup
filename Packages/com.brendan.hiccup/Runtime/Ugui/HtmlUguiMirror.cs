@@ -263,7 +263,7 @@ namespace Hiccup.Ugui
                 doc.On("click", OnClick);
                 doc.On("input", OnInput);
                 doc.On("change", OnChange);
-                doc.On("ugscroll", OnScroll);
+                doc.OnMessage("ugscroll", OnScroll);
                 doc.On("pointerover", OnPointerOver);
                 doc.On("pointerdown", OnPointerDown);
                 doc.On("pointerup", OnPointerUp);
@@ -282,7 +282,7 @@ namespace Hiccup.Ugui
             _doc.Off("click", OnClick);
             _doc.Off("input", OnInput);
             _doc.Off("change", OnChange);
-            _doc.Off("ugscroll", OnScroll);
+            _doc.OffMessage("ugscroll", OnScroll);
             _doc.Off("pointerover", OnPointerOver);
             _doc.Off("pointerdown", OnPointerDown);
             _doc.Off("pointerup", OnPointerUp);
@@ -297,14 +297,13 @@ namespace Hiccup.Ugui
             _hovered = _pressed = null;
         }
 
-        // The panel root only sees bubbling events and scroll does not bubble, so relay it as one that does,
-        // carrying the offsets in a data attribute the event payload already forwards.
+        // The panel root only sees bubbling events and scroll does not bubble, so a capture-phase listener
+        // sends the viewport's id and offsets to C# as a message instead.
         private const string ScrollScript = @"
             root.addEventListener('scroll', function (e) {
                 var t = e.target;
-                if (!t || !t.dataset) return;
-                t.dataset.scroll = Math.round(t.scrollTop) + ',' + Math.round(t.scrollLeft);
-                t.dispatchEvent(new CustomEvent('ugscroll', { bubbles: true }));
+                if (!t || !t.id) return;
+                HUI.send('ugscroll', t.id + ',' + Math.round(t.scrollTop) + ',' + Math.round(t.scrollLeft));
             }, true);";
 
         // ------------------------------------------------------------------ per-frame sync
@@ -1356,13 +1355,16 @@ namespace Hiccup.Ugui
             }
         }
 
-        private void OnScroll(HtmlEvent e)
+        private void OnScroll(HtmlMessage m)
         {
-            var n = NodeFor(e);
+            // "<viewport id>,<scrollTop>,<scrollLeft>"
+            var parts = m.Data.Split(',');
+            if (parts.Length < 3)
+                return;
+            var n = NodeFor(parts[0]);
             if (n == null || n.Viewport == null || n.Viewport.content == null)
                 return;
-            var parts = (e.GetData("scroll") ?? string.Empty).Split(',');
-            if (parts.Length < 2 || !float.TryParse(parts[0], NumberStyles.Float, Inv, out float top) || !float.TryParse(parts[1], NumberStyles.Float, Inv, out float left))
+            if (!float.TryParse(parts[1], NumberStyles.Float, Inv, out float top) || !float.TryParse(parts[2], NumberStyles.Float, Inv, out float left))
                 return;
             n.ScrollPushed = new Vector2(left, top);
             if (!_nodes.TryGetValue(n.Viewport.content.GetEntityId(), out var content))
@@ -1371,7 +1373,7 @@ namespace Hiccup.Ugui
             // Content top must end up at -scrollTop: CSS top grows downward, anchoredPosition.y upward.
             n.Viewport.content.anchoredPosition = new Vector2(ap.x - left - content.Last.Left, ap.y + content.Last.Top + top);
             n.Viewport.velocity = Vector2.zero;
-            e.Handled = true;
+            m.Handled = true;
         }
 
         private void OnPointerOver(HtmlEvent e)

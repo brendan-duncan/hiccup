@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### Added
+- Page-to-C# messages. Script run through `HtmlDocument.Eval` / `EvalAsync`, or DOM listeners such script
+  installs, calls `HUI.send(name, payload)`; C# receives it with `doc.OnMessage(name, handler)` or the
+  `doc.MessageReceived` event as an `HtmlMessage` (`Name`, `Data`, `DataAsFloat`, `DataAsInt`, `DataAsBool`,
+  `DataAs<T>()`, `Handled`). A string payload arrives as sent, anything else as JSON. In the jslib the `HUI`
+  that `Eval` code sees is now a per-panel view of the bridge (`send`, `panel`, `root`, plus everything the
+  bridge had); the Editor preview delivers messages through a second DevTools binding, `HUI_Message`.
+- `HtmlDocument.EvalAsync(js)` returns a `Task<string>`. The code runs as an `async` function body with the same
+  `panel`, `root` and `HUI` scope as `Eval`, so it can `await` fetches, animations, dialog results and other
+  promises; the result is stringified like `Eval`'s. A throw or rejection faults the task with
+  `HtmlEvalException`; destroying the panel cancels it. `IHtmlBackend` gained `PanelEvalAsync`, and `HtmlBackend`
+  gained `CompleteEval` and `DispatchMessage` for backends to report through.
+
+### Changed
+- The uGUI mirror's scroll relay uses the message channel: the capture-phase `scroll` listener sends the
+  viewport id and offsets with `HUI.send('ugscroll', …)` instead of re-dispatching a bubbling custom event with
+  a `data-scroll` attribute.
+
+### Fixed
+- Editor preview: `HtmlDocument.Eval` returning an object, array or boolean came back as .NET's rendering of
+  the value (a type name, `True`). It is now stringified in the page exactly as the jslib does (JSON, `true`).
+
 ### Added (experimental)
 - `HtmlUguiMirror` (`Hiccup.Ugui`): mirrors a uGUI `Canvas` into an `HtmlDocument` after every layout pass, so an
   existing uGUI interface is drawn and interacted with as DOM while uGUI keeps running underneath. RectTransforms

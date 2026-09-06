@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Hiccup
@@ -14,6 +15,12 @@ namespace Hiccup
         ChildrenOnly = 1,
         /// <summary>The document is display-only.</summary>
         None = 2
+    }
+
+    /// <summary>Thrown (through the returned task) when <see cref="HtmlDocument.EvalAsync"/> code throws or its promise rejects.</summary>
+    public sealed class HtmlEvalException : Exception
+    {
+        public HtmlEvalException(string message) : base(message) { }
     }
 
     /// <summary>
@@ -67,9 +74,14 @@ namespace Hiccup
         private readonly Dictionary<string, List<Action<HtmlEvent>>> _elementHandlers = new Dictionary<string, List<Action<HtmlEvent>>>();
         private readonly Dictionary<string, List<Action<HtmlEvent>>> _actionHandlers = new Dictionary<string, List<Action<HtmlEvent>>>();
         private readonly HashSet<string> _listened = new HashSet<string>();
+        private readonly Dictionary<string, List<Action<HtmlMessage>>> _messageHandlers = new Dictionary<string, List<Action<HtmlMessage>>>();
+        private readonly Dictionary<int, TaskCompletionSource<string>> _evals = new Dictionary<int, TaskCompletionSource<string>>();
+        private int _nextEval = 1;
 
         /// <summary>Raised for every DOM event forwarded from the browser, before element/action handlers.</summary>
         public event Action<HtmlEvent> EventReceived;
+        /// <summary>Raised for every message the page sends with <c>HUI.send</c>, before <see cref="OnMessage"/> handlers.</summary>
+        public event Action<HtmlMessage> MessageReceived;
         /// <summary>Raised when <see cref="Texture"/> is (re)created, e.g. after a resize.</summary>
         public event Action<HtmlDocument> TextureChanged;
         /// <summary>
@@ -281,6 +293,7 @@ namespace Hiccup
             _created = false;
             _ready = false;
             _panel = 0;
+            CancelEvals();
         }
 
         /// <summary>Re-applies the serialized HTML and style sheets.</summary>
@@ -407,6 +420,45 @@ namespace Hiccup
             return HtmlNative.TakeString(HtmlNative.Hiccup_PanelEval(_panel, javascript ?? string.Empty));
         }
 
+        /// <summary>
+        /// Runs JavaScript inside the page as an <c>async</c> function body, so <c>await</c> is allowed, and completes
+        /// when it returns or its promise settles. Same scope as <see cref="Eval"/>: <c>panel</c>, <c>root</c> and
+        /// <c>HUI</c>. The result is stringified (objects as JSON); an exception or rejection faults the task with an
+        /// <see cref="HtmlEvalException"/>. Destroying the panel cancels the task.
+        /// </summary>
+        public Task<string> EvalAsync(string javascript)
+        {
+            if (!_created)
+                return Task.FromResult(string.Empty);
+            int id = _nextEval++;
+            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _evals[id] = tcs;   // before the call: a bridge with no browser completes synchronously
+            HtmlNative.Hiccup_PanelEvalAsync(_panel, javascript ?? string.Empty, id);
+            return tcs.Task;
+        }
+
+        /// <summary>Called by <see cref="HtmlRuntime"/> when the bridge finishes an <see cref="EvalAsync"/> request.</summary>
+        internal void CompleteEval(int requestId, string result, string error)
+        {
+            if (!_evals.TryGetValue(requestId, out var tcs))
+                return;
+            _evals.Remove(requestId);
+            if (error != null)
+                tcs.TrySetException(new HtmlEvalException(error));
+            else
+                tcs.TrySetResult(result ?? string.Empty);
+        }
+
+        private void CancelEvals()
+        {
+            if (_evals.Count == 0)
+                return;
+            var pending = new List<TaskCompletionSource<string>>(_evals.Values);
+            _evals.Clear();
+            foreach (var tcs in pending)
+                tcs.TrySetCanceled();
+        }
+
         /// <summary>Announces text to screen readers through an aria-live region.</summary>
         public void Announce(string text, bool assertive = false)
         {
@@ -452,19 +504,58 @@ namespace Hiccup
                 HtmlNative.Hiccup_PanelListen(_panel, eventType, 1);
         }
 
-        private static void AddHandler(Dictionary<string, List<Action<HtmlEvent>>> map, string key, Action<HtmlEvent> handler)
+        private static void AddHandler<T>(Dictionary<string, List<Action<T>>> map, string key, Action<T> handler)
         {
             if (handler == null)
                 return;
             if (!map.TryGetValue(key, out var list))
-                map[key] = list = new List<Action<HtmlEvent>>();
+                map[key] = list = new List<Action<T>>();
             list.Add(handler);
         }
 
-        private static void RemoveHandler(Dictionary<string, List<Action<HtmlEvent>>> map, string key, Action<HtmlEvent> handler)
+        private static void RemoveHandler<T>(Dictionary<string, List<Action<T>>> map, string key, Action<T> handler)
         {
             if (map.TryGetValue(key, out var list))
                 list.Remove(handler);
+        }
+
+        // ------------------------------------------------------------------ messages
+
+        /// <summary>
+        /// Handles messages the page sends with <c>HUI.send(name, payload)</c> from script run through
+        /// <see cref="Eval"/> or <see cref="EvalAsync"/>, or from DOM listeners such script installed.
+        /// </summary>
+        public void OnMessage(string name, Action<HtmlMessage> handler) => AddHandler(_messageHandlers, name ?? string.Empty, handler);
+
+        public void OffMessage(string name, Action<HtmlMessage> handler) => RemoveHandler(_messageHandlers, name ?? string.Empty, handler);
+
+        internal void DispatchMessage(string name, string data) => DispatchMessage(new HtmlMessage(this, name, data));
+
+        /// <summary>Dispatches a message through the C# handlers (<see cref="MessageReceived"/>, then <see cref="OnMessage"/> handlers).</summary>
+        public void DispatchMessage(HtmlMessage m)
+        {
+            try { MessageReceived?.Invoke(m); }
+            catch (Exception ex) { Debug.LogException(ex, this); }
+            if (m.Handled || !_messageHandlers.TryGetValue(m.Name, out var list) || list.Count == 0)
+                return;
+            if (list.Count == 1)
+            {
+                InvokeMessage(list[0], m);
+                return;
+            }
+            var snapshot = list.ToArray();   // handlers may add or remove handlers while running
+            foreach (var h in snapshot)
+            {
+                if (m.Handled)
+                    return;
+                InvokeMessage(h, m);
+            }
+        }
+
+        private void InvokeMessage(Action<HtmlMessage> handler, HtmlMessage m)
+        {
+            try { handler(m); }
+            catch (Exception ex) { Debug.LogException(ex, this); }
         }
 
         internal void DispatchNative(string json)

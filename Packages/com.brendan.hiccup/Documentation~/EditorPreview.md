@@ -309,6 +309,10 @@ That arrives as `Runtime.bindingCalled`, is routed to a panel by `sessionId`, an
 entry point the jslib callback uses. `JsonUtility` deserializes it into `HtmlEvent`, so `On`, `OnAction`,
 `e.GetData` and ancestor bubbling all work as documented.
 
+Page messages take a second binding, `HUI_Message`. `__HUI.send(name, payload)` stringifies the payload the way
+the jslib does and posts `{name, data}` as JSON; `Runtime.bindingCalled` is routed by binding name to
+`HtmlBackend.DispatchMessage`, so `OnMessage` handlers run from the same per-frame pump as event handlers.
+
 ## The element API
 
 `Q`, `QAll` and every `HtmlElement` operation work, but not the way the jslib implements them. The jslib keeps a
@@ -338,7 +342,14 @@ browser). Every read flushes that document's pending writes first, so a read alw
 A read whose command fails — the session detached, the socket dropped — returns the empty value rather than
 throwing into game code. `HtmlDocument.Eval` works the same way with a 250 ms budget. The code is wrapped as a function body taking
 `panel`, `root` and `HUI`, matching the jslib's `new Function('panel','root','HUI', code)`: statements are fine,
-and a value comes back only through `return`.
+and a value comes back only through `return`. `__HUI.run` stringifies the value in the page, so objects come
+back as JSON and booleans as `true`/`false`, exactly as they do from the jslib.
+
+**`EvalAsync` does not block.** The body is wrapped as an `async` function and handed to `__HUI.runAsync`, and
+the `Runtime.evaluate` is sent with `awaitPromise` so Chrome answers when the promise settles. The reply, or its
+`exceptionDetails`, is posted to the main thread and completes the document's task through
+`HtmlBackend.CompleteEval`; a request issued before the page is ready fails the same way, one frame later, with
+a message pointing at `Created`.
 
 The handle table is bounded at 8192 entries and evicts oldest-first, because `HtmlElement.Dispose` is optional
 and `Q()` is cheap enough to call in a loop. Handles are used within a frame of being created, so eviction is not

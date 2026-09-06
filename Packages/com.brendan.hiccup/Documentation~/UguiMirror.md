@@ -60,8 +60,8 @@ Everything goes through the normal `HtmlDocument`/`HtmlElement` API, so writes a
 Editor preview and synchronous in a web build.
 
 Scroll is the one place the DOM is a source of truth. `scroll` does not bubble, so a capture-phase listener
-installed through `Eval` re-dispatches it as a bubbling `ugscroll` event with the offsets in a `data-` attribute,
-which the standard event payload forwards.
+installed through `Eval` sends the viewport's id and offsets to C# with `HUI.send('ugscroll', …)`, which the
+mirror receives through `HtmlDocument.OnMessage`.
 
 ## Limits
 

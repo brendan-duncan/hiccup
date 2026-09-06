@@ -14,6 +14,8 @@ namespace Hiccup.Editor.Cdp
     {
         /// <summary>Name of the DevTools binding the page calls to deliver DOM events to Unity.</summary>
         public const string EventBinding = "HUI_Event";
+        /// <summary>Name of the DevTools binding <c>HUI.send</c> delivers page messages through, as <c>{name, data}</c> JSON.</summary>
+        public const string MessageBinding = "HUI_Message";
 
         public const string Source = @"
 (function () {
@@ -96,6 +98,19 @@ namespace Hiccup.Editor.Cdp
       HUI.live.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
       HUI.live.textContent = '';
       window.setTimeout(function () { HUI.live.textContent = text; }, 10);
+    },
+
+    // ---------------------------------------------------------------- Eval / EvalAsync / send
+    // Mirrors the jslib: a value crosses back as a string as-is, anything else as JSON, undefined as ''.
+
+    stringify: function (r) {
+      return r === undefined ? '' : (typeof r === 'string' ? r : JSON.stringify(r));
+    },
+    run: function (fn) { return HUI.stringify(fn(HUI.panel, HUI.content, HUI)); },
+    runAsync: function (fn) { return Promise.resolve(fn(HUI.panel, HUI.content, HUI)).then(HUI.stringify); },
+    send: function (name, payload) {
+      if (typeof window.HUI_Message !== 'function') return;
+      try { window.HUI_Message(JSON.stringify({ name: String(name), data: HUI.stringify(payload) })); } catch (err) { }
     },
 
     // ---------------------------------------------------------------- elements

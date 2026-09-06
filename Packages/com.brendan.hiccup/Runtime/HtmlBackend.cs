@@ -45,6 +45,12 @@ namespace Hiccup
         void PanelSetGeometry(int panel, float[] pixelToClipColumnMajor);
         void PanelAnnounce(int panel, string text, bool assertive);
         string PanelEval(int panel, string javascript);
+        /// <summary>
+        /// Runs <paramref name="javascript"/> as an async function body and reports the outcome through
+        /// <see cref="HtmlBackend.CompleteEval"/> with the same <paramref name="requestId"/>, never synchronously
+        /// from inside this call.
+        /// </summary>
+        void PanelEvalAsync(int panel, string javascript, int requestId);
 
         /// <summary>Texture holding the rendered panel, or null until the first frame arrives. Owned by the backend.</summary>
         Texture PanelGetTexture(int panel);
@@ -130,6 +136,15 @@ namespace Hiccup
 
         /// <summary>Delivers a DOM event payload from the backend to the document that owns the panel.</summary>
         public static void DispatchEvent(int panel, string json) => HtmlRuntime.DispatchToPanel(panel, json);
+
+        /// <summary>Delivers a page message (<c>HUI.send(name, payload)</c>) to the document that owns the panel.</summary>
+        public static void DispatchMessage(int panel, string name, string data) => HtmlRuntime.DispatchMessageToPanel(panel, name, data);
+
+        /// <summary>
+        /// Completes an <see cref="IHtmlBackend.PanelEvalAsync"/> request. <paramref name="error"/> is null on success;
+        /// otherwise it is the message the returned task faults with.
+        /// </summary>
+        public static void CompleteEval(int panel, int requestId, string result, string error) => HtmlRuntime.CompleteEvalOnPanel(panel, requestId, result, error);
 
         // ---- keyboard capture, for backends that relay the Game view's keys to a browser
 

@@ -26,6 +26,9 @@ var HiccupLibrary = {
     linear: false,     // project color space is linear -> sRGB texture storage
     debug: false,
     eventCb: 0,
+    messageCb: 0,      // (panel, name, data)            HUI.send from page script
+    evalCb: 0,         // (panel, requestId, result, failed) Hiccup_PanelEvalAsync completion
+    AsyncFunction: undefined,   // resolved lazily; see asyncFunction()
     panels: {},
     nextPanel: 1,
     handles: [null],
@@ -63,6 +66,21 @@ var HiccupLibrary = {
       var p = _malloc(len);
       stringToUTF8(s, p, len);
       return p;
+    },
+
+    // How a value crosses back to C#: strings as they are, everything else as JSON, undefined as ''.
+    stringify: function (r) {
+      return r === undefined ? '' : (typeof r === 'string' ? r : JSON.stringify(r));
+    },
+
+    // The AsyncFunction constructor, so EvalAsync bodies may use await. The async keyword is kept inside a
+    // string: this file stays ES5 for the Emscripten pre-processor, the page is always a modern Chrome.
+    asyncFunction: function () {
+      if (HUI.AsyncFunction === undefined) {
+        try { HUI.AsyncFunction = new Function('return Object.getPrototypeOf(async function(){}).constructor')(); }
+        catch (e) { HUI.AsyncFunction = null; }
+      }
+      return HUI.AsyncFunction || Function;
     },
 
     panel: function (id) {
@@ -372,6 +390,11 @@ var HiccupLibrary = {
         premultiply: true, blockInput: true, preventSubmit: true,
         listeners: {}, blockers: [], live: null, lastMatrix: null
       };
+      // What Eval / EvalAsync code sees as `HUI`: the bridge, plus this panel's send() and its elements.
+      p.api = Object.create(HUI);
+      p.api.panel = el;
+      p.api.root = content;
+      p.api.send = function (name, payload) { HUI.sendMessage(p, name, payload); };
       HUI.panels[id] = p;
 
       if (HUI.mode === 1) HUI.canvas.appendChild(el); else HUI.overlay.appendChild(el);
@@ -849,13 +872,41 @@ var HiccupLibrary = {
       p.live.textContent = '';
       var l = p.live;
       requestAnimationFrame(function () { l.textContent = text; });
+    },
+
+    // ------------------------------------------------------------------ page -> C#
+
+    // HUI.send(name, payload) from page script. Delivered synchronously, like a DOM event.
+    sendMessage: function (p, name, payload) {
+      if (!HUI.messageCb || !HUI.panels[p.id]) return;
+      var namePtr = HUI.cstr(name), dataPtr = HUI.cstr(HUI.stringify(payload));
+      var cb = HUI.messageCb;
+      try {
+        {{{ makeDynCall('viii', 'cb') }}}(p.id, namePtr, dataPtr);
+      } finally {
+        _free(namePtr);
+        _free(dataPtr);
+      }
+    },
+
+    completeEval: function (panelId, requestId, failed, text) {
+      if (!HUI.evalCb) return;
+      var ptr = HUI.cstr(text);
+      var cb = HUI.evalCb;
+      try {
+        {{{ makeDynCall('viiii', 'cb') }}}(panelId, requestId, ptr, failed ? 1 : 0);
+      } finally {
+        _free(ptr);
+      }
     }
   },
 
   // ==================================================================== exported C API
 
-  Hiccup_Init: function (backend, linear, forceOverlay, debug, eventCb) {
+  Hiccup_Init: function (backend, linear, forceOverlay, debug, eventCb, messageCb, evalCb) {
     HUI.eventCb = eventCb;
+    HUI.messageCb = messageCb;
+    HUI.evalCb = evalCb;
     return HUI.init(backend, !!linear, !!forceOverlay, !!debug);
   },
 
@@ -925,13 +976,39 @@ var HiccupLibrary = {
     var p = HUI.panel(id); if (!p) return HUI.cstr('');
     try {
       var fn = new Function('panel', 'root', 'HUI', UTF8ToString(codePtr));
-      var r = fn(p.el, p.content, HUI);
+      var r = fn(p.el, p.content, p.api);
       p.dirty = true; HUI.requestPaint();
-      return HUI.cstr(r === undefined ? '' : (typeof r === 'string' ? r : JSON.stringify(r)));
+      return HUI.cstr(HUI.stringify(r));
     } catch (e) {
       console.error('[Hiccup] Eval failed: ' + e);
       return HUI.cstr('');
     }
+  },
+  // The body runs as an async function, so `await` is allowed; completion always arrives through evalCb on a
+  // later turn, never from inside this call. A throw or rejection completes with failed = 1 and the message.
+  Hiccup_PanelEvalAsync: function (id, codePtr, requestId) {
+    var p = HUI.panel(id);
+    // The task faults with 'Name: message', one line, the same text the Editor preview produces.
+    var fail = function (e) {
+      console.error('[Hiccup] EvalAsync failed: ' + e);
+      HUI.completeEval(id, requestId, true, String(e).split('\n')[0]);
+    };
+    if (!p) { Promise.resolve().then(function () { fail('Unknown panel ' + id); }); return; }
+    var result;
+    try {
+      var Ctor = HUI.asyncFunction();
+      var fn = new Ctor('panel', 'root', 'HUI', UTF8ToString(codePtr));
+      result = fn(p.el, p.content, p.api);
+    } catch (e) {
+      // A syntax error, or a synchronous throw when no AsyncFunction constructor exists.
+      Promise.resolve().then(function () { fail(e); });
+      return;
+    }
+    // Stringifying is its own step so a value JSON cannot encode (a cycle, a DOM node) fails the request too.
+    Promise.resolve(result).then(function (r) { return HUI.stringify(r); }).then(function (text) {
+      if (HUI.panels[id]) { p.dirty = true; HUI.requestPaint(); }
+      HUI.completeEval(id, requestId, false, text);
+    }, fail);
   },
 
   // ---- elements (handles)

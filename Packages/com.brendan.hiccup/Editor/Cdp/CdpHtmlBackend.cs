@@ -287,6 +287,8 @@ namespace Hiccup.Editor.Cdp
                 await client.SendAsync("Runtime.enable", null, sessionId).ConfigureAwait(false);
                 await client.SendAsync("Runtime.addBinding",
                     "{\"name\":" + Json.Quote(CdpBridgeJs.EventBinding) + "}", sessionId).ConfigureAwait(false);
+                await client.SendAsync("Runtime.addBinding",
+                    "{\"name\":" + Json.Quote(CdpBridgeJs.MessageBinding) + "}", sessionId).ConfigureAwait(false);
                 // A transparent page lets the document composite over the Unity scene like the real thing.
                 await client.SendAsync("Emulation.setDefaultBackgroundColorOverride",
                     "{\"color\":{\"r\":0,\"g\":0,\"b\":0,\"a\":0}}", sessionId).ConfigureAwait(false);
@@ -385,6 +387,7 @@ namespace Hiccup.Editor.Cdp
 
         private const string EvaluateHead = "{\"expression\":";
         private const string EvaluateTail = ",\"returnByValue\":true,\"awaitPromise\":false}";
+        private const string EvaluateTailAwait = ",\"returnByValue\":true,\"awaitPromise\":true}";
         private readonly StringBuilder _evaluate = new StringBuilder(4096);   // main thread only
 
         /// <summary>
@@ -413,12 +416,13 @@ namespace Hiccup.Editor.Cdp
         }
 
         /// <summary>The <c>Runtime.evaluate</c> params for an arbitrary expression.</summary>
-        private static string EvaluateParams(string expression)
+        private static string EvaluateParams(string expression, bool awaitPromise = false)
         {
-            var sb = new StringBuilder(expression.Length + EvaluateHead.Length + EvaluateTail.Length + 2);
+            var tail = awaitPromise ? EvaluateTailAwait : EvaluateTail;
+            var sb = new StringBuilder(expression.Length + EvaluateHead.Length + tail.Length + 2);
             sb.Append(EvaluateHead);
             Json.Quote(expression, sb);
-            sb.Append(EvaluateTail);
+            sb.Append(tail);
             return sb.ToString();
         }
 
@@ -547,8 +551,8 @@ namespace Hiccup.Editor.Cdp
 
             // Give the caller the same synchronous contract the jslib has, at the cost of a short block. The code is a
             // function body, exactly as Hiccup_PanelEval's `new Function('panel','root','HUI', code)` treats it: statements
-            // are allowed and a value comes back only through `return`.
-            var wrapped = "(function(panel,root,HUI){" + javascript + "\n})(window.__HUI.panel,window.__HUI.content,window.__HUI)";
+            // are allowed and a value comes back only through `return`. __HUI.run stringifies it the way the jslib does.
+            var wrapped = "window.__HUI.run(function(panel,root,HUI){" + javascript + "\n})";
             if (!TryWait(EvaluateAsync(_client, p.SessionId, wrapped), 250, out var reply))
                 return string.Empty;
 
@@ -558,6 +562,52 @@ namespace Hiccup.Editor.Cdp
             if (result.TryGetValue("value", out var value) && value != null)
                 return ValueToString(value);
             return Json.Str(result, "description", string.Empty);
+        }
+
+        public void PanelEvalAsync(int id, string javascript, int requestId)
+        {
+            if (!_panels.TryGetValue(id, out var p) || !p.Ready || !Connected)
+            {
+                // Completed on a later frame, never from inside the call, so callers see the timing a build has.
+                Post(() => HtmlBackend.CompleteEval(id, requestId, string.Empty,
+                    "the document's page is not ready; call EvalAsync from HtmlDocument.Created or later"));
+                return;
+            }
+            // The body becomes an async function, so `await` is allowed, and Runtime.evaluate awaits the promise
+            // __HUI.runAsync returns. A throw or rejection comes back as exceptionDetails and faults the task.
+            var wrapped = "window.__HUI.runAsync(async function(panel,root,HUI){" + javascript + "\n})";
+            _ = RunEvalAsync(_client, p, requestId, wrapped);
+        }
+
+        private async Task RunEvalAsync(CdpClient client, Panel panel, int requestId, string expression)
+        {
+            string result = string.Empty, error = null;
+            try
+            {
+                var reply = await client.SendAsync("Runtime.evaluate", EvaluateParams(expression, awaitPromise: true), panel.SessionId).ConfigureAwait(false);
+                var details = Json.Dict(reply, "exceptionDetails");
+                if (details != null)
+                {
+                    // 'Name: message' on one line, as the jslib reports it; the description carries the stack below that.
+                    var exception = Json.Dict(details, "exception");
+                    if (exception != null)
+                        error = Json.Str(exception, "description", null) ?? (exception.TryGetValue("value", out var ev) ? ValueToString(ev) : null);
+                    if (string.IsNullOrEmpty(error))
+                        error = Json.Str(details, "text", "EvalAsync failed");
+                    int newline = error.IndexOf('\n');
+                    if (newline >= 0)
+                        error = error.Substring(0, newline);
+                }
+                else
+                {
+                    var r = Json.Dict(reply, "result");
+                    if (r != null && r.TryGetValue("value", out var value) && value != null)
+                        result = ValueToString(value);
+                }
+            }
+            catch (OperationCanceledException) { error = "the Editor preview stopped"; }
+            catch (Exception e) { error = e.Message; }
+            Post(() => HtmlBackend.CompleteEval(panel.Id, requestId, result, error));
         }
 
         public void PanelSetGeometry(int id, float[] columnMajor)
@@ -955,11 +1005,20 @@ namespace Hiccup.Editor.Cdp
                 {
                     if (sessionId == null || !_bySession.TryGetValue(sessionId, out var panel))
                         return;
-                    if (Json.Str(parameters, "name") != CdpBridgeJs.EventBinding)
-                        return;
+                    var binding = Json.Str(parameters, "name");
                     var payload = Json.Str(parameters, "payload");
-                    if (!string.IsNullOrEmpty(payload))
+                    if (string.IsNullOrEmpty(payload))
+                        return;
+                    if (binding == CdpBridgeJs.EventBinding)
+                    {
                         HtmlBackend.DispatchEvent(panel.Id, payload);
+                    }
+                    else if (binding == CdpBridgeJs.MessageBinding)
+                    {
+                        // {name, data}: the page already stringified the payload the way the jslib does.
+                        if (Json.Parse(payload) is Dictionary<string, object> message)
+                            HtmlBackend.DispatchMessage(panel.Id, Json.Str(message, "name", string.Empty), Json.Str(message, "data", string.Empty));
+                    }
                     break;
                 }
 

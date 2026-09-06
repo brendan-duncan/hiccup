@@ -276,6 +276,22 @@ then walks handlers in a fixed order, stopping at any point if a handler sets `e
 4. `data-action` handlers (clicks only)
 5. handlers bound to the event type
 
+## Messages and async evaluation
+
+Two more paths cross from the page to C#, both registered at init next to the event callback.
+
+`Eval` code sees `HUI` as a per-panel view of the bridge: `Object.create(HUI)` with `panel`, `root` and `send`
+on top, so bridge functions still resolve through the prototype and `HUI.send(name, payload)` knows which panel it
+belongs to. `send` stringifies the payload (a string as-is, anything else as JSON, `undefined` as empty) and calls
+the message callback synchronously, the way a DOM event does. `HtmlDocument.DispatchMessage` runs
+`MessageReceived` and then the `OnMessage` handlers for that name until one sets `Handled`.
+
+`EvalAsync` compiles the body with the `AsyncFunction` constructor, fetched through `new Function` so the jslib
+itself stays ES5, which is what lets the body `await`. The returned promise settles to a stringified value or an
+error message and is reported through the eval callback with the request id `HtmlDocument` allocated, always on
+a later turn, never from inside the P/Invoke. The document completes the matching `Task<string>`, faults it with
+`HtmlEvalException` on failure, and cancels it if the panel is destroyed first.
+
 ## Element handles
 
 `HUI.handles` is an array of element references with a free list; `Hiccup_Query` returns an index. The element

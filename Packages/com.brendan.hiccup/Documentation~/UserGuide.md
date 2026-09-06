@@ -20,6 +20,7 @@ For details on previewing inside the Editor, read [EditorPreview.md](EditorPrevi
 - [Size and placement](#size-and-placement)
 - [Reacting to the UI](#reacting-to-the-ui)
 - [Updating the UI](#updating-the-ui)
+- [Running JavaScript in the page](#running-javascript-in-the-page)
 - [Panels in the 3D scene](#panels-in-the-3d-scene)
 - [Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface)
 - [Input and click-through](#input-and-click-through)
@@ -198,9 +199,10 @@ Two rules come out of this script, and they apply to every script you write agai
 
 * **Register event handlers whenever you like.** `On`, `OnAction` and `Listen` remember what you asked for and
   apply it once the panel exists. Calling them from `OnEnable` or `Awake` is fine.
-* **Only touch elements after `IsCreated` is true.** Before that, `Q` returns a handle that does nothing and
-  `Eval` returns an empty string. Neither one warns you. To set the initial state, subscribe to the `Created`
-  event as shown above. The sample's scripts all use the same `IsCreated ? Wire : Created += Wire` shape.
+* **Only touch elements after `IsCreated` is true.** Before that, `Q` returns a handle that does nothing,
+  `Eval` returns an empty string, and `EvalAsync` completes with an empty string too (in the Editor preview it
+  fails instead, with a message that says so). None of them warns you otherwise. To set the initial state,
+  subscribe to the `Created` event as shown above. The sample's scripts all use the same `IsCreated ? Wire : Created += Wire` shape.
   In a web build `Created` fires right away. In the Editor preview it fires a few frames later, once Chrome has
   loaded the page. Code written in the shape above works the same in both.
 
@@ -257,8 +259,9 @@ emoji, transitions.
 **What does not:**
 
 * **`<script>` tags never run.** Hiccup inserts your content with `innerHTML`, and browsers ignore scripts
-  added that way. When you really need JavaScript, call `HtmlDocument.Eval(js)`. The code runs with `panel`,
-  `root` and `HUI` available as variables.
+  added that way. When you really need JavaScript, call `HtmlDocument.Eval(js)` or `EvalAsync(js)`. The code
+  runs with `panel`, `root` and `HUI` available as variables, and `HUI.send` carries results back to C#. See
+  [Running JavaScript in the page](#running-javascript-in-the-page).
 * **Cross-origin `<iframe>` content is not drawn** in texture mode. (An iframe is a page embedded inside
   another page. "Cross-origin" means it comes from a different website.) The browser leaves that area empty.
   Iframes from your own site draw in full, including any WebGL canvases inside them. A frame filled through the
@@ -397,6 +400,67 @@ foreach (var btn in doc.QAll(".nav-btn"))
 
 A single `doc.Q("#x").Text = "…"` in an update loop is fine. A hundred handles per frame that are never disposed
 is not.
+
+## Running JavaScript in the page
+
+Most UIs never need this: `Q`, the element API and the event handlers cover buttons, forms, text and dialogs.
+Reach for JavaScript when the page has to do something itself, such as run an animation, talk to a web API,
+or drive a widget that lives in the DOM, and when the answer has to come back to C#.
+
+**`Eval` runs code now and returns a string.** The code is the body of a function with three things in scope:
+`panel` (the document's outer element), `root` (the element your HTML lives in) and `HUI` (Hiccup's bridge).
+Whatever it `return`s comes back as a string; objects and arrays come back as JSON.
+
+```csharp
+string title = doc.Eval("return root.querySelector('h1').textContent;");
+doc.Eval("root.querySelector('#settings-form').reset();");
+```
+
+**`EvalAsync` runs code that needs to wait.** The body is an `async` function, so it can `await`, and the result
+arrives through a `Task<string>` when the code returns or its promise settles. A throw or a rejected promise
+faults the task with `HtmlEvalException`, so wrap it in `try` if the code can fail.
+
+```csharp
+async void LoadLeaderboard()
+{
+    try
+    {
+        string json = await doc.EvalAsync(@"
+            const r = await fetch('/api/leaderboard');
+            return await r.json();");
+        ShowLeaderboard(JsonUtility.FromJson<Leaderboard>(json));
+    }
+    catch (HtmlEvalException e) { Debug.LogWarning(e.Message); }
+}
+
+// Wait for a CSS animation, then continue.
+await doc.EvalAsync("await root.querySelector('#toast').getAnimations()[0].finished;");
+```
+
+**`HUI.send` sends a message from the page to C#.** Code that runs through `Eval` or `EvalAsync`, including the
+event listeners it installs, can call `HUI.send(name, payload)` at any time. On the C# side, `OnMessage` handles
+a name, and `MessageReceived` sees every message. A string payload arrives exactly as sent; anything else is
+turned into JSON, which `DataAs<T>()` reads back into a serializable class.
+
+```csharp
+doc.Eval(@"
+    root.querySelector('#inventory').addEventListener('drop', e => {
+        e.preventDefault();
+        HUI.send('item-dropped', { item: e.dataTransfer.getData('text'), slot: e.target.dataset.slot });
+    });");
+
+[System.Serializable] class Drop { public string item; public string slot; }
+doc.OnMessage("item-dropped", m => MoveItem(m.DataAs<Drop>()));
+
+doc.OnMessage("volume", m => audio.volume = m.DataAsFloat);   // HUI.send('volume', 0.4)
+```
+
+Messages are delivered as DOM events are: right away in a build, and through the same per-frame pump as clicks
+in the Editor preview. Set `m.Handled = true` to stop later handlers for the same name.
+
+`<script>` tags inside your HTML do not run (the browser ignores them when HTML is inserted this way), so
+`Eval` is also how you install any page-side code. Run it from the `Created` event, which fires once the page
+can be written to in both the build and the Editor.
 
 ## Panels in the 3D scene
 
@@ -687,7 +751,8 @@ For a detailed trace, set `HtmlRuntime.DebugLogging = true` before creating your
 * **Web builds only.** There is no browser on desktop, mobile or console, so there is nothing to draw the page.
 * **Drawing inside the scene needs Chrome 148+** with the flag or an Origin Trial token. The browser feature is
   still in trial and has changed between versions. Hiccup detects each version it knows about.
-* **No `<script>` in your HTML.** Use `Eval`.
+* **No `<script>` in your HTML.** Use `Eval` or `EvalAsync`; see
+  [Running JavaScript in the page](#running-javascript-in-the-page).
 * **Cross-origin iframes** are not drawn in texture mode. Same-origin ones, including `srcdoc`, are. Overlay
   mode shows cross-origin frames.
 * **In overlay mode, the UI cannot be hidden behind scene geometry** when the game canvas is opaque, because

@@ -69,8 +69,10 @@ namespace Hiccup
     {
         private static HtmlRuntime s_instance;
         private static bool s_quitting;
-        // Keep the delegate alive for the lifetime of the app: the browser holds a raw pointer to it.
+        // Keep the delegates alive for the lifetime of the app: the browser holds raw pointers to them.
         private static readonly HtmlNative.EventCallback s_callback = OnNativeEvent;
+        private static readonly HtmlNative.MessageCallback s_messageCallback = OnNativeMessage;
+        private static readonly HtmlNative.EvalCallback s_evalCallback = OnNativeEvalComplete;
 
         /// <summary>Set before the first document is created to force the DOM overlay even if HTML-in-Canvas is available.</summary>
         public static bool ForceOverlay { get; set; }
@@ -152,7 +154,7 @@ namespace Hiccup
             int linear = QualitySettings.activeColorSpace == ColorSpace.Linear ? 1 : 0;
 
             HtmlNative.Hiccup_SetGeometryMode((int)s_geometryMode);
-            int mode = HtmlNative.Hiccup_Init(backend, linear, ForceOverlay ? 1 : 0, DebugLogging ? 1 : 0, s_callback);
+            int mode = HtmlNative.Hiccup_Init(backend, linear, ForceOverlay ? 1 : 0, DebugLogging ? 1 : 0, s_callback, s_messageCallback, s_evalCallback);
             Mode = HtmlNative.Available ? (HtmlRenderMode)mode : HtmlRenderMode.Unavailable;
 
             if (HtmlBackend.Current != null)
@@ -185,6 +187,27 @@ namespace Hiccup
             catch (Exception ex) { Debug.LogException(ex); }
         }
 
+        /// <summary>Routes a page message from a bridge to the document that owns the panel.</summary>
+        internal static void DispatchMessageToPanel(int panel, string name, string data)
+        {
+            if (s_instance == null)
+                return;
+            if (!s_instance._documents.TryGetValue(panel, out var doc) || doc == null)
+                return;
+            try { doc.DispatchMessage(name, data); }
+            catch (Exception ex) { Debug.LogException(ex); }
+        }
+
+        /// <summary>Routes an async Eval completion from a bridge to the document that issued it.</summary>
+        internal static void CompleteEvalOnPanel(int panel, int requestId, string result, string error)
+        {
+            if (s_instance == null)
+                return;
+            if (!s_instance._documents.TryGetValue(panel, out var doc) || doc == null)
+                return;
+            doc.CompleteEval(requestId, result, error);
+        }
+
         private void RefreshCanvasInfo()
         {
             HtmlNative.Hiccup_GetCanvasInfo(_info);
@@ -202,6 +225,23 @@ namespace Hiccup
             if (s_instance == null)
                 return;
             DispatchToPanel(panel, HtmlNative.ReadUtf8(json));
+        }
+
+        [MonoPInvokeCallback(typeof(HtmlNative.MessageCallback))]
+        private static void OnNativeMessage(int panel, IntPtr name, IntPtr data)
+        {
+            if (s_instance == null)
+                return;
+            DispatchMessageToPanel(panel, HtmlNative.ReadUtf8(name), HtmlNative.ReadUtf8(data));
+        }
+
+        [MonoPInvokeCallback(typeof(HtmlNative.EvalCallback))]
+        private static void OnNativeEvalComplete(int panel, int requestId, IntPtr result, int failed)
+        {
+            if (s_instance == null)
+                return;
+            var text = HtmlNative.ReadUtf8(result);
+            CompleteEvalOnPanel(panel, requestId, failed != 0 ? string.Empty : text, failed != 0 ? text : null);
         }
 
         private void LateUpdate()

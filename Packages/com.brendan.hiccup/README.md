@@ -85,7 +85,11 @@ document's screen transform from the camera every frame so the browser hit-tests
   key/code, pointer position in panel pixels, modifiers, ancestor path and `data-*` attributes. Set
   `e.Handled = true` to stop further C# dispatch. Only a default set of event types is forwarded; call
   `doc.Listen("pointerover")` (done automatically by `On`) for others.
-* Escape hatch: `doc.Eval(js)` runs JavaScript with `panel`, `root` and `HUI` in scope.
+* Escape hatch: `doc.Eval(js)` runs JavaScript with `panel`, `root` and `HUI` in scope. `doc.EvalAsync(js)` runs
+  the same kind of body as an `async` function (so `await` works) and returns a `Task<string>` that faults with
+  `HtmlEvalException` on a throw or rejection.
+* Page to C#: script calls `HUI.send("name", payload)`; C# handles it with `doc.OnMessage("name", m => ...)`
+  (`m.Data` is the string as sent, or JSON for anything else; `m.DataAs<T>()` deserializes it) or `doc.MessageReceived`.
 * Options: `PointerMode` (Panel / ChildrenOnly / None), `BlockUnityInput`, `PremultipliedAlpha`,
   `HtmlRuntime.ForceOverlay`, `HtmlRuntime.UpdateMode`, `HtmlRuntime.DebugLogging`.
 
@@ -162,7 +166,7 @@ orientation handling, input projection and the element handle model in detail.
 * HTML-in-Canvas is experimental: cross-origin iframes are not drawn, and some API names differ between Chrome
   versions (the bridge tries `texElementSubImage2D`, then the 3- and 6-argument `texElementImage2D`;
   `drawElementImageToTexture` with its own destination shape, then both `copyElementImageToTexture` forms).
-* `<script>` inside your HTML is not executed (`innerHTML` semantics). Use `HtmlDocument.Eval`.
+* `<script>` inside your HTML is not executed (`innerHTML` semantics). Use `HtmlDocument.Eval` or `EvalAsync`.
 * On WebGPU the bridge needs the JS-side texture for `RenderTexture.GetNativeTexturePtr()`; it looks it up
   through `wgpu[ptr]` / `Module.WebGPU` and copies through a staging texture when the Unity texture lacks
   `RENDER_ATTACHMENT | COPY_DST` usage. If lookup fails it logs once and the panel stays blank — switch to

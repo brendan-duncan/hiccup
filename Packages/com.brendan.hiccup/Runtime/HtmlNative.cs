@@ -12,6 +12,12 @@ namespace Hiccup
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void EventCallback(int panel, IntPtr json);
+        /// <summary>A page-to-C# message: <c>HUI.send(name, payload)</c> in the page.</summary>
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void MessageCallback(int panel, IntPtr name, IntPtr data);
+        /// <summary>Completion of <c>Hiccup_PanelEvalAsync</c>: <paramref name="failed"/> is non-zero when <paramref name="result"/> is an error message.</summary>
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void EvalCallback(int panel, int requestId, IntPtr result, int failed);
 
         /// <summary>Reads a UTF8 string returned by the bridge and frees it.</summary>
         public static string TakeString(IntPtr ptr)
@@ -50,7 +56,7 @@ namespace Hiccup
 #if UNITY_WEBGL && !UNITY_EDITOR
         public static bool Available => true;
 
-        [DllImport("__Internal")] public static extern int Hiccup_Init(int backend, int linear, int forceOverlay, int debug, EventCallback cb);
+        [DllImport("__Internal")] public static extern int Hiccup_Init(int backend, int linear, int forceOverlay, int debug, EventCallback cb, MessageCallback messageCb, EvalCallback evalCb);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_GetFeatures();
         [DllImport("__Internal")] public static extern void Hiccup_GetCanvasInfo(float[] outInfo);
         [DllImport("__Internal")] public static extern void Hiccup_SetUpdateMode(int mode);
@@ -80,6 +86,7 @@ namespace Hiccup
         [DllImport("__Internal")] public static extern void Hiccup_PanelBindGPUTexture(int id, IntPtr texturePtr);
         [DllImport("__Internal")] public static extern void Hiccup_PanelAnnounce(int id, string text, int assertive);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_PanelEval(int id, string code);
+        [DllImport("__Internal")] public static extern void Hiccup_PanelEvalAsync(int id, string code, int requestId);
 
         [DllImport("__Internal")] public static extern int Hiccup_Query(int id, string selector);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_QueryAll(int id, string selector);
@@ -137,7 +144,7 @@ namespace Hiccup
             return ptr;
         }
 
-        public static int Hiccup_Init(int backend, int linear, int forceOverlay, int debug, EventCallback cb)
+        public static int Hiccup_Init(int backend, int linear, int forceOverlay, int debug, EventCallback cb, MessageCallback messageCb, EvalCallback evalCb)
             => HtmlBackend.Current?.Init(backend, linear, forceOverlay, debug) ?? -1;
         public static IntPtr Hiccup_GetFeatures() => IntPtr.Zero;
         public static void Hiccup_GetCanvasInfo(float[] outInfo)
@@ -192,6 +199,14 @@ namespace Hiccup
         public static void Hiccup_PanelBindGPUTexture(int id, IntPtr texturePtr) { }
         public static void Hiccup_PanelAnnounce(int id, string text, int assertive) => HtmlBackend.Current?.PanelAnnounce(id, text, assertive != 0);
         public static IntPtr Hiccup_PanelEval(int id, string code) => AllocUtf8(HtmlBackend.Current?.PanelEval(id, code));
+        public static void Hiccup_PanelEvalAsync(int id, string code, int requestId)
+        {
+            var b = HtmlBackend.Current;
+            if (b != null)
+                b.PanelEvalAsync(id, code, requestId);
+            else
+                HtmlBackend.CompleteEval(id, requestId, string.Empty, null);   // no browser: Eval returns empty here too
+        }
 
         public static int Hiccup_Query(int id, string selector) => HtmlBackend.Current?.Query(id, selector) ?? 0;
         public static IntPtr Hiccup_QueryAll(int id, string selector) => AllocUtf8(HtmlBackend.Current?.QueryAll(id, selector));
