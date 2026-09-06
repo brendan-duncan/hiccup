@@ -1122,6 +1122,7 @@ var HiccupLibrary = {
     return HUI.cstr(out.join(','));
   },
   Hiccup_ElemRelease: function (h) { HUI.releaseHandle(h); },
+  Hiccup_ElemExists: function (h) { return HUI.handles[h] ? 1 : 0; },
   Hiccup_ElemEnsureId: function (h) { var e = HUI.el(h); return HUI.cstr(e ? HUI.ensureId(e) : ''); },
   Hiccup_ElemGetText: function (h) { var e = HUI.el(h); return HUI.cstr(e ? e.textContent : ''); },
   Hiccup_ElemSetText: function (h, sPtr) { var e = HUI.el(h); if (e) e.textContent = UTF8ToString(sPtr); },

@@ -316,7 +316,8 @@ returns handles as a comma-separated string. `HtmlElement.Dispose` releases one;
 every handle inside it.
 
 Handles are cheap but not free: `HtmlElement` is `IDisposable`, and code that queries in a loop should dispose,
-as the Full UI Sample does in `ShowScreen`.
+as the Full UI Sample does in `ShowScreen`. `IsValid` is `Hiccup_ElemExists`, a table lookup here; the Editor
+preview answers it with a read, since its handles are recipes rather than references.
 
 ## Accessibility
 

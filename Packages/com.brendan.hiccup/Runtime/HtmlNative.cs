@@ -92,6 +92,7 @@ namespace Hiccup
         [DllImport("__Internal")] public static extern int Hiccup_Query(int id, string selector);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_QueryAll(int id, string selector);
         [DllImport("__Internal")] public static extern void Hiccup_ElemRelease(int h);
+        [DllImport("__Internal")] public static extern int Hiccup_ElemExists(int h);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_ElemEnsureId(int h);
         [DllImport("__Internal")] public static extern IntPtr Hiccup_ElemGetText(int h);
         [DllImport("__Internal")] public static extern void Hiccup_ElemSetText(int h, string s);
@@ -216,6 +217,7 @@ namespace Hiccup
         public static int Hiccup_Query(int id, string selector) => HtmlBackend.Current?.Query(id, selector) ?? 0;
         public static IntPtr Hiccup_QueryAll(int id, string selector) => AllocUtf8(HtmlBackend.Current?.QueryAll(id, selector));
         public static void Hiccup_ElemRelease(int h) => HtmlBackend.Current?.ElemRelease(h);
+        public static int Hiccup_ElemExists(int h) => (HtmlBackend.Current?.ElemExists(h) ?? (h != 0)) ? 1 : 0;
         public static IntPtr Hiccup_ElemEnsureId(int h) => AllocUtf8(HtmlBackend.Current?.ElemEnsureId(h));
         public static IntPtr Hiccup_ElemGetText(int h) => AllocUtf8(HtmlBackend.Current?.ElemGetText(h));
         public static void Hiccup_ElemSetText(int h, string s) => HtmlBackend.Current?.ElemSetText(h, s);

@@ -347,8 +347,8 @@ correct after an `InnerHtml` replaces a subtree — the failure mode a cached re
 append to a per-document buffer and are flushed once per frame as a single `__HUI.apply([...])`. A HUD update
 that touches six elements is one web socket message.
 
-**Reads block**, briefly. `Value`, `GetAttribute`, `Checked`, `HasClass`, `Bounds`, `Matches`, `Id` and `QAll`
-need an answer, so they wait up to 100 ms on a `Runtime.evaluate` (sub-millisecond in practice against a local
+**Reads block**, briefly. `Value`, `GetAttribute`, `Checked`, `HasClass`, `Bounds`, `Matches`, `Id`, `QAll` and
+`IsValid` (whether the recipe finds an element) need an answer, so they wait up to 100 ms on a `Runtime.evaluate` (sub-millisecond in practice against a local
 browser). Every read flushes that document's pending writes first, so a read always observes its own writes.
 A read whose command fails — the session detached, the socket dropped — returns the empty value rather than
 throwing into game code. `HtmlDocument.Eval` works the same way with a 250 ms budget. The code is wrapped as a function body taking
@@ -446,6 +446,16 @@ specifically the `linear: true` staging texture and the `GL.sRGBWrite = false` a
 **Nothing updates but the page seems alive.** Watch for the screenshot-polling message in the console; if it
 appears, screencasting is not working in your Chrome configuration. Turn off headless mode to watch the page
 directly, and turn on **Log Browser Console** to see the page's own output.
+
+## Automated tests
+
+`Tests/Runtime/PreviewDocumentTests.cs` runs in play mode against this backend, and is the regression net for the
+whole path: it creates documents, reads and writes elements, clicks a button and waits for the event, sends a
+message from the page, awaits `EvalAsync` results and rejections, checks a script ran before `Created`, binds an
+image and reads its natural size back, and watches the focus flags follow `Focus()` and `Blur()`. Each test
+ignores itself when `HtmlBackend.Current` is null, so a machine without Chrome still passes the suite.
+`Tests/Editor/BridgeConsistencyTests.cs` reads `CdpBridgeJs.Source` and the jslib and checks they emit the same
+payload fields, among other things.
 
 ## Testing the protocol path outside Unity
 

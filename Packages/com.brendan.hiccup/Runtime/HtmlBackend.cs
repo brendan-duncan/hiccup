@@ -73,6 +73,8 @@ namespace Hiccup
         int ElemClosest(int handle, string selector);
         int ElemParent(int handle);
         void ElemRelease(int handle);
+        /// <summary>Whether the handle resolves to an element right now.</summary>
+        bool ElemExists(int handle);
 
         string ElemEnsureId(int handle);
         string ElemGetText(int handle);

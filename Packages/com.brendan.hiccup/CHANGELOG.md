@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### Added
+- Tests. `Tests/Editor` holds edit-mode tests for the pure C# layers (event payload parsing, dispatch order and
+  `Handled`, messages, focus flags, `Html.Escape`, the image encoder, the preview's JSON reader) and consistency
+  checks that read the sources: every native import has a jslib export and an Editor stub, both bridges build
+  the same event payload and only fields `HtmlEvent` declares, the preview script has no double quotes, and the
+  jslib stays ES5. `Tests/Runtime` holds play-mode tests that drive the real Editor preview end to end
+  (elements, clicks, messages, `Eval`/`EvalAsync`, scripts before `Created`, images, focus), ignored when no
+  preview is running. A GitHub Actions workflow (`.github/workflows/tests.yml`) runs both; it needs a Unity
+  license added as repository secrets before it can activate.
 - **Open in Chrome DevTools** on the HtmlDocument inspector during play mode (with a **Copy URL** button beside
   it): opens the preview Chrome's own DevTools front end for that document's page, so its DOM, styles, console
   and network are inspectable live. The launcher now picks the debugging port itself and passes it to
@@ -57,6 +65,10 @@
   a `data-scroll` attribute.
 
 ### Fixed
+- `HtmlElement.IsValid` now means "the element exists" in the Editor preview too. Preview handles are recipes
+  resolved on use, so `Q()` on a missing element used to report valid there while a web build reported invalid;
+  `IsValid` now asks the page (one short read), and the element's own operations keep their cheap guard. Found
+  by the new play-mode tests.
 - `package.json` declares its dependencies: `com.unity.ugui` 2.0.0 (which carries TextMeshPro on Unity 6) and the
   UI, IMGUI, ImageConversion and JsonSerialize modules. The runtime assembly references `UnityEngine.UI` and
   `Unity.TextMeshPro`, so a project without uGUI could not compile the package before. It also names its

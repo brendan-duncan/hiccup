@@ -111,6 +111,20 @@ you want them there. They show what the package expects of your HTML, CSS and C#
 | [UguiMirror.md](Packages/com.brendan.hiccup/Documentation~/UguiMirror.md) | Experimental: mirroring a uGUI canvas into a document, the component-by-component mapping, and its limits. |
 | [CHANGELOG.md](Packages/com.brendan.hiccup/CHANGELOG.md) | What changed, and what is unreleased. |
 
+## Tests
+
+The package carries its tests under `Packages/com.brendan.hiccup/Tests`, and they show in **Window ▸ General ▸
+Test Runner**. Edit-mode tests cover the C# layers and check that the web bridge, the Editor preview's script
+and the native bindings stay in step. Play-mode tests drive the real Editor preview end to end, so they need
+Chrome and are ignored without it. From the command line:
+
+```
+Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml
+```
+
+`.github/workflows/tests.yml` runs both on push once a Unity license is added as repository secrets (see the
+comments in the file).
+
 ## Status
 
 Experimental. HTML-in-Canvas is in Origin Trial in Chrome 148–150 and its function signatures may still change;

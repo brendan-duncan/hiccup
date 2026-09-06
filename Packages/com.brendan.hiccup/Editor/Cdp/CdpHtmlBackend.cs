@@ -778,6 +778,9 @@ namespace Hiccup.Editor.Cdp
                 _handles.Remove(handle);
         }
 
+        /// <summary>A handle is a recipe, so only the page knows whether it finds anything: one read.</summary>
+        public bool ElemExists(int handle) => ReadBool(Spec(handle), "exists", null);
+
         // ---- writes: queued and flushed once per frame
 
         public void ElemSetText(int handle, string value) => Write(handle, "text", value);
