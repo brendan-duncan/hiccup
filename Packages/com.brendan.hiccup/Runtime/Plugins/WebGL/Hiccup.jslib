@@ -724,10 +724,14 @@ var HiccupLibrary = {
           ok = true;
         }
         if (ok) {
-          var err = gl.getError();
-          if (err !== gl.NO_ERROR) { HUI.warnOnce('glerr' + err, 'WebGL error ' + err + ' while uploading HTML texture.'); }
+          // getError forces a round trip to the GPU process, so it is only worth paying for when debugging.
+          if (HUI.debug) {
+            var err = gl.getError();
+            if (err !== gl.NO_ERROR) { HUI.warnOnce('glerr' + err, 'WebGL error ' + err + ' while uploading HTML texture.'); }
+          }
+          // Sampler state lives on the texture object and was set by allocGLTexture, which also runs whenever
+          // the mipmap flag changes (C# recreates the texture), so re-specifying level 0 needs no sampler update.
           if (p.mipmaps) gl.generateMipmap(gl.TEXTURE_2D);
-          HUI.applyGLSampler(gl, p);
         }
       } catch (e) {
         // Most likely "no snapshot recorded yet": ask for a paint and try again next frame.

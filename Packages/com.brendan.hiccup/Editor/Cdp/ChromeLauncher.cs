@@ -106,8 +106,8 @@ namespace Hiccup.Editor.Cdp
             args.Append(" --disable-backgrounding-occluded-windows --disable-renderer-backgrounding");
             args.Append(" --disable-background-timer-throttling");
             // The preview itself paints through the screencast, but pages that use HTML-in-Canvas on their own
-            // (the Three.js Desk sample's nested build, for one) need the API in this Chrome too. Equivalent to
-            // chrome://flags/#canvas-draw-element; unknown feature names are ignored by older builds.
+            // need the API in this Chrome too. Equivalent to chrome://flags/#canvas-draw-element; unknown feature names
+            // are ignored by older builds.
             args.Append(" --enable-features=CanvasDrawElement --enable-blink-features=CanvasDrawElement");
             if (headless)
                 args.Append(" --headless=new");

@@ -481,15 +481,19 @@ namespace Hiccup
             try { EventReceived?.Invoke(e); }
             catch (Exception ex) { Debug.LogException(ex, this); }
 
-            if (!e.Handled && !string.IsNullOrEmpty(e.id))
-                Invoke(_elementHandlers, e.id + "|" + e.type, e);
-            if (!e.Handled && !string.IsNullOrEmpty(e.path))
+            // The element lookups build a key per ancestor, so skip them when nothing is registered per element.
+            if (!e.Handled && _elementHandlers.Count > 0)
             {
-                foreach (var id in e.path.Split(' '))
+                if (!string.IsNullOrEmpty(e.id))
+                    Invoke(_elementHandlers, e.id + "|" + e.type, e);
+                if (!e.Handled && !string.IsNullOrEmpty(e.path))
                 {
-                    if (e.Handled)
-                        break;
-                    Invoke(_elementHandlers, id + "|" + e.type, e);
+                    foreach (var id in e.path.Split(' '))
+                    {
+                        if (e.Handled)
+                            break;
+                        Invoke(_elementHandlers, id + "|" + e.type, e);
+                    }
                 }
             }
             if (!e.Handled && e.type == "click" && !string.IsNullOrEmpty(e.action))
@@ -502,14 +506,25 @@ namespace Hiccup
         {
             if (!map.TryGetValue(key, out var list) || list.Count == 0)
                 return;
-            var snapshot = list.ToArray();
+            if (list.Count == 1)
+            {
+                // The common case needs no snapshot: the one handler runs, and whatever it adds or removes is next time's business.
+                Invoke(list[0], e);
+                return;
+            }
+            var snapshot = list.ToArray();   // handlers may add or remove handlers while running
             foreach (var h in snapshot)
             {
                 if (e.Handled)
                     return;
-                try { h(e); }
-                catch (Exception ex) { Debug.LogException(ex, this); }
+                Invoke(h, e);
             }
+        }
+
+        private void Invoke(Action<HtmlEvent> handler, HtmlEvent e)
+        {
+            try { handler(e); }
+            catch (Exception ex) { Debug.LogException(ex, this); }
         }
 
         // ------------------------------------------------------------------ texture

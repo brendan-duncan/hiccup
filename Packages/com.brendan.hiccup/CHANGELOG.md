@@ -13,6 +13,19 @@
   `Unity.TextMeshPro` explicitly. See `Documentation~/UguiMirror.md` for the mapping and the limits, and the
   **uGUI Mirror** sample under `Assets/Samples/Hiccup`.
 
+### Changed
+- `IHtmlBackend` gained `PanelSetMipmaps`, so the Editor preview follows `HtmlDocument.Mipmaps` instead of always
+  generating a mip chain per frame. Runtime and Editor hot paths were reworked to allocate nothing on a steady frame:
+  the uGUI mirror reuses last frame's strings, caches components, fonts and converted rich text per node, and
+  formats numbers in place; the texture cache reads RGBA32 textures without a decoded copy and composes slices per
+  column; the jslib no longer calls `getError` outside debug mode; the preview pools screencast buffers and drops
+  unwanted DevTools messages before parsing them.
+
+### Removed
+- Three.js Desk: the nested Unity build on the three.js scene's monitor. A running build painted through a second
+  level of HTML-in-Canvas crashed the renderer (`STATUS_ACCESS_VIOLATION`) after a while with nothing on the
+  console, so the scene is now the three.js shapes alone; the desk mouse still orbits, drags and clicks them.
+
 ### Fixed
 - Editor preview: `HtmlDocument.Eval` wrapped the code as a single expression (`return (code)`), so any script with
   more than one statement, a `var`, or a trailing semicolon failed silently — the Full UI Sample's tooltip

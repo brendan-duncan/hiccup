@@ -147,10 +147,14 @@ namespace Hiccup
             m.SetColumn(3, new Vector4(ndcTL.x, ndcTL.y, 0f, 1f));
             document.SetGeometry(m);
 
+            // The texture and uvRect setters return early on the same value; enabled does not, and toggling a
+            // Graphic re-registers it with the canvas, so it is written only on change.
             var tex = document.Texture;
             _rawImage.texture = tex;   // null in cutout mode: the RawImage then draws its white default, which the shader ignores
             _rawImage.uvRect = document.TextureIsTopDown ? new Rect(0f, 1f, 1f, -1f) : new Rect(0f, 0f, 1f, 1f);
-            _rawImage.enabled = document.Visible && (cutout || tex != null);
+            bool show = document.Visible && (cutout || tex != null);
+            if (_rawImage.enabled != show)
+                _rawImage.enabled = show;
         }
     }
 }

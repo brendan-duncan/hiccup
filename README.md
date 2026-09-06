@@ -36,7 +36,7 @@ of HTML-in-Canvas features, such as screen readers and accessibility.
 https://brendan-duncan.github.io/hiccup/build/ugui
 
 ### Multi-Engine
-A Unity game running ThreeJS on a virtual computer, and the ThreeJS scene is running the Unity Hiccup UI Sample within it.
+A Unity game running ThreeJS on a virtual computer.
 Is it necessary? No. Is it fun to see how far things can be pushed? Absolutely.
 
 https://brendan-duncan.github.io/hiccup/build/multiengine

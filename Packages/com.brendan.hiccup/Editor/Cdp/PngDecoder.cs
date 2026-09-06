@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 
@@ -21,15 +22,16 @@ namespace Hiccup.Editor.Cdp
     {
         private static readonly byte[] Signature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-        private byte[] _filtered;          // inflated scanlines, each prefixed by its filter byte
-        private MemoryStream _idat;        // concatenated IDAT payloads, reused across frames
+        private byte[] _filtered;                                  // inflated scanlines, each prefixed by its filter byte
+        private readonly ChunkStream _idat = new ChunkStream();    // the IDAT payloads, read in place
 
         /// <summary>Bytes needed for a <paramref name="width"/> × <paramref name="height"/> RGBA32 image.</summary>
         public static int OutputSize(int width, int height) => width * height * 4;
 
         /// <summary>
-        /// Decodes <paramref name="png"/> into <paramref name="rgba"/>, allocating or reallocating it when it is not
-        /// exactly the right size. Returns false when the data is not a PNG this decoder handles.
+        /// Decodes the first <paramref name="length"/> bytes of <paramref name="png"/> into <paramref name="rgba"/>,
+        /// allocating or reallocating it when it is not exactly the right size. Returns false when the data is not
+        /// a PNG this decoder handles.
         /// </summary>
         public bool TryDecode(byte[] png, int length, ref byte[] rgba, out int width, out int height)
         {
@@ -45,8 +47,7 @@ namespace Hiccup.Editor.Cdp
             int pos = Signature.Length;
             int colorType = -1;
             int channels = 0;
-            _idat ??= new MemoryStream(256 * 1024);
-            _idat.SetLength(0);
+            _idat.Reset(png);
 
             while (pos + 8 <= length)
             {
@@ -82,7 +83,7 @@ namespace Hiccup.Editor.Cdp
                     case 0x49444154: // IDAT
                         if (channels == 0)
                             return false;
-                        _idat.Write(png, data, chunkLength);
+                        _idat.Add(data, chunkLength);
                         break;
 
                     case 0x49454E44: // IEND
@@ -114,9 +115,9 @@ namespace Hiccup.Editor.Cdp
         }
 
         /// <summary>Inflates a zlib stream, skipping the two-byte header and ignoring the Adler-32 trailer.</summary>
-        private static bool Inflate(MemoryStream zlib, byte[] destination, int count)
+        private static bool Inflate(ChunkStream zlib, byte[] destination, int count)
         {
-            zlib.Position = 2;
+            zlib.Skip(2);
             try
             {
                 using (var deflate = new DeflateStream(zlib, CompressionMode.Decompress, leaveOpen: true))
@@ -233,5 +234,88 @@ namespace Hiccup.Editor.Cdp
 
         private static uint ReadUInt32(byte[] b, int i)
             => ((uint)b[i] << 24) | ((uint)b[i + 1] << 16) | ((uint)b[i + 2] << 8) | b[i + 3];
+
+        /// <summary>
+        /// A read-only, forward-only view over the IDAT chunks where they sit in the PNG, so the compressed
+        /// data is never copied out before it is inflated. Reused across frames.
+        /// </summary>
+        private sealed class ChunkStream : Stream
+        {
+            private byte[] _source;
+            private readonly List<int> _chunks = new List<int>();   // offset, length pairs
+            private int _chunk;     // index into _chunks of the chunk being read
+            private int _cursor;    // bytes of that chunk already consumed
+            private long _length;
+
+            public void Reset(byte[] source)
+            {
+                _source = source;
+                _chunks.Clear();
+                _chunk = 0;
+                _cursor = 0;
+                _length = 0;
+            }
+
+            public void Add(int offset, int length)
+            {
+                _chunks.Add(offset);
+                _chunks.Add(length);
+                _length += length;
+            }
+
+            public void Skip(int count)
+            {
+                while (count > 0 && _chunk < _chunks.Count)
+                {
+                    int available = _chunks[_chunk + 1] - _cursor;
+                    if (available <= 0)
+                    {
+                        _chunk += 2;
+                        _cursor = 0;
+                        continue;
+                    }
+                    int n = Math.Min(available, count);
+                    _cursor += n;
+                    count -= n;
+                }
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                int total = 0;
+                while (count > 0 && _chunk < _chunks.Count)
+                {
+                    int available = _chunks[_chunk + 1] - _cursor;
+                    if (available <= 0)
+                    {
+                        _chunk += 2;
+                        _cursor = 0;
+                        continue;
+                    }
+                    int n = Math.Min(available, count);
+                    Buffer.BlockCopy(_source, _chunks[_chunk] + _cursor, buffer, offset, n);
+                    _cursor += n;
+                    offset += n;
+                    count -= n;
+                    total += n;
+                }
+                return total;
+            }
+
+            public override bool CanRead => true;
+            public override bool CanSeek => false;
+            public override bool CanWrite => false;
+            public override long Length => _length;
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override void Flush() { }
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+            public override void SetLength(long value) => throw new NotSupportedException();
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
     }
 }

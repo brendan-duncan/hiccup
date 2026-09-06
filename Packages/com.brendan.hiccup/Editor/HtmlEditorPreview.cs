@@ -49,9 +49,21 @@ namespace Hiccup.Editor
         /// </summary>
         public static bool FlipY
         {
-            get => EditorPrefs.GetBool(FlipKey, true);
-            set => EditorPrefs.SetBool(FlipKey, value);
+            get
+            {
+                // The backend reads this for every uploaded frame; a prefs lookup each time is a native call.
+                if (s_flipY == null)
+                    s_flipY = EditorPrefs.GetBool(FlipKey, true);
+                return s_flipY.Value;
+            }
+            set
+            {
+                s_flipY = value;
+                EditorPrefs.SetBool(FlipKey, value);
+            }
         }
+
+        private static bool? s_flipY;
 
         /// <summary>One-line description of the preview for inspectors.</summary>
         public static string Status =>

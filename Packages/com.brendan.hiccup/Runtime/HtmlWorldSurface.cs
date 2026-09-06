@@ -28,6 +28,7 @@ namespace Hiccup
         private Material _material;      // texture mode: premultiplied sample of the document texture
         private Material _cutout;        // overlay mode behind a transparent canvas: alpha-0 hole with depth
         private bool _usingCutout;
+        private Texture _shown;          // what _material samples, so texture and flip are written only when they change
         private static readonly int s_FlipY = Shader.PropertyToID("_FlipY");
         private static readonly int s_Cull = Shader.PropertyToID("_Cull");
 
@@ -44,6 +45,7 @@ namespace Hiccup
                 document = GetComponent<HtmlDocument>();
             _material = CreateMaterial("Hiccup/Unlit Premultiplied", "Hiccup Unlit Premultiplied (instance)");
             _usingCutout = false;
+            _shown = null;
             if (_material != null)
                 _renderer.material = _material;
         }
@@ -116,12 +118,16 @@ namespace Hiccup
                 if (m != null)
                     _renderer.material = m;
             }
-            if (!cutout && _material != null)
+            var tex = document.Texture;
+            if (!cutout && _material != null && !ReferenceEquals(tex, _shown))
             {
-                _material.mainTexture = document.Texture;
+                _shown = tex;
+                _material.mainTexture = tex;
                 _material.SetFloat(s_FlipY, document.TextureIsTopDown ? 1f : 0f);
             }
-            _renderer.enabled = document.Visible && (cutout || document.Texture != null);
+            bool show = document.Visible && (cutout || tex != null);
+            if (_renderer.enabled != show)
+                _renderer.enabled = show;
         }
     }
 }

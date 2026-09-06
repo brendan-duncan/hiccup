@@ -32,6 +32,10 @@ namespace Hiccup
         {
             if (ptr == IntPtr.Zero)
                 return string.Empty;
+#if NET_STANDARD_2_1
+            return Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
+#else
+            // The .NET Framework profile has no PtrToStringUTF8: find the terminator, then decode.
             int len = 0;
             while (Marshal.ReadByte(ptr, len) != 0)
                 len++;
@@ -40,6 +44,7 @@ namespace Hiccup
             var bytes = new byte[len];
             Marshal.Copy(ptr, bytes, 0, len);
             return Encoding.UTF8.GetString(bytes);
+#endif
         }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -168,7 +173,7 @@ namespace Hiccup
         public static void Hiccup_PanelSetPremultiplied(int id, int v) { }
         public static void Hiccup_PanelSetPreventSubmit(int id, int v) { }
         public static void Hiccup_PanelSetResolutionScale(int id, float scale) => HtmlBackend.Current?.PanelSetResolutionScale(id, scale);
-        public static void Hiccup_PanelSetMipmaps(int id, int v) { }
+        public static void Hiccup_PanelSetMipmaps(int id, int v) => HtmlBackend.Current?.PanelSetMipmaps(id, v != 0);
         public static int Hiccup_PanelTakeUpdated(int id) => 0;
         public static void Hiccup_PanelListen(int id, string type, int enabled) => HtmlBackend.Current?.PanelListen(id, type, enabled != 0);
         public static void Hiccup_PanelInvalidate(int id) => HtmlBackend.Current?.PanelInvalidate(id);

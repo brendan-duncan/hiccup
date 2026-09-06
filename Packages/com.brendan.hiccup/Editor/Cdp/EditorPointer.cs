@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 
@@ -7,22 +8,19 @@ namespace Hiccup.Editor.Cdp
     /// <summary>
     /// Reads the mouse without binding the package to either input backend. A project may have the old
     /// input manager, the Input System package, or both, and an assembly reference to a package that is
-    /// not installed would not compile — so both paths are resolved reflectively, once.
+    /// not installed would not compile — so the Input System path is resolved reflectively, once, into
+    /// compiled delegates, and the per-frame read is then a plain call with no boxing.
     /// </summary>
     internal static class EditorPointer
     {
         private static bool s_resolved;
 
-        // Input System package
-        private static PropertyInfo s_mouseCurrent;
-        private static PropertyInfo s_mousePosition;
-        private static PropertyInfo s_mouseLeftButton;
-        private static PropertyInfo s_buttonIsPressed;
-        private static MethodInfo s_readVector2;
+        // Input System package; all null when it is not installed or looks unfamiliar.
+        private static Func<object> s_mouseCurrent;           // () => Mouse.current
+        private static Func<object, Vector2> s_mousePosition; // mouse => mouse.position.ReadValue()
+        private static Func<object, bool> s_leftPressed;      // mouse => mouse.leftButton.isPressed
 
         // Legacy input manager
-        private static PropertyInfo s_legacyMousePosition;
-        private static MethodInfo s_legacyGetMouseButton;
         private static bool s_legacyBroken;
 
         /// <summary>Mouse position in screen pixels (origin bottom-left) and whether the left button is held.</summary>
@@ -38,30 +36,24 @@ namespace Hiccup.Editor.Cdp
 
             if (s_mouseCurrent != null)
             {
-                var mouse = s_mouseCurrent.GetValue(null);
+                var mouse = s_mouseCurrent();
                 if (mouse != null)
                 {
-                    var positionControl = s_mousePosition?.GetValue(mouse);
-                    var leftButton = s_mouseLeftButton?.GetValue(mouse);
-                    if (positionControl != null && leftButton != null &&
-                        s_readVector2 != null && s_buttonIsPressed != null)
-                    {
-                        position = (Vector2)s_readVector2.Invoke(positionControl, null);
-                        leftButtonDown = (bool)s_buttonIsPressed.GetValue(leftButton);
-                        return true;
-                    }
+                    position = s_mousePosition(mouse);
+                    leftButtonDown = s_leftPressed(mouse);
+                    return true;
                 }
             }
 
-            if (s_legacyMousePosition != null && !s_legacyBroken)
+            if (!s_legacyBroken)
             {
                 try
                 {
-                    position = (Vector3)s_legacyMousePosition.GetValue(null);
-                    leftButtonDown = (bool)s_legacyGetMouseButton.Invoke(null, new object[] { 0 });
+                    position = Input.mousePosition;
+                    leftButtonDown = Input.GetMouseButton(0);
                     return true;
                 }
-                catch (TargetInvocationException)
+                catch (InvalidOperationException)
                 {
                     // Thrown when the project is set to the Input System package only.
                     s_legacyBroken = true;
@@ -76,25 +68,35 @@ namespace Hiccup.Editor.Cdp
             s_resolved = true;
 
             var mouseType = Type.GetType("UnityEngine.InputSystem.Mouse, Unity.InputSystem");
-            if (mouseType != null)
+            if (mouseType == null)
+                return;
+
+            try
             {
-                s_mouseCurrent = mouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-                s_mousePosition = mouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
-                s_mouseLeftButton = mouseType.GetProperty("leftButton", BindingFlags.Public | BindingFlags.Instance);
+                var current = mouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+                var positionProperty = mouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
+                var leftButtonProperty = mouseType.GetProperty("leftButton", BindingFlags.Public | BindingFlags.Instance);
+                var readValue = positionProperty?.PropertyType.GetMethod("ReadValue", BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+                var isPressed = leftButtonProperty?.PropertyType.GetProperty("isPressed", BindingFlags.Public | BindingFlags.Instance);
+                if (current == null || readValue == null || readValue.ReturnType != typeof(Vector2) ||
+                    isPressed == null || isPressed.PropertyType != typeof(bool))
+                    return;   // an unexpected version; the legacy path is all that is left
 
-                var vector2Control = Type.GetType("UnityEngine.InputSystem.Controls.Vector2Control, Unity.InputSystem");
-                s_readVector2 = vector2Control?.GetMethod("ReadValue", BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
-
-                var buttonControl = Type.GetType("UnityEngine.InputSystem.Controls.ButtonControl, Unity.InputSystem");
-                s_buttonIsPressed = buttonControl?.GetProperty("isPressed", BindingFlags.Public | BindingFlags.Instance);
-
-                if (s_mouseCurrent == null || s_readVector2 == null || s_buttonIsPressed == null)
-                    s_mouseCurrent = null;   // an unexpected version; fall through to the legacy path
+                var mouse = Expression.Parameter(typeof(object), "mouse");
+                var typed = Expression.Convert(mouse, mouseType);
+                s_mousePosition = Expression.Lambda<Func<object, Vector2>>(
+                    Expression.Call(Expression.Property(typed, positionProperty), readValue), mouse).Compile();
+                s_leftPressed = Expression.Lambda<Func<object, bool>>(
+                    Expression.Property(Expression.Property(typed, leftButtonProperty), isPressed), mouse).Compile();
+                s_mouseCurrent = Expression.Lambda<Func<object>>(
+                    Expression.Convert(Expression.Property(null, current), typeof(object))).Compile();
             }
-
-            var inputType = typeof(Input);
-            s_legacyMousePosition = inputType.GetProperty("mousePosition", BindingFlags.Public | BindingFlags.Static);
-            s_legacyGetMouseButton = inputType.GetMethod("GetMouseButton", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(int) }, null);
+            catch (Exception)
+            {
+                s_mouseCurrent = null;
+                s_mousePosition = null;
+                s_leftPressed = null;
+            }
         }
     }
 }

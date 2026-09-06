@@ -118,7 +118,6 @@ namespace Hiccup.Samples
                     Document.Q("[data-action=spin]").Click();
                     break;
                 case "color":
-                case "color":
                     Document.Q("[data-action=color]").Click();
                     break;
                 case "status":

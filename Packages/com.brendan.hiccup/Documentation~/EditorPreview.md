@@ -149,9 +149,15 @@ A screencast message is almost entirely one base64 string, and a full-viewport f
 that through the generic protocol path meant a multi-megabyte string, a character-by-character copy of it inside
 the JSON parser, and a third copy for the base64 decode — per frame, on top of the decode itself. Those
 allocations were most of the Editor's hitching. `CdpClient` instead recognizes the message in its raw UTF-8
-bytes, decodes the payload directly from them, and parses only the few hundred bytes that remain as JSON. The
-frame reaches the backend on the receive thread through `ScreencastFrameHandler`, which acknowledges it at once
-and queues it for decoding.
+bytes, decodes the payload directly from them into a buffer recycled through `FrameBuffers`, and parses only the
+few hundred bytes that remain as JSON. The frame reaches the backend on the receive thread through the screencast
+callback it was connected with, which acknowledges it at once and queues it for decoding; the buffer goes back to
+the pool once the frame is decoded or superseded.
+
+The rest of the traffic gets the same treatment before it is parsed: every fire-and-forget `Send` still draws a
+reply, and an enabled domain emits events nothing listens to. A prefix check on the raw bytes drops replies whose
+id nobody is waiting for and events outside the short list the backend asked for (`Runtime.bindingCalled`,
+`Target.detachedFromTarget`, and `Runtime.consoleAPICalled` only when console logging is on).
 
 Only the newest undecoded frame is kept per document. If Chrome is painting faster than frames can be decoded,
 intermediate frames are dropped rather than queued, which is the right trade for a preview.
@@ -200,9 +206,12 @@ color space project the sRGB flags are ignored throughout and the pass-through s
 
 ### Mipmaps and resizing
 
-The target is created with `useMipMap` and `autoGenerateMips = false`, then `GenerateMips()` is called after each
-blit — matching what the WebGL path does in `AfterBridgeUpdate`. Trilinear plus 16× anisotropy, clamped, which is
-what world-space panels need.
+The target follows the document's `Mipmaps` setting, which reaches the backend through `PanelSetMipmaps`. With it
+on (the default) the target is created with `useMipMap` and `autoGenerateMips = false`, then `GenerateMips()` is
+called after each blit — matching what the WebGL path does in `AfterBridgeUpdate` — and sampled trilinear with
+16× anisotropy, which is what world-space panels need. With it off the target is a plain bilinear texture and
+each frame skips the mip pass, which is the right choice for screen-space panels drawn 1:1. Changing the setting
+rebuilds the target and refills it from the last frame.
 
 The target is reallocated whenever the decoded frame's dimensions change. Document resizes go the other way:
 `PanelSetSize` sends `Emulation.setDeviceMetricsOverride` and restarts the screencast so its `maxWidth`/`maxHeight`
@@ -251,9 +260,11 @@ The result drives `Input.dispatchMouseEvent` in document CSS pixels — which is
 further conversion. Moves are sent only when the position changes; a press that starts inside the panel keeps
 tracking after the pointer leaves, so drags and releases outside still land.
 
-The mouse itself is read through `EditorPointer`, which resolves `UnityEngine.InputSystem.Mouse` reflectively and
-falls back to the legacy `Input` class. An assembly reference to a package that may not be installed would not
-compile, and a project may be configured for either backend or both.
+The mouse itself is read through `EditorPointer`, which resolves `UnityEngine.InputSystem.Mouse` reflectively —
+once, into compiled delegates, so the per-frame read allocates nothing — and falls back to the legacy `Input`
+class. An assembly reference to a package that may not be installed would not compile, and a project may be
+configured for either backend or both. The backend reads the mouse once per `Update()` and hands the result to
+every document.
 
 ## Keyboard input
 
@@ -324,7 +335,8 @@ that touches six elements is one web socket message.
 **Reads block**, briefly. `Value`, `GetAttribute`, `Checked`, `HasClass`, `Bounds`, `Matches`, `Id` and `QAll`
 need an answer, so they wait up to 100 ms on a `Runtime.evaluate` (sub-millisecond in practice against a local
 browser). Every read flushes that document's pending writes first, so a read always observes its own writes.
-`HtmlDocument.Eval` works the same way with a 250 ms budget. The code is wrapped as a function body taking
+A read whose command fails — the session detached, the socket dropped — returns the empty value rather than
+throwing into game code. `HtmlDocument.Eval` works the same way with a 250 ms budget. The code is wrapped as a function body taking
 `panel`, `root` and `HUI`, matching the jslib's `new Function('panel','root','HUI', code)`: statements are fine,
 and a value comes back only through `return`.
 
@@ -380,7 +392,6 @@ already done their work for the frame:
 | IME, dead keys, non-Latin layouts | Keys are relayed one character per press as IMGUI reports them; composed input does not work. |
 | `PointerMode` / `BlockUnityInput` ignored | Unity receives the same clicks the document does. |
 | `PremultipliedAlpha = false` unsupported | The preview always premultiplies; a document that opts out will blend wrongly. The default is `true`. |
-| `Mipmaps = false` ignored | Preview targets always have mipmaps. |
 | Edit mode | The preview runs in play mode only; outside it, documents still show the placeholder. |
 | Accessibility, IME, HTML-in-Canvas | Not reproducible by construction — see the top of this document. |
 

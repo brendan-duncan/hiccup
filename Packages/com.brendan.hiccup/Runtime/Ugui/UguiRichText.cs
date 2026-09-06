@@ -21,6 +21,13 @@ namespace Hiccup.Ugui
             return sb.ToString();
         }
 
+        /// <summary>Appends <paramref name="s"/> escaped for HTML text or a double-quoted attribute.</summary>
+        public static void Escape(string s, StringBuilder sb)
+        {
+            if (!string.IsNullOrEmpty(s))
+                Escape(s, 0, s.Length, sb);
+        }
+
         private static void Escape(string s, int from, int to, StringBuilder sb)
         {
             for (int i = from; i < to; i++)
@@ -44,6 +51,21 @@ namespace Hiccup.Ugui
             var sb = new StringBuilder(s.Length + 32);
             int last = 0;
             int open = 0;   // spans we emitted and still owe a close for
+
+            void OpenSpan(string property, string value)
+            {
+                sb.Append("<span style=\"").Append(property).Append(value).Append("\">");
+                open++;
+            }
+
+            void CloseSpan()
+            {
+                if (open == 0)
+                    return;
+                sb.Append("</span>");
+                open--;
+            }
+
             foreach (Match m in s_tag.Matches(s))
             {
                 Escape(s, last, m.Index, sb);
@@ -54,7 +76,7 @@ namespace Hiccup.Ugui
 
                 switch (name)
                 {
-                    case "b": case "i": case "u": case "s":
+                    case "b": case "i": case "u": case "s": case "sup": case "sub":
                         sb.Append(closing ? "</" : "<").Append(name).Append('>');
                         break;
                     case "br":
@@ -63,66 +85,27 @@ namespace Hiccup.Ugui
                         break;
                     case "color":
                         if (closing)
-                        {
-                            if (open > 0)
-                            {
-                                sb.Append("</span>");
-                                open--;
-                            }
-                        }
+                            CloseSpan();
                         else
-                        {
-                            sb.Append("<span style=\"color:").Append(CssColor(arg)).Append("\">");
-                            open++;
-                        }
+                            OpenSpan("color:", CssColor(arg));
                         break;
                     case "size":
                         if (closing)
-                        {
-                            if (open > 0)
-                            {
-                                sb.Append("</span>");
-                                open--;
-                            }
-                        }
+                            CloseSpan();
                         else
-                        {
-                            sb.Append("<span style=\"font-size:").Append(CssSize(arg)).Append("\">");
-                            open++;
-                        }
+                            OpenSpan("font-size:", CssSize(arg));
                         break;
                     case "mark":
                         if (closing)
-                        {
-                            if (open > 0)
-                            {
-                                sb.Append("</span>");
-                                open--;
-                            }
-                        }
+                            CloseSpan();
                         else
-                        {
-                            sb.Append("<span style=\"background:").Append(CssColor(arg)).Append("\">");
-                            open++;
-                        }
-                        break;
-                    case "sup": case "sub":
-                        sb.Append(closing ? "</" : "<").Append(name).Append('>');
+                            OpenSpan("background:", CssColor(arg));
                         break;
                     case "nobr":
                         if (closing)
-                        {
-                            if (open > 0)
-                            {
-                                sb.Append("</span>");
-                                open--;
-                            }
-                        }
+                            CloseSpan();
                         else
-                        {
-                            sb.Append("<span style=\"white-space:nowrap\">");
-                            open++;
-                        }
+                            OpenSpan("white-space:", "nowrap");
                         break;
                     default:
                         // sprite, material, link, align, indent, voffset, cspace, font, ...: no HTML equivalent here.

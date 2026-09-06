@@ -3,15 +3,6 @@
 <head>
 <meta charset="utf-8">
 <title>three.js desk scene</title>
-<script>
-// HTML-in-Canvas is used by this page too (see "nested screen" below). An Origin Trial token is validated per
-// document, and this frame is a separate document from the build's index.html even though it shares the origin,
-// so copy the parent's token in before anything else runs. With the chrome://flags entry this is a no-op.
-try {
-  var ot = window.parent !== window && window.parent.document.querySelector('meta[http-equiv="origin-trial"]');
-  if (ot) document.head.appendChild(ot.cloneNode(true));
-} catch (e) {}
-</script>
 <script type="importmap">
 {
   "imports": {
@@ -30,40 +21,22 @@ try {
   }
   #cursor.down { transform: scale(.7); border-color: #ffd166; }
   #cursor.over { border-color: #6ee7b7; }
-  #cursor.screen { border-color: #5cc8ff; border-radius: 3px; }
   #hint {
     position: absolute; left: 14px; bottom: 12px; color: #9fb3c8; pointer-events: none; z-index: 10;
     font: 15px/1.4 "Segoe UI", system-ui, sans-serif; text-shadow: 0 1px 2px #000;
   }
-  #nested {
-    position: absolute; right: 14px; top: 12px; color: #7f95ad; pointer-events: none; z-index: 10;
-    font: 13px/1.4 "Segoe UI", system-ui, sans-serif; text-shadow: 0 1px 2px #000; text-align: right;
-  }
-  /* The nested page's panel. In texture mode it is a child of a hidden host canvas (laid out, never displayed,
-     only snapshotted); in overlay mode it is placed by CSS3DRenderer over the WebGL canvas instead. */
-  #unity-panel { position: absolute; left: 0; top: 0; overflow: hidden; background: #000; contain: layout paint style; }
-  #unity-panel > iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
 </style>
 </head>
 <body>
 <div id="cursor"></div>
 <div id="hint">Loading three.js…</div>
-<div id="nested"></div>
 <script type="module">
 // This page runs inside the monitor's iframe. It has no pointer of its own: the desk mouse in Unity writes
 // data-x / data-y (0..1), data-down, data-clicks and data-wheel onto the iframe element, and this page reads
 // them every frame through window.frameElement (allowed because the frame is same-origin).
-//
-// It also has a monitor of its own. The screen of that monitor is another web page, the Unity build published at
-// UNITY_URL, running in an <iframe> and painted by HTML-in-Canvas into a WebGL texture that three.js draws on a
-// plane. So: Unity -> HTML-in-Canvas -> three.js -> HTML-in-Canvas -> Unity.
-const UNITY_URL = 'https://brendan-duncan.github.io/hiccup/build/sample/';
-const NESTED_PX = { w: 1280, h: 720 };     // CSS pixels of the nested page
-const NESTED_SIZE = { w: 6.4, h: 3.6 };    // world size of its screen in this scene: the wall of the room
-const LOOK_AT = { x: 0, y: 1.6, z: -0.6 }; // the orbit center, between the shapes and the big screen
+const LOOK_AT = { x: 0, y: 0.9, z: 0 }; // the orbit center, amid the shapes
 
 const hint = document.getElementById('hint');
-const nestedLabel = document.getElementById('nested');
 const cursorEl = document.getElementById('cursor');
 const status = window.frameElement && window.frameElement.parentNode
   ? window.frameElement.parentNode.querySelector('#status') : null;
@@ -77,7 +50,7 @@ try {
   say('three.js failed to load');
   throw e;
 }
-hint.textContent = 'Right-drag on the pad to move the cursor, left-drag the mouse to press. Drag a shape to move it, drag empty space to orbit, tap to recolor, scroll to zoom. The cursor works on the big screen too.';
+hint.textContent = 'Right-drag on the pad to move the cursor, left-drag the mouse to press. Drag a shape to move it, drag empty space to orbit, tap to recolor, scroll to zoom.';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -88,7 +61,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b1020);
 scene.fog = new THREE.Fog(0x0b1020, 18, 40);
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
-let yaw = 0.3, pitch = 0.22, dist = 10;
+let yaw = 0.3, pitch = 0.22, dist = 8;
 function placeCamera() {
   camera.position.set(
     LOOK_AT.x + Math.sin(yaw) * Math.cos(pitch) * dist,
@@ -124,184 +97,12 @@ geometries.forEach(([name, geometry], i) => {
   shapes.push(mesh);
 });
 
-// ---- A big screen at the back of the scene. Its picture is the nested page (below).
-const monitor = new THREE.Group();
-monitor.position.set(0, NESTED_SIZE.h / 2 + 0.7, -4.2);
-scene.add(monitor);
-const plastic = new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.55, metalness: 0.2 });
-const bezel = new THREE.Mesh(new THREE.BoxGeometry(NESTED_SIZE.w + 0.24, NESTED_SIZE.h + 0.24, 0.14), plastic);
-bezel.position.z = -0.08;
-monitor.add(bezel);
-const neck = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.14), plastic);
-neck.position.set(0, -NESTED_SIZE.h / 2 - 0.35, -0.12);
-monitor.add(neck);
-const foot = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.2, 0.06, 48), plastic);
-foot.position.set(0, -NESTED_SIZE.h / 2 - 0.68, -0.12);
-monitor.add(foot);
-// A little light from the picture spills onto the floor, so the screen reads as a screen.
-const glow = new THREE.PointLight(0x9fc4ff, 6, 9, 1.6);
-glow.position.set(0, -NESTED_SIZE.h / 2 + 0.6, 1.2);
-monitor.add(glow);
-const screenMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(NESTED_SIZE.w, NESTED_SIZE.h),
-  new THREE.MeshBasicMaterial({ color: 0x05070c }));   // replaced by the nested page's texture when it is painted
-screenMesh.name = 'Monitor';
-monitor.add(screenMesh);
-
-// ---- The nested page. Two modes, chosen once, the same way the Hiccup bridge chooses its own:
-//   texture  - HTML-in-Canvas is present: the <iframe> becomes a child of a hidden host canvas (layoutsubtree),
-//              each frame its snapshot is drawn into that canvas with drawElementImage, and three.js samples the
-//              host as a CanvasTexture. The screen is then just a textured plane: occluded, fogged and orbited
-//              like everything else in the scene.
-//   overlay  - otherwise the <iframe> is a DOM element above the canvas, placed with CSS3DRenderer so it sits on
-//              the monitor. Nothing in the scene can occlude it. This is what browsers without the API show,
-//              and what the Editor preview shows if its Chrome lacks the API.
-const nested = await createNestedScreen();
-async function createNestedScreen() {
-  // A second canvas hosts the HTML-in-Canvas work. It must not be the three.js canvas: a canvas that carries
-  // layoutsubtree is itself left out of any snapshot that contains it, and this whole page is one (the desk's
-  // screen is painted by the same API one level up), so the scene would vanish from the desk. The host sits
-  // behind the WebGL canvas, never seen, and its 2D context draws the nested page's snapshot each frame;
-  // three.js then reads the host like any other canvas.
-  const host = document.createElement('canvas');
-  const hctx = host.getContext('2d');
-  const hic = typeof host.requestPaint === 'function' || ('onpaint' in host);
-  const api = hctx && typeof hctx.drawElementImage === 'function' ? 'drawElementImage'
-            : hctx && typeof hctx.drawElement === 'function' ? 'drawElement' : null;
-
-  const panel = document.createElement('div');
-  panel.id = 'unity-panel';
-  panel.style.width = NESTED_PX.w + 'px';
-  panel.style.height = NESTED_PX.h + 'px';
-  const frame = document.createElement('iframe');
-  frame.title = 'Unity build, nested';
-  panel.appendChild(frame);
-
-  // HTML-in-Canvas leaves cross-origin frames out of the snapshot, and the build is only same-origin when this
-  // page is served from the same site. So do what the bridge does with this page: load the build through
-  // srcdoc, which inherits this origin. Its index.html is fetched (GitHub Pages sends CORS headers) and given a
-  // <base> so the loader, data and wasm still come from the real site; script and fetch sources are not
-  // painted content, so their origin does not matter. The page's Origin Trial token comes along too.
-  let why = null;
-  let sameOrigin = false;
-  try { sameOrigin = new URL(UNITY_URL).origin === window.parent.location.origin; } catch (e) {}
-  if (sameOrigin) {
-    frame.src = UNITY_URL;
-  } else {
-    try {
-      const res = await fetch(UNITY_URL, { mode: 'cors' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const ot = document.querySelector('meta[http-equiv="origin-trial"]');
-      const inject = '<base href="' + UNITY_URL + '">' + (ot ? ot.outerHTML : '');
-      // The loader resolves streamingAssetsUrl against document.URL, which is "about:srcdoc" here and throws,
-      // so make the template's relative URLs absolute rather than relying on <base> for everything.
-      const absolute = (rel) => { try { return new URL(rel, UNITY_URL).href; } catch (e) { return rel; } };
-      const html = (await res.text())
-        .replace(/(var\s+buildUrl\s*=\s*)"([^"]*)"/, (m, k, v) => k + '"' + absolute(v) + '"')
-        .replace(/(streamingAssetsUrl\s*:\s*)"([^"]*)"/, (m, k, v) => k + '"' + absolute(v) + '"');
-      frame.srcdoc = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => m + inject) : inject + html;
-    } catch (e) {
-      frame.src = UNITY_URL;   // cross-origin: overlay mode is all that can show it
-      why = 'the build could not be fetched for a same-origin frame (' + e.message + ')';
-    }
-  }
-  if (!hic) why = 'no HTML-in-Canvas API in this frame';
-  else if (!api) why = 'no drawElementImage on a 2D context';
-  const textureMode = why === null;
-
-  const warned = new Set();
-  const warnOnce = (key, msg) => { if (!warned.has(key)) { warned.add(key); console.warn('[desk] ' + msg); } };
-
-  if (textureMode) {
-    const dpr = renderer.getPixelRatio();
-    const texW = Math.round(NESTED_PX.w * dpr), texH = Math.round(NESTED_PX.h * dpr);
-    host.width = texW;
-    host.height = texH;
-    host.style.cssText = 'position:absolute;left:0;top:0;z-index:-1;width:' + NESTED_PX.w + 'px;height:' + NESTED_PX.h + 'px;';
-    host.setAttribute('layoutsubtree', '');
-    panel.setAttribute('drawable', '');
-    host.appendChild(panel);
-    document.body.appendChild(host);
-
-    const texture = new THREE.CanvasTexture(host);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    screenMesh.material = new THREE.MeshBasicMaterial({ map: texture });
-
-    let painted = false;
-    const upload = () => {
-      try {
-        hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        hctx[api](panel, 0, 0);
-        if (!painted) {
-          hctx.getImageData(0, 0, 1, 1);   // throws if the snapshot tainted the host; three.js could not read it either
-          painted = true;
-          nestedLabel.textContent = 'monitor: ' + UNITY_URL + ' (texture mode, ' + api + ')';
-        }
-        texture.needsUpdate = true;
-      } catch (e) {
-        // Common on the first frames ("no snapshot recorded yet"); ask for a paint and try again next frame.
-        warnOnce('upload', api + ' failed (will retry): ' + e);
-        if (typeof host.requestPaint === 'function') { try { host.requestPaint(); } catch (e2) {} }
-      }
-    };
-    nestedLabel.textContent = 'monitor: loading ' + UNITY_URL + ' …';
-    return { mode: 'texture', frame, update: upload, resize() {} };
-  }
-
-  // Overlay mode: the same element, placed over the canvas by CSS3DRenderer using the same camera.
-  const { CSS3DRenderer, CSS3DObject } = await import('three/addons/renderers/CSS3DRenderer.js');
-  const cssRenderer = new CSS3DRenderer();
-  cssRenderer.setSize(innerWidth, innerHeight);
-  cssRenderer.domElement.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;z-index:1;';
-  document.body.appendChild(cssRenderer.domElement);
-  const object = new CSS3DObject(panel);
-  object.scale.setScalar(NESTED_SIZE.w / NESTED_PX.w);   // CSS3D treats one CSS pixel as one world unit
-  screenMesh.getWorldPosition(object.position);
-  screenMesh.getWorldQuaternion(object.quaternion);
-  scene.add(object);
-  nestedLabel.textContent = 'monitor: ' + UNITY_URL + ' (overlay mode: ' + why + ')';
-  return {
-    mode: 'overlay', frame,
-    update() { cssRenderer.render(scene, camera); },
-    resize() { cssRenderer.setSize(innerWidth, innerHeight); },
-  };
-}
-
-// Forward the desk mouse into the nested page. The frame receives no real pointer events in either mode, but
-// it is same-origin in texture mode, so events can be dispatched into its document directly. Synthetic events
-// are untrusted, which the build does not mind: Unity's input handlers and the Hiccup UI listen with ordinary
-// DOM listeners. In overlay mode in the Editor preview the frame is cross-origin and this quietly does nothing.
-function forwardToNested(type, uv, extra) {
-  let doc;
-  try { doc = nested.frame.contentDocument; } catch (e) { return; }
-  if (!doc || !doc.defaultView) return;
-  const x = uv.x * NESTED_PX.w, y = (1 - uv.y) * NESTED_PX.h;
-  const target = doc.elementFromPoint(x, y) || doc.body;
-  if (!target) return;
-  const w = doc.defaultView;
-  const init = Object.assign({
-    bubbles: true, cancelable: true, composed: true, view: w, clientX: x, clientY: y, screenX: x, screenY: y,
-    button: 0, buttons: 0, pointerId: 1, pointerType: 'mouse', isPrimary: true,
-  }, extra);
-  try {
-    if (type === 'wheel') {
-      target.dispatchEvent(new w.WheelEvent('wheel', init));
-    } else if (type === 'click') {
-      target.dispatchEvent(new w.MouseEvent('click', init));
-    } else {
-      if (w.PointerEvent) target.dispatchEvent(new w.PointerEvent('pointer' + type, init));
-      target.dispatchEvent(new w.MouseEvent('mouse' + type, init));
-    }
-  } catch (e) {}
-}
-
 // ---- Desk mouse -> cursor -> raycasts
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const cursor = { x: innerWidth / 2, y: innerHeight / 2 };
-const last = { x: 0.5, y: 0.5, down: false, clicks: 0, wheel: 0, cx: cursor.x, cy: cursor.y, uv: null };
-let hovered = null, grabbed = null, onScreen = false;   // onScreen: the press started on the monitor
+const last = { x: 0.5, y: 0.5, down: false, clicks: 0, wheel: 0, cx: cursor.x, cy: cursor.y };
+let hovered = null, grabbed = null;
 const grabPlane = new THREE.Plane(), grabOffset = new THREE.Vector3(), hitPoint = new THREE.Vector3();
 
 function aim() {
@@ -313,11 +114,6 @@ function pick() {
   const hits = raycaster.intersectObjects(shapes, false);
   return hits.length ? hits[0].object : null;
 }
-function screenUv() {
-  aim();
-  const hits = raycaster.intersectObject(screenMesh, false);
-  return hits.length && hits[0].uv ? hits[0].uv.clone() : null;
-}
 function setHovered(mesh) {
   if (hovered === mesh) return;
   if (hovered) hovered.material.emissive.setHex(0x000000);
@@ -328,14 +124,6 @@ function setHovered(mesh) {
 }
 function press() {
   cursorEl.classList.add('down');
-  const uv = screenUv();
-  if (uv) {
-    onScreen = true;
-    last.uv = uv;
-    forwardToNested('down', uv, { buttons: 1 });
-    say('pressing on the monitor');
-    return;
-  }
   grabbed = pick();
   if (grabbed) {
     // Drag on a plane through the object, facing the camera.
@@ -349,16 +137,8 @@ function press() {
     say('orbiting');
   }
 }
-function release(click) {
+function release() {
   cursorEl.classList.remove('down');
-  if (onScreen) {
-    onScreen = false;
-    const uv = screenUv() || last.uv;
-    if (uv) {
-      forwardToNested('up', uv, { buttons: 0 });
-      if (click) forwardToNested('click', uv, { buttons: 0 });
-    }
-  }
   grabbed = null;
   hovered = null;            // force setHovered to restate the status after a drag
   setHovered(pick());
@@ -372,10 +152,7 @@ function click() {
   say('clicked ' + mesh.name.toLowerCase());
 }
 function drag(dx, dy) {
-  if (onScreen) {
-    const uv = screenUv() || last.uv;
-    if (uv) { last.uv = uv; forwardToNested('move', uv, { buttons: 1 }); }
-  } else if (grabbed) {
+  if (grabbed) {
     aim();
     if (raycaster.ray.intersectPlane(grabPlane, hitPoint)) {
       grabbed.position.copy(hitPoint).add(grabOffset);
@@ -385,18 +162,6 @@ function drag(dx, dy) {
     yaw -= dx * 0.006;
     pitch = Math.max(0.08, Math.min(1.3, pitch + dy * 0.006));
     placeCamera();
-  }
-}
-function hover() {
-  const uv = screenUv();
-  cursorEl.classList.toggle('screen', !!uv);
-  if (uv) {
-    setHovered(null);
-    last.uv = uv;
-    forwardToNested('move', uv, { buttons: 0 });
-    say('over the monitor');
-  } else {
-    setHovered(pick());
   }
 }
 
@@ -416,20 +181,14 @@ function readDesk() {
   const clicked = clicks !== last.clicks;
 
   if (wheel !== last.wheel) {
-    const uv = screenUv();
-    if (uv) {
-      forwardToNested('wheel', uv, { deltaY: -(wheel - last.wheel), deltaMode: 0 });
-    } else {
-      dist = Math.max(4, Math.min(18, dist - (wheel - last.wheel) * 0.008));
-      placeCamera();
-    }
+    dist = Math.max(4, Math.min(18, dist - (wheel - last.wheel) * 0.008));
+    placeCamera();
   }
   if (down && !last.down) press();
   if (down && (dx || dy)) drag(dx, dy);
-  const wasOnScreen = onScreen;
-  if (!down && last.down) release(clicked);
-  if (clicked && !wasOnScreen) click();
-  if (!down && (dx || dy)) hover();
+  if (!down && last.down) release();
+  if (clicked) click();
+  if (!down && (dx || dy)) setHovered(pick());
 
   Object.assign(last, { x, y, down, clicks, wheel, cx: cursor.x, cy: cursor.y });
 }
@@ -438,7 +197,6 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  nested.resize();
 });
 
 const clock = new THREE.Clock();
@@ -455,9 +213,7 @@ renderer.setAnimationLoop(() => {
     const s = 1 + Math.sin(u.pop * Math.PI) * 0.25;
     mesh.scale.setScalar(s);
   }
-  if (nested.mode === 'texture') nested.update();   // copy the nested page's snapshot before drawing the scene
   renderer.render(scene, camera);
-  if (nested.mode === 'overlay') nested.update();   // place the DOM over the frame that was just drawn
 });
 </script>
 </body>
