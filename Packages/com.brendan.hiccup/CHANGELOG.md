@@ -38,6 +38,11 @@
   a `data-scroll` attribute.
 
 ### Fixed
+- `package.json` declares its dependencies: `com.unity.ugui` 2.0.0 (which carries TextMeshPro on Unity 6) and the
+  UI, IMGUI, ImageConversion and JsonSerialize modules. The runtime assembly references `UnityEngine.UI` and
+  `Unity.TextMeshPro`, so a project without uGUI could not compile the package before. It also names its
+  repository, documentation, changelog and license URLs, and the READMEs show the git URL install
+  (`?path=Packages/com.brendan.hiccup`).
 - Editor preview: `HtmlDocument.Eval` returning an object, array or boolean came back as .NET's rendering of
   the value (a type name, `True`). It is now stringified in the page exactly as the jslib does (JSON, `true`).
 

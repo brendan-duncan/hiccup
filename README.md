@@ -81,12 +81,21 @@ https://brendan-duncan.github.io/hiccup/build/multiengine
 
 ## Using the package elsewhere
 
-Copy `Packages/com.brendan.hiccup` into another project's `Packages` folder, or reference it from
-`Packages/manifest.json`:
+Add it to another project's `Packages/manifest.json` straight from GitHub (the package lives in a subfolder, so
+the `path` query is needed):
+
+```json
+"com.brendan.hiccup": "https://github.com/brendan-duncan/hiccup.git?path=Packages/com.brendan.hiccup"
+```
+
+Or copy `Packages/com.brendan.hiccup` into the other project's `Packages` folder, or reference a local clone:
 
 ```json
 "com.brendan.hiccup": "file:../../hiccup/Packages/com.brendan.hiccup"
 ```
+
+The package declares what it needs (uGUI, which includes TextMeshPro, and the UI, IMGUI, ImageConversion and
+JsonSerialize modules), so the Package Manager brings those in.
 
 The samples live in this project rather than in the package, so copy `Assets/Samples/Hiccup` across as well if
 you want them there. They show what the package expects of your HTML, CSS and C#. The [user guide](Packages/com.brendan.hiccup/Documentation~/UserGuide.md) is the place to start authoring.

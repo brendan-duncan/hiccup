@@ -26,7 +26,8 @@ interactive, just not composited into the Unity frame). The Editor shows placeho
 
 ## Requirements
 
-* Unity 6000.0+ with the **Web** platform module (WebGL2 or WebGPU).
+* Unity 6000.0+ with the **Web** platform module (WebGL2 or WebGPU). The package depends on `com.unity.ugui` 2.0+
+  and the UI, IMGUI, ImageConversion and JsonSerialize modules, and declares them, so the Package Manager installs them.
 * Chrome 148+ with `chrome://flags/#canvas-draw-element`, or an
   [Origin Trial token](https://developer.chrome.com/origintrials/#/view_trial/3478467762190286849) for your origin
   (the API is in origin trial in Chrome 148–150; signatures may still change — the bridge feature-detects each
@@ -34,7 +35,9 @@ interactive, just not composited into the Unity frame). The Editor shows placeho
 
 ## Quick start
 
-1. Add the package (it is an embedded package in `Packages/com.brendan.hiccup`).
+1. Add the package: in this repository it is embedded at `Packages/com.brendan.hiccup`; in another project add
+   `"com.brendan.hiccup": "https://github.com/brendan-duncan/hiccup.git?path=Packages/com.brendan.hiccup"` to
+   `Packages/manifest.json`. It pulls in uGUI (with TextMeshPro) and the modules it uses.
 2. Optional but recommended: set **Project Settings ▸ Player ▸ Resolution and Presentation ▸ WebGL Template** to
    `Hiccup` (copied to `Assets/WebGLTemplates/Hiccup`). It adds the Origin Trial `<meta>` tag placeholder and a
    full-window canvas with `layoutsubtree`. The bridge sets the attribute at runtime anyway.

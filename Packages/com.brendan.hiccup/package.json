@@ -4,6 +4,13 @@
   "displayName": "Hiccup",
   "description": "HTML-In-Canvas Components Unity Package. Define Unity UIs in HTML/CSS for WebGL and WebGPU builds. Uses Chrome's HTML-in-Canvas API (layoutsubtree / drawable / paint / texElementImage2D / copyElementImageToTexture) so the DOM is composited into the Unity frame while staying fully accessible (screen readers, find-in-page, text selection, IME, keyboard navigation). Falls back to a DOM overlay in browsers without the API.",
   "unity": "6000.0",
+  "dependencies": {
+    "com.unity.ugui": "2.0.0",
+    "com.unity.modules.ui": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0"
+  },
   "keywords": [
     "ui",
     "html",
@@ -16,5 +23,12 @@
   ],
   "author": {
     "name": "Brendan Duncan"
+  },
+  "documentationUrl": "https://github.com/brendan-duncan/hiccup/blob/main/Packages/com.brendan.hiccup/Documentation~/UserGuide.md",
+  "changelogUrl": "https://github.com/brendan-duncan/hiccup/blob/main/Packages/com.brendan.hiccup/CHANGELOG.md",
+  "licensesUrl": "https://github.com/brendan-duncan/hiccup/blob/main/Packages/com.brendan.hiccup/LICENSE.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brendan-duncan/hiccup.git"
   }
 }
