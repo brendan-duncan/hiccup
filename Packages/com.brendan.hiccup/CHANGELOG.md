@@ -3,6 +3,13 @@
 ## Unreleased
 
 ### Added
+- `HtmlDocument.Scripts`: `.js` TextAssets that run in the page, in order, once the document is created (before
+  `Created` fires, so handlers there see what they installed) and again after `Reload()`. Each is a function body
+  with `panel`, `root` and `HUI` in scope, run through `EvalAsync`, so `await` is allowed and a script that throws
+  is reported in the Unity console with its asset name. `.js` files import as TextAssets through a new
+  `JsImporter` with their own icon, selected per asset like `.html` and skipping `WebGLTemplates` and `Plugins`
+  folders; **Assets ▸ Create ▸ Hiccup ▸ Script** makes one with a starter template. The Full UI Sample's
+  tooltip-dismissal code moved out of a C# string into `GameUI.tooltips.js`.
 - Page-to-C# messages. Script run through `HtmlDocument.Eval` / `EvalAsync`, or DOM listeners such script
   installs, calls `HUI.send(name, payload)`; C# receives it with `doc.OnMessage(name, handler)` or the
   `doc.MessageReceived` event as an `HtmlMessage` (`Name`, `Data`, `DataAsFloat`, `DataAsInt`, `DataAsBool`,

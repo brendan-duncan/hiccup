@@ -40,19 +40,6 @@ namespace Hiccup.Samples
             new Item { Id = "oxygen", Name = "O₂ canister", Icon = "🫧", Category = "consumable", Qty = 5, Description = "Twelve hours of breathing." },
         };
 
-        private const string TooltipScript = @"
-            var wraps = function () { return root.querySelectorAll('.tip-wrap'); };
-            root.addEventListener('keydown', function (e) {
-                if (e.key !== 'Escape') return;
-                wraps().forEach(function (w) { w.classList.add('tip-dismissed'); });
-            });
-            var reveal = function (e) {
-                var t = e.target, w = t && t.closest ? t.closest('.tip-wrap') : null;
-                if (w) w.classList.remove('tip-dismissed');
-            };
-            root.addEventListener('pointerover', reveal);
-            root.addEventListener('focusin', reveal);";
-
         private string _screen = "menu";
         private string _selectedItem;
         private int _toastId;
@@ -204,9 +191,8 @@ namespace Hiccup.Samples
                     Game.Pause();
             });
 
-            // ---- Tooltip dismissal (WAI-ARIA: Escape hides a tooltip; it comes back on the next hover/focus).
-            // Done in-page through Eval so pointer-move traffic never crosses the bridge.
-            doc.Eval(TooltipScript);
+            // Tooltip dismissal (Escape hides, hover or focus brings it back) lives in GameUI.tooltips.js, one of the
+            // document's Scripts: it ran before Created fired, and pointer-move traffic never crosses the bridge.
 
             // ---- Game -> UI
             Game.StateChanged += OnStateChanged;

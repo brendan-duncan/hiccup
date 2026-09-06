@@ -3,9 +3,10 @@ using UnityEditor;
 namespace Hiccup.Editor
 {
     /// <summary>
-    /// Assets ▸ Create ▸ Hiccup menu: new .html fragments and .css style sheets, created with the Project window's
-    /// inline rename like any other asset. Both import as TextAssets (.html by Unity, .css by <see cref="CssImporter"/>)
-    /// ready to assign to HtmlDocument's Html and Style Sheets fields.
+    /// Assets ▸ Create ▸ Hiccup menu: new .html fragments, .css style sheets and .js scripts, created with the
+    /// Project window's inline rename like any other asset. All import as TextAssets (<see cref="HtmlImporter"/>,
+    /// <see cref="CssImporter"/>, <see cref="JsImporter"/>) ready to assign to HtmlDocument's Html, Style Sheets
+    /// and Scripts fields.
     /// </summary>
     internal static class HtmlAssetMenu
     {
@@ -42,11 +43,24 @@ button {
 }
 ";
 
+        private const string JsTemplate =
+@"// Runs in the page once the document is created, and again after Reload(). This is a function body:
+// `panel` is the document's outer element, `root` holds your HTML, `HUI.send(name, payload)` reaches C#
+// (doc.OnMessage), and `await` is allowed. <script> tags in the HTML itself never run.
+root.addEventListener('click', function (e) {
+  var button = e.target.closest('button');
+  if (button) HUI.send('clicked', button.textContent);
+});
+";
+
         [MenuItem(Menu + "HTML Document", priority = Priority)]
         private static void CreateHtml() => Create("NewHtmlDocument.html", HtmlTemplate);
 
         [MenuItem(Menu + "Style Sheet", priority = Priority + 1)]
         private static void CreateCss() => Create("NewStyleSheet.css", CssTemplate);
+
+        [MenuItem(Menu + "Script", priority = Priority + 2)]
+        private static void CreateJs() => Create("NewScript.js", JsTemplate);
 
         private static void Create(string defaultName, string content)
         {

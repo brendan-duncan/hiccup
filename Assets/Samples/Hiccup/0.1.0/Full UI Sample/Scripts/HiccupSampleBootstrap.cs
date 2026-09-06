@@ -91,6 +91,7 @@ namespace Hiccup.Samples
             var hudDoc = hudGo.AddComponent<HtmlDocument>();
             hudDoc.Html = Resources.Load<TextAsset>("HiccupSample/GameUI");
             hudDoc.StyleSheets = new[] { Resources.Load<TextAsset>("HiccupSample/GameUI.style") };
+            hudDoc.Scripts = new[] { Resources.Load<TextAsset>("HiccupSample/GameUI.tooltips") };
             hudDoc.PointerMode = HtmlPointerMode.ChildrenOnly; // the sample CSS decides which regions take input
             hudGo.AddComponent<HtmlScreenSurface>();
             var hudController = hudGo.AddComponent<GameUIController>();

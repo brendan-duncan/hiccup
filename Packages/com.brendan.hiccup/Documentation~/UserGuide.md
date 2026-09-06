@@ -102,7 +102,8 @@ creates itself the first time a document is enabled.
 ### 1. The content
 
 In the Project window, right-click and choose **Create ▸ Hiccup ▸ HTML Document**, then
-**Create ▸ Hiccup ▸ Style Sheet**. (Both are also under the **Assets ▸ Create** menu.) Each new file starts as a
+**Create ▸ Hiccup ▸ Style Sheet**. (Both are also under the **Assets ▸ Create** menu, next to **Script**, which
+makes a `.js` file for page-side code; you will not need one for this HUD.) Each new file starts as a
 small template; replace the contents with the snippets below. You can also copy `.html` and `.css` files in from
 anywhere else. Both kinds show up with their own icons in the Project window (orange `<>` for HTML, blue `{}`
 for CSS) and in Inspector fields.
@@ -259,8 +260,9 @@ emoji, transitions.
 **What does not:**
 
 * **`<script>` tags never run.** Hiccup inserts your content with `innerHTML`, and browsers ignore scripts
-  added that way. When you really need JavaScript, call `HtmlDocument.Eval(js)` or `EvalAsync(js)`. The code
-  runs with `panel`, `root` and `HUI` available as variables, and `HUI.send` carries results back to C#. See
+  added that way. Put page-side code in `.js` files listed under the document's **Scripts**, or call
+  `HtmlDocument.Eval(js)` / `EvalAsync(js)`. Either way the code runs with `panel`, `root` and `HUI` available
+  as variables, and `HUI.send` carries results back to C#. See
   [Running JavaScript in the page](#running-javascript-in-the-page).
 * **Cross-origin `<iframe>` content is not drawn** in texture mode. (An iframe is a page embedded inside
   another page. "Cross-origin" means it comes from a different website.) The browser leaves that area empty.
@@ -407,6 +409,27 @@ Most UIs never need this: `Q`, the element API and the event handlers cover butt
 Reach for JavaScript when the page has to do something itself, such as run an animation, talk to a web API,
 or drive a widget that lives in the DOM, and when the answer has to come back to C#.
 
+**Scripts are `.js` files attached to the document.** Create one with **Create ▸ Hiccup ▸ Script**, drag it into
+the document's **Scripts** list, and it runs in the page as soon as the document exists, before your `Created`
+handler, and again after `Reload()`. Several scripts run in the order they are listed. This is where page-side
+code belongs: keep it next to the HTML and CSS it works with instead of inside a C# string.
+
+```js
+// Tooltips.js: Escape hides tooltips, hovering or focusing a trigger brings them back.
+root.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  root.querySelectorAll('.tip-wrap').forEach(function (w) { w.classList.add('tip-dismissed'); });
+});
+```
+
+A script is a function body, so it can `return` early and `await` promises, and it sees the same three variables
+as `Eval` below. Listeners it attaches to `root` survive later changes to the HTML; listeners on elements inside
+`root` go away with those elements. A script that throws is reported in the Unity console with the asset's name.
+Because `Reload()` runs the scripts again, a script that must not run twice can guard itself with a flag on
+`root`.
+
+The three ways below run code from C# instead.
+
 **`Eval` runs code now and returns a string.** The code is the body of a function with three things in scope:
 `panel` (the document's outer element), `root` (the element your HTML lives in) and `HUI` (Hiccup's bridge).
 Whatever it `return`s comes back as a string; objects and arrays come back as JSON.
@@ -458,9 +481,9 @@ doc.OnMessage("volume", m => audio.volume = m.DataAsFloat);   // HUI.send('volum
 Messages are delivered as DOM events are: right away in a build, and through the same per-frame pump as clicks
 in the Editor preview. Set `m.Handled = true` to stop later handlers for the same name.
 
-`<script>` tags inside your HTML do not run (the browser ignores them when HTML is inserted this way), so
-`Eval` is also how you install any page-side code. Run it from the `Created` event, which fires once the page
-can be written to in both the build and the Editor.
+`<script>` tags inside your HTML do not run (the browser ignores them when HTML is inserted this way). Put
+page-side code in the document's **Scripts** instead, or run it with `Eval` from the `Created` event, which fires
+once the page can be written to in both the build and the Editor.
 
 ## Panels in the 3D scene
 
@@ -751,7 +774,7 @@ For a detailed trace, set `HtmlRuntime.DebugLogging = true` before creating your
 * **Web builds only.** There is no browser on desktop, mobile or console, so there is nothing to draw the page.
 * **Drawing inside the scene needs Chrome 148+** with the flag or an Origin Trial token. The browser feature is
   still in trial and has changed between versions. Hiccup detects each version it knows about.
-* **No `<script>` in your HTML.** Use `Eval` or `EvalAsync`; see
+* **No `<script>` in your HTML.** Use the document's **Scripts** list, `Eval` or `EvalAsync`; see
   [Running JavaScript in the page](#running-javascript-in-the-page).
 * **Cross-origin iframes** are not drawn in texture mode. Same-origin ones, including `srcdoc`, are. Overlay
   mode shows cross-origin frames.

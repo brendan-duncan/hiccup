@@ -39,6 +39,8 @@ namespace Hiccup
         [SerializeField] private TextAsset[] styleSheets;
         [TextArea(2, 8)]
         [SerializeField] private string extraCss;
+        [Tooltip("JavaScript run in the page once it is created, and again after Reload(), in order. Each file is a function body with panel, root and HUI in scope, like Eval; await is allowed.")]
+        [SerializeField] private TextAsset[] scripts;
 
         [Header("Layout")]
         [Tooltip("Document size in CSS pixels. Surfaces may override this (e.g. to match a RectTransform).")]
@@ -134,6 +136,16 @@ namespace Hiccup
                 if (_created)
                     SetCss(BuildCss());
             }
+        }
+        /// <summary>
+        /// JavaScript files (.js TextAssets) run in the page, in order, once it is created and again after
+        /// <see cref="Reload"/>. Each runs like <see cref="EvalAsync"/>: a function body with <c>panel</c>,
+        /// <c>root</c> and <c>HUI</c> in scope. Assigning this does not run anything by itself.
+        /// </summary>
+        public TextAsset[] Scripts
+        {
+            get => scripts;
+            set => scripts = value;
         }
 
         /// <summary>Document size in CSS pixels.</summary>
@@ -277,8 +289,31 @@ namespace Hiccup
         private void RaiseCreated()
         {
             _ready = true;
+            RunScripts();   // before Created, so handlers there see what the scripts installed
             try { Created?.Invoke(this); }
             catch (Exception ex) { Debug.LogException(ex, this); }
+        }
+
+        /// <summary>Runs the <see cref="Scripts"/> in order. A script that throws is reported with its asset name.</summary>
+        private void RunScripts()
+        {
+            if (scripts == null)
+                return;
+            foreach (var script in scripts)
+            {
+                if (script != null)
+                    RunScript(script);
+            }
+        }
+
+        private async void RunScript(TextAsset script)
+        {
+            // EvalAsync so the body may await and so a failure comes back with a message; in a web build the body
+            // still runs synchronously up to its first await, and the Editor preview evaluates it before anything
+            // queued after it, so the order scripts, then Created handlers, then later writes always holds.
+            try { await EvalAsync(script.text); }
+            catch (HtmlEvalException ex) { Debug.LogError($"[Hiccup] Script \"{script.name}\" failed: {ex.Message}", this); }
+            catch (OperationCanceledException) { /* the panel was destroyed first */ }
         }
 
         /// <summary>Removes the panel from the page and releases the texture.</summary>
@@ -296,7 +331,7 @@ namespace Hiccup
             CancelEvals();
         }
 
-        /// <summary>Re-applies the serialized HTML and style sheets.</summary>
+        /// <summary>Re-applies the serialized HTML and style sheets, then runs the <see cref="Scripts"/> again.</summary>
         public void Reload()
         {
             if (!_created)
@@ -306,6 +341,8 @@ namespace Hiccup
             }
             SetCss(BuildCss());
             SetHtml(html != null ? html.text : string.Empty);
+            if (_ready)
+                RunScripts();
         }
 
         private string BuildCss()
