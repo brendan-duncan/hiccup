@@ -715,6 +715,12 @@ In Play mode, Hiccup renders documents through a real copy of Chrome, so you can
 Layout, styling, script behavior, mouse input and events are all genuine. The toggles live under
 **Window ▸ Hiccup**.
 
+**Edit while playing.** Save a change to a `.html`, `.css` or `.js` file a document uses and switch back to
+Unity so it reimports the file. The document picks it up: a style sheet change is applied in place and the page
+keeps its state (open dialogs, typed text, scroll position), while an HTML or script change reloads the document
+and runs its scripts again. Only the assets assigned to the document are tracked; content set from code with
+`SetHtml` or `SetCss` is not. **Window ▸ Hiccup ▸ Reload Changed Assets in Play Mode** turns this off.
+
 Keys typed in the Game view go to the document you last clicked in, so text fields and keyboard shortcuts work.
 IME and other composed input do not. The preview also cannot show accessibility features or the in-scene
 compositing. Treat it as a fast iteration loop, not as a substitute for testing a build.

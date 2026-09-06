@@ -144,6 +144,7 @@ Toggles live under **Window > Hiccup**:
 | Run Chrome Headless | Off runs a visible (off-screen) browser window, which is useful when debugging the page. |
 | Log Browser Console | Forwards the page's `console` output to the Unity console. |
 | Flip Preview Vertically | Corrects the frame orientation if it comes out upside down on your graphics API. |
+| Reload Changed Assets in Play Mode | On by default. A saved `.css` is applied to live documents in place; a saved `.html` or `.js` reloads them. |
 
 What the preview gives you is genuine, because it is genuinely Chrome: layout, CSS, fonts, script behavior and
 event payloads. What it cannot give you is the part that only exists in a web build — accessibility (screen

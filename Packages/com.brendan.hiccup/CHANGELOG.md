@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- Hot reload in play mode. Saving a `.html`, `.css` or `.js` asset a live document uses pushes it into the page
+  once Unity reimports it: a style sheet change is applied in place and the page keeps its state, an HTML or
+  script change calls `Reload()`. `HtmlDocument.ReloadStyles()` is the new public half of that. Toggle it under
+  **Window ▸ Hiccup ▸ Reload Changed Assets in Play Mode**; content set from code is not tracked.
 - `HtmlDocument.Scripts`: `.js` TextAssets that run in the page, in order, once the document is created (before
   `Created` fires, so handlers there see what they installed) and again after `Reload()`. Each is a function body
   with `panel`, `root` and `HUI` in scope, run through `EvalAsync`, so `await` is allowed and a script that throws

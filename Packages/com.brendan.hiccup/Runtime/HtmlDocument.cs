@@ -345,6 +345,13 @@ namespace Hiccup
                 RunScripts();
         }
 
+        /// <summary>Re-applies the serialized style sheets and <see cref="ExtraCss"/> without touching the HTML, so the page keeps its state.</summary>
+        public void ReloadStyles()
+        {
+            if (_created)
+                SetCss(BuildCss());
+        }
+
         private string BuildCss()
         {
             var sb = new StringBuilder();

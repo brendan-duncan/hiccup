@@ -49,6 +49,7 @@ whether *either* bridge exists, which is what makes `HtmlDocument` allocate a te
 | `Runtime/HtmlNative.cs` | Editor stubs forward to the backend. |
 | `Runtime/HtmlDocument.cs` | A third texture branch for backend-owned textures. |
 | `Editor/HtmlEditorPreview.cs` | Settings, menu, and the lifecycle that guarantees Chrome dies with the session. |
+| `Editor/HtmlHotReload.cs` | Pushes reimported .html, .css and .js assets into live documents during play mode. |
 | `Editor/Cdp/ChromeLauncher.cs` | Finds and starts Chrome, discovers its DevTools endpoint. |
 | `Editor/Cdp/PreviewOrigin.cs` | Loopback HTTP server serving the empty page documents are created on, so they have a real origin. |
 | `Editor/Cdp/CdpClient.cs` | JSON-RPC over one web socket. |
@@ -395,6 +396,15 @@ already done their work for the frame:
    4. per document: upload the newest decoded frame and blit it, service the capture fallback, dispatch pointer input,
    5. dispatch the frame's key presses to the focused document.
 4. `HtmlDocument.AfterBridgeUpdate` — pick up a new or resized texture.
+
+## Hot reload
+
+`HtmlHotReload` is an `AssetPostprocessor`. When `OnPostprocessAllAssets` runs during play mode with any `.html`,
+`.css` or `.js` among the imported paths, it walks every `HtmlDocument` in the scene, matches the document's
+`Html`, `StyleSheets` and `Scripts` against those paths by `AssetDatabase.GetAssetPath`, and calls `Reload()`
+for an HTML or script match or `ReloadStyles()` for a style-only match. The TextAsset objects are already
+refreshed by the time the callback fires, so the document reads the new text through its normal path. It has
+nothing to do with the protocol: the same bridge calls a script would make carry the change to Chrome.
 
 ## Known gaps
 

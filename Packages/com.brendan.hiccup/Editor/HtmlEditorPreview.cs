@@ -15,12 +15,14 @@ namespace Hiccup.Editor
         private const string HeadlessKey = "Hiccup.Preview.Headless";
         private const string DebugKey = "Hiccup.Preview.Debug";
         private const string FlipKey = "Hiccup.Preview.FlipY";
+        private const string HotReloadKey = "Hiccup.Preview.HotReload";
 
         private const string MenuRoot = "Window/Hiccup/";
         private const string MenuEnabled = MenuRoot + "Editor Preview (Chrome)";
         private const string MenuHeadless = MenuRoot + "Run Chrome Headless";
         private const string MenuDebug = MenuRoot + "Log Browser Console";
         private const string MenuFlip = MenuRoot + "Flip Preview Vertically";
+        private const string MenuHotReload = MenuRoot + "Reload Changed Assets in Play Mode";
         private const string MenuRestart = MenuRoot + "Restart Preview";
 
         private static CdpHtmlBackend s_backend;
@@ -64,6 +66,13 @@ namespace Hiccup.Editor
         }
 
         private static bool? s_flipY;
+
+        /// <summary>Whether <see cref="HtmlHotReload"/> pushes reimported .html, .css and .js assets into live documents.</summary>
+        public static bool HotReload
+        {
+            get => EditorPrefs.GetBool(HotReloadKey, true);
+            set => EditorPrefs.SetBool(HotReloadKey, value);
+        }
 
         /// <summary>One-line description of the preview for inspectors.</summary>
         public static string Status =>
@@ -169,6 +178,16 @@ namespace Hiccup.Editor
         private static bool ToggleFlipValidate()
         {
             Menu.SetChecked(MenuFlip, FlipY);
+            return true;
+        }
+
+        [MenuItem(MenuHotReload, priority = 104)]
+        private static void ToggleHotReload() => HotReload = !HotReload;
+
+        [MenuItem(MenuHotReload, true)]
+        private static bool ToggleHotReloadValidate()
+        {
+            Menu.SetChecked(MenuHotReload, HotReload);
             return true;
         }
 
