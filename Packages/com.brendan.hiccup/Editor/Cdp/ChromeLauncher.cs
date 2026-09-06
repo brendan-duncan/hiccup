@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -143,7 +144,7 @@ namespace Hiccup.Editor.Cdp
             _process.BeginErrorReadLine();
             _process.BeginOutputReadLine();
 
-            BrowserWebSocketUrl = await ReadDevToolsEndpointAsync(_profileDir, ct).ConfigureAwait(false);
+            BrowserWebSocketUrl = await ReadDevToolsEndpointAsync(_profileDir, DevToolsPort, ct).ConfigureAwait(false);
         }
 
         /// <summary>A port nothing is listening on right now. Chrome binds it moments later; a collision is very unlikely.</summary>
@@ -163,16 +164,33 @@ namespace Hiccup.Editor.Cdp
             return $"http://127.0.0.1:{DevToolsPort}/devtools/inspector.html?ws=127.0.0.1:{DevToolsPort}/devtools/page/{targetId}";
         }
 
-        private async Task<string> ReadDevToolsEndpointAsync(string profileDir, CancellationToken ct)
+        /// <summary>
+        /// Waits for Chrome's DevTools server. With an explicit port, current Chrome (152 at least) does not write
+        /// the DevToolsActivePort file it writes for port 0, so the server's own /json/version endpoint is asked for
+        /// the browser socket URL; the file is still honored where it appears.
+        /// </summary>
+        private async Task<string> ReadDevToolsEndpointAsync(string profileDir, int port, CancellationToken ct)
         {
             var portFile = Path.Combine(profileDir, "DevToolsActivePort");
             var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+            var versionUrl = $"http://127.0.0.1:{port}/json/version";
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
 
             while (DateTime.UtcNow < deadline)
             {
                 ct.ThrowIfCancellationRequested();
                 if (!IsRunning)
                     throw new Exception("Chrome exited before it published a DevTools port.");
+
+                try
+                {
+                    var json = await http.GetStringAsync(versionUrl).ConfigureAwait(false);
+                    var url = Json.Str(Json.Parse(json) as System.Collections.Generic.Dictionary<string, object>, "webSocketDebuggerUrl");
+                    if (!string.IsNullOrEmpty(url))
+                        return url;
+                }
+                catch (HttpRequestException) { /* not listening yet */ }
+                catch (TaskCanceledException) { /* the per-request timeout; try again */ }
 
                 if (File.Exists(portFile))
                 {
@@ -183,10 +201,10 @@ namespace Hiccup.Editor.Cdp
                         {
                             using (var reader = new StreamReader(stream))
                             {
-                                var port = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
+                                var filePort = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
                                 var path = (await reader.ReadLineAsync().ConfigureAwait(false))?.Trim();
-                                if (!string.IsNullOrEmpty(port) && !string.IsNullOrEmpty(path))
-                                    return $"ws://127.0.0.1:{port}{path}";
+                                if (!string.IsNullOrEmpty(filePort) && !string.IsNullOrEmpty(path))
+                                    return $"ws://127.0.0.1:{filePort}{path}";
                             }
                         }
                     }

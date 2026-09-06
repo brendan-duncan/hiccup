@@ -69,9 +69,11 @@ before any scene object's `Awake`, so the first document to call `Create()` alre
 `HtmlRenderMode.Texture` **immediately** and kicks off browser startup in the background. Nothing blocks on
 Chrome: documents are created, panels are allocated, and their content is buffered until the connection lands.
 
-Chrome is started with `--remote-debugging-port=0` and a throwaway profile directory. Port 0 makes Chrome choose
-a free port and write it, along with the browser-level web socket path, to `DevToolsActivePort` in that profile —
-which is polled for up to 20 seconds. This avoids both hard-coding a port and racing another instance. By default
+Chrome is started with `--remote-debugging-port=<port>` and a throwaway profile directory. The port is a free
+loopback port the launcher picks a moment before (so it can be named in `--remote-allow-origins`, which the
+DevTools front end needs; see [Troubleshooting](#troubleshooting)). Chrome does not write `DevToolsActivePort`
+for an explicit port, so the launcher polls `http://127.0.0.1:<port>/json/version` for up to 20 seconds and
+takes `webSocketDebuggerUrl` from the reply; the file is still honored if a Chrome writes it. By default
 it runs `--headless=new`, which is a full browser and still screencasts; turning headless off positions a real
 window at `-32000,-32000` instead. Backgrounding, timer throttling and occlusion throttling are all disabled, or
 Chrome stops painting a window nobody is looking at.
