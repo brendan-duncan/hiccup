@@ -63,6 +63,10 @@ Scroll is the one place the DOM is a source of truth. `scroll` does not bubble, 
 installed through `Eval` sends the viewport's id and offsets to C# with `HUI.send('ugscroll', …)`, which the
 mirror receives through `HtmlDocument.OnMessage`.
 
+All of this — the document, the per-node diff, HTML emission, texture export, fonts and event routing — lives in
+`HtmlMirror` under `Runtime/Mirror`, which the [UI Toolkit mirror](UitkMirror.md) shares; this class only walks
+the Canvas and describes each RectTransform.
+
 ## Limits
 
 * Text metrics differ: uGUI sets the rectangle, the browser draws the text inside it with its own font. To keep

@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### Added
+- **UI Toolkit mirror** (`HtmlUitkMirror`, experimental): copies a UI Toolkit runtime panel into a document every
+  frame, the way the uGUI mirror does for a Canvas. Resolved USS maps onto CSS almost one to one (backgrounds,
+  borders and radii, opacity, visibility, transforms, fonts, spacing, text shadow and outline); Button, Toggle,
+  RadioButton, Slider, the text and number fields, DropdownField and ScrollView become native controls and
+  browser scrolling; pointer events are re-sent into the panel so `:hover`/`:active` styles, Clickable,
+  dropdown menus and list selection run. The DOM side of both mirrors (`HtmlMirror`, `MirrorTextureCache`,
+  `MirrorRichText` under `Runtime/Mirror`) is now shared; `HtmlUguiMirror` keeps its API. A **UI Toolkit
+  Mirror** sample and play-mode tests come with it. See [UitkMirror.md](Documentation~/UitkMirror.md).
 - Stacking order between overlapping documents. `HtmlDocument.SortOrder` sets the panel's `z-index`, so the
   browser hit-tests the document Unity draws on top (and, in overlay mode, draws it on top too).
   `HtmlScreenSurface` keeps it in step with the Raw Image's draw order every frame (canvas sorting order, then

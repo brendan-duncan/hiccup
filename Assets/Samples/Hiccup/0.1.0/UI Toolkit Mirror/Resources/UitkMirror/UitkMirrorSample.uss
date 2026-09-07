@@ -1,0 +1,174 @@
+/* Styles for the UI Toolkit Mirror sample. Everything the mirror copies comes from resolved USS like this,
+   including the :hover and :active rules, which run because the mirror forwards the pointer into the panel. */
+
+.screen {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel {
+    width: 600px;
+    height: 660px;
+    padding: 24px 28px;
+    background-color: rgba(20, 26, 41, 0.94);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(92, 200, 250, 0.25);
+}
+
+.panel.glow {
+    background-color: rgba(26, 41, 61, 0.94);
+    border-color: rgba(92, 200, 250, 0.7);
+}
+
+.title {
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(237, 242, 250);
+    margin-bottom: 4px;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: rgb(158, 171, 194);
+    white-space: normal;
+    margin-bottom: 12px;
+}
+
+.row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+    min-height: 32px;
+}
+
+.note {
+    font-size: 16px;
+    color: rgb(158, 171, 194);
+    margin-left: 16px;
+}
+
+.accent {
+    color: rgb(92, 200, 250);
+}
+
+.warm {
+    color: rgb(250, 153, 92);
+}
+
+.primary {
+    width: 160px;
+    height: 44px;
+    margin: 0;
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: rgb(8, 20, 36);
+    background-color: rgb(92, 200, 250);
+    border-width: 0;
+    border-radius: 10px;
+    transition-property: background-color, scale;
+    transition-duration: 0.12s;
+}
+
+.primary:hover {
+    background-color: rgb(204, 235, 255);
+}
+
+.primary:active {
+    background-color: rgb(140, 178, 217);
+    scale: 0.97 0.97;
+}
+
+.switch {
+    width: 220px;
+    margin: 0;
+}
+
+/* The runtime theme gives every field label a 150px minimum, which would leave a 24px checkbox no room. */
+.switch .unity-base-field__label {
+    min-width: 0;
+    margin-right: 8px;
+}
+
+.switch .unity-base-field__label,
+.volume .unity-base-field__label,
+.quality .unity-base-field__label {
+    color: rgb(237, 242, 250);
+    font-size: 16px;
+}
+
+.volume {
+    width: 240px;
+    margin: 0;
+}
+
+.name {
+    width: 240px;
+    margin: 0;
+}
+
+.name .unity-base-text-field__input {
+    height: 36px;
+    padding-left: 12px;
+    font-size: 16px;
+    color: rgb(237, 242, 250);
+    background-color: rgba(10, 13, 23, 0.9);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(92, 200, 250, 0.35);
+}
+
+.quality {
+    width: 200px;
+    margin: 0;
+}
+
+.quality .unity-base-popup-field__input {
+    height: 36px;
+    padding-left: 12px;
+    color: rgb(237, 242, 250);
+    background-color: rgba(10, 13, 23, 0.9);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(92, 200, 250, 0.35);
+}
+
+.progress {
+    width: 120px;
+    margin: 0 0 0 16px;
+}
+
+.spinner {
+    width: 22px;
+    height: 22px;
+    margin-left: 16px;
+    background-color: rgb(250, 153, 92);
+    border-radius: 6px;
+}
+
+.list {
+    flex-grow: 1;
+    min-height: 140px;
+    padding: 6px;
+    background-color: rgba(10, 13, 23, 0.9);
+    border-radius: 10px;
+}
+
+.list-row {
+    height: 36px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    justify-content: center;
+    background-color: rgb(36, 43, 64);
+    border-radius: 8px;
+}
+
+.list-row:hover {
+    background-color: rgb(48, 58, 84);
+}
+
+.row-text {
+    font-size: 15px;
+    color: rgb(237, 242, 250);
+}

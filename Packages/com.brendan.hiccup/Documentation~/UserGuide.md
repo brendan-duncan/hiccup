@@ -24,6 +24,7 @@ For details on previewing inside the Editor, read [EditorPreview.md](EditorPrevi
 - [Showing Unity textures in the page](#showing-unity-textures-in-the-page)
 - [Panels in the 3D scene](#panels-in-the-3d-scene)
 - [Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface)
+- [Mirroring an existing UI Toolkit interface](#mirroring-an-existing-ui-toolkit-interface)
 - [Input and click-through](#input-and-click-through)
 - [Accessibility](#accessibility)
 - [Working in the Editor](#working-in-the-editor)
@@ -91,7 +92,8 @@ the flag; Hiccup sets the canvas attributes it needs when the game starts.
 **Full UI Sample**. It is a complete game UI: a menu, a settings form, an inventory list, a HUD, pop-up dialogs,
 toast messages, themes, and a working console on a 3D quad. It is the fastest way to see what a finished Hiccup
 UI looks like. **uGUI Mirror** shows an existing uGUI form turned into HTML with a single component (see
-[Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface)). **Three.js Desk** runs a whole
+[Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface)), and **UI Toolkit Mirror** does the same
+for a UI Toolkit panel. **Three.js Desk** runs a whole
 second web page on a monitor in the scene.
 
 ## Your first HUD
@@ -715,8 +717,71 @@ The sample under `Assets/Samples/Hiccup/0.1.0/uGUI Mirror` builds a form with al
 is a good reference for what to expect. For the full component-by-component mapping and how the sync works,
 see [UguiMirror.md](UguiMirror.md).
 
-## Input and click-through
+## Mirroring an existing UI Toolkit interface
 
+The same idea works for UI Toolkit. The `HtmlUitkMirror` component copies a UI Toolkit runtime panel into a
+Hiccup document every frame: UI Toolkit keeps resolving USS, laying out and running your callbacks, but the
+result is drawn, clicked and read as real DOM. Because USS is already a CSS dialect, most of what you styled —
+backgrounds, borders, rounded corners, opacity, transforms, fonts, spacing — reaches the page as the same
+property. This feature is experimental, like the uGUI mirror.
+
+### Tutorial: mirror a UI Toolkit panel
+
+**1. Add the component.** Select the GameObject with your `UIDocument` and choose **Add Component ▸ Hiccup ▸ UI
+Toolkit Mirror**. The whole panel is mirrored, so one mirror covers every `UIDocument` that shares the same
+`PanelSettings`; add it to one of them. Leave every field at its default for now. Or open the **UI Toolkit
+Mirror** sample, which builds a whole form in code.
+
+**2. Press Play.** With the Editor preview on, the Game view looks almost the same as before, but what you see
+is the browser's copy. The mirror has created a full-screen document, hidden the panel by giving its root
+opacity 0 and mapping the real pointer to "outside the panel", and created a DOM element for every element in
+the visual tree at the rectangle UI Toolkit computed.
+
+**3. Try it.** Click a `Button`: its `clicked` callback fires. Hover it: its USS `:hover` rule runs, because the
+mirror forwards the pointer into the panel. Drag a `Slider`, type in a `TextField`, open a `DropdownField`: the
+elements' values change and your `RegisterValueChangedCallback` handlers run. Press **Tab** to move focus
+through the controls with a visible ring.
+
+**4. Compare the two.** Turn **Hide Source** off to see the panel and the mirror at once.
+
+### Adding it from code
+
+```csharp
+using Hiccup.Uitk;
+using UnityEngine.UIElements;
+
+// documentGo is a GameObject with a UIDocument whose panel you built.
+var mirror = documentGo.AddComponent<HtmlUitkMirror>();
+
+// Later, to switch back to native UI Toolkit drawing and remove the document:
+mirror.enabled = false;
+```
+
+### Its Inspector fields
+
+**Document**, **Hide Source**, **Fallback Fonts**, **Fonts**, **Render Texture Refresh**, **Outline Unsupported**
+and **Dump Exports** work as they do on the uGUI mirror (see [the table above](#the-inspector-fields)). For a
+`FontAsset`, set the **Fonts** family to the face's family name, the one its font file reports. Two are its own:
+
+| Field | What it does |
+| --- | --- |
+| **Dropdown Mode** | *UI Toolkit Menu* (default): clicking a `DropdownField` opens its own menu on the panel, which is mirrored like everything else, so it looks exactly as styled. *Native Select*: an invisible browser `<select>` opens the browser's own picker instead. |
+| **Forward Pointer** | On by default. Sends hover, press and release from the DOM into the panel, so `:hover` and `:active` styles, `Clickable`, dropdown menus, list selection and your manipulators run. Turn it off to drive the panel through the native controls only. |
+
+### What the UI Toolkit mirror can and cannot copy
+
+**Copied:** every element's rectangle and transform; USS background colors and images, borders and radii,
+opacity and visibility; `Label` and other text with font, size, style, color, alignment, spacing, shadow and
+outline, wrapping and rich text; `Button`, `Toggle`, `RadioButton`, `Slider`, `SliderInt`, the text and number
+fields and `DropdownField` as native controls that write back; `ScrollView` (and so `ListView`) scrolling with
+`scrollOffset` written back; `:hover`, `:active`, `:checked` and `:disabled` styling and USS transitions.
+
+**Not copied:** anything drawn with `generateVisualContent` or `Painter2D`, vector images, materials and
+filters; `Scroller` and `MinMaxSlider` dragging; exact text line breaks; world-space and render-texture panels.
+
+For the full element-by-element mapping and how the sync works, see [UitkMirror.md](UitkMirror.md).
+
+## Input and click-through
 **Pointer Mode** on the document decides what the panel captures:
 
 | Mode | Behavior |
@@ -873,3 +938,5 @@ For a detailed trace, set `HtmlRuntime.DebugLogging = true` before creating your
   its panel, so nearer objects cover it. Post-processing that rewrites the alpha channel defeats this.
 * **The uGUI mirror is experimental.** It copies the built-in components and stops at custom meshes. See
   [Mirroring an existing uGUI interface](#mirroring-an-existing-ugui-interface).
+* **The UI Toolkit mirror is experimental** too. It copies resolved USS and the built-in controls and stops at
+  custom drawing. See [Mirroring an existing UI Toolkit interface](#mirroring-an-existing-ui-toolkit-interface).

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--
+      HTML-in-Canvas Origin Trial. Register your origin at
+      https://developer.chrome.com/origintrials/#/view_trial/3478467762190286849 and paste the token below.
+      For local testing you can instead enable chrome://flags/#canvas-draw-element (Chrome 148+ / Canary 149+).
+    -->
+    <meta http-equiv="origin-trial" content="PASTE_YOUR_HTML_IN_CANVAS_ORIGIN_TRIAL_TOKEN_HERE">
+    <title>hiccup</title>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+      #unity-container { position: absolute; inset: 0; }
+      /* The Unity canvas hosts the HTML UI as DOM children (layoutsubtree). It must be positioned so those
+         children can be laid out and hit tested against it. */
+      #unity-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+      #unity-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #cfd8ea; font: 14px system-ui, sans-serif; }
+      #unity-progress { width: 240px; height: 6px; background: #223; border-radius: 3px; overflow: hidden; }
+      #unity-progress > div { height: 100%; width: 0; background: #5cc8ff; }
+      #unity-warning { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); color: #fff; }
+      #unity-warning > div { background: #a00; padding: 8px 12px; margin: 4px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" layoutsubtree tabindex="-1" aria-label="hiccup"></canvas>
+      <div id="unity-loading" role="status" aria-live="polite">
+        <div>
+          <div>Loading hiccup…</div>
+          <div id="unity-progress"><div></div></div>
+        </div>
+      </div>
+      <div id="unity-warning"></div>
+    </div>
+    <script>
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loading = document.querySelector("#unity-loading");
+      var progressBar = document.querySelector("#unity-progress > div");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() { warningBanner.style.display = warningBanner.children.length ? 'block' : 'none'; }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; color: black; padding: 10px;';
+          setTimeout(function() { warningBanner.removeChild(div); updateBannerVisibility(); }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/uitk.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/uitk.data",
+        frameworkUrl: buildUrl + "/uitk.framework.js",
+        codeUrl: buildUrl + "/uitk.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "hiccup",
+        productVersion: "0.1.0",
+        showBanner: unityShowBanner,
+        // Render at the device's native resolution so the HTML texture stays crisp.
+        devicePixelRatio: window.devicePixelRatio || 1,
+        // An alpha channel on the canvas lets the DOM overlay (the fallback for browsers without HTML-in-Canvas)
+        // sit *behind* the frame: HTML surfaces then cut holes through the scene where their panels are, so
+        // geometry in front of a panel covers it. Pixels the scene leaves at alpha 0 show the page background.
+        webglContextAttributes: { alpha: true },
+      };
+
+      if (!('requestPaint' in canvas) && !('onpaint' in canvas)) {
+        console.warn('[Hiccup] HTML-in-Canvas is not available in this browser; the UI will use the DOM overlay fallback. ' +
+                     'Use Chrome 148+ with chrome://flags/#canvas-draw-element or an Origin Trial token.');
+      }
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = function() {
+        createUnityInstance(canvas, config, function(progress) {
+          progressBar.style.width = (100 * progress) + "%";
+        }).then(function(unityInstance) {
+          loading.style.display = "none";
+        }).catch(function(message) {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

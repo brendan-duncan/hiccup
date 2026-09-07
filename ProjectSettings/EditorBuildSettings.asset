@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Samples/Hiccup/0.1.0/uGUI Mirror/Scenes/UguiMirrorSample.unity
     guid: a2b3c4d5e6f7480912a3b4c5d6e7f809
+  - enabled: 0
+    path: Assets/Samples/Hiccup/0.1.0/UI Toolkit Mirror/Scenes/UitkMirrorSample.unity
+    guid: 357f1425916f43daa03bff54b3783a6c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

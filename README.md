@@ -35,6 +35,11 @@ of HTML-in-Canvas features, such as screen readers and accessibility.
 
 https://brendan-duncan.github.io/hiccup/build/ugui
 
+### UI Toolkit Mirror
+The same for UI Toolkit: `HtmlUitkMirror` copies a runtime panel into a document every frame, so an existing UI Toolkit UI is
+drawn, clicked and read as DOM while USS keeps doing the styling and layout. Hover and active styles still run, because the
+pointer is forwarded back into the panel.
+
 ### Multi-Engine
 A Unity game running ThreeJS on a virtual computer.
 Is it necessary? No. Is it fun to see how far things can be pushed? Absolutely.
@@ -50,6 +55,7 @@ https://brendan-duncan.github.io/hiccup/build/multiengine
 | [Assets/Samples/Hiccup/0.1.0/Full UI Sample/](Assets/Samples/Hiccup/0.1.0/Full%20UI%20Sample/) | The main sample, "Orbital Salvage": menu, settings, HUD, inventory, dialogs, a world-space console. |
 | [Assets/Samples/Hiccup/0.1.0/Three.js Desk/](Assets/Samples/Hiccup/0.1.0/Three.js%20Desk/) | A three.js page on a monitor: a same-origin iframe painted by HTML-in-Canvas onto a world-space quad, driven by a mouse you drag around the desk. |
 | [Assets/Samples/Hiccup/0.1.0/uGUI Mirror/](Assets/Samples/Hiccup/0.1.0/uGUI%20Mirror/) | Experimental: an ordinary uGUI form built in code and mirrored into a document by `HtmlUguiMirror`, so it is drawn and clicked as DOM. |
+| [Assets/Samples/Hiccup/0.1.0/UI Toolkit Mirror/](Assets/Samples/Hiccup/0.1.0/UI%20Toolkit%20Mirror/) | Experimental: the same for a UI Toolkit runtime panel, mirrored by `HtmlUitkMirror`; USS hover and active states, dropdown menus and scrolling included. |
 | [Assets/WebGLTemplates/Hiccup/](Assets/WebGLTemplates/Hiccup/) | WebGL template with a full-window canvas and the Origin Trial `<meta>` placeholder. |
 
 ## Getting started
