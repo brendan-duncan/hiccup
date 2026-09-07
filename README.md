@@ -130,9 +130,6 @@ Chrome and are ignored without it. From the command line:
 Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testResults results.xml
 ```
 
-`.github/workflows/tests.yml` runs both on push once a Unity license is added as repository secrets (see the
-comments in the file).
-
 ## Status
 
 Experimental. HTML-in-Canvas is in Origin Trial in Chrome 148–150 and its function signatures may still change;

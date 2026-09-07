@@ -23,8 +23,7 @@
   the same event payload and only fields `HtmlEvent` declares, the preview script has no double quotes, and the
   jslib stays ES5. `Tests/Runtime` holds play-mode tests that drive the real Editor preview end to end
   (elements, clicks, messages, `Eval`/`EvalAsync`, scripts before `Created`, images, focus), ignored when no
-  preview is running. A GitHub Actions workflow (`.github/workflows/tests.yml`) runs both; it needs a Unity
-  license added as repository secrets before it can activate.
+  preview is running.
 - **Open in Chrome DevTools** on the HtmlDocument inspector during play mode (with a **Copy URL** button beside
   it): opens the preview Chrome's own DevTools front end for that document's page, so its DOM, styles, console
   and network are inspectable live. The launcher now picks the debugging port itself and passes it to
