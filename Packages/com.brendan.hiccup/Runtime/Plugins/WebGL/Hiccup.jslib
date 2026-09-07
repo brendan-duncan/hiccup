@@ -57,6 +57,9 @@ var HiccupLibrary = {
       HUI.warned[key] = true;
       console.warn('[Hiccup] ' + msg);
     },
+    // An element the canvas has not painted yet (its first frame, or right after it was re-added) has no paint
+    // record, so the HTML-in-Canvas calls throw until the next frame. That is expected and retried, not a warning.
+    transient: function (e) { return /No cached paint record/i.test(String(e)); },
 
     // JS string -> freshly malloc'd UTF8 buffer. The C# side copies it and calls Hiccup_Free.
     cstr: function (s) {
@@ -481,7 +484,8 @@ var HiccupLibrary = {
       var stop = function (e) { e.stopPropagation(); };
       for (var j = 0; j < HUI.BLOCK_EVENTS.length; j++) {
         var t = HUI.BLOCK_EVENTS[j];
-        p.el.addEventListener(t, stop);
+        // Passive: the blockers only stop propagation, so the browser may scroll without waiting on them.
+        p.el.addEventListener(t, stop, { passive: true });
         p.blockers.push({ t: t, f: stop });
       }
     },
@@ -610,7 +614,7 @@ var HiccupLibrary = {
         var useGET = hasGET && (mode === 2 || (mode === 0 && (perspective || !hasUEG)));
         if (useGET) {
           try { p.el.style.transform = canvas.getElementTransform(p.el, dm).toString(); applied = true; }
-          catch (e2) { HUI.warnOnce('get', 'getElementTransform failed, falling back: ' + e2); }
+          catch (e2) { if (HUI.transient(e2)) HUI.log('getElementTransform not ready yet: ' + e2); else HUI.warnOnce('get', 'getElementTransform failed, falling back: ' + e2); }
         }
         if (!applied && hasUEG && mode !== 2) {
           try {
@@ -790,7 +794,8 @@ var HiccupLibrary = {
         }
       } catch (e) {
         // Most likely "no snapshot recorded yet": ask for a paint and try again next frame.
-        HUI.warnOnce('glup', 'texElementImage2D failed (will retry): ' + e);
+        if (HUI.transient(e)) HUI.log('texElementImage2D not ready yet: ' + e);
+        else HUI.warnOnce('glup', 'texElementImage2D failed (will retry): ' + e);
         ok = false;
       }
       HUI.restoreGLState(gl, st);
@@ -856,7 +861,8 @@ var HiccupLibrary = {
         }
       }
       if (lastErr) {
-        HUI.warnOnce('gpuup', 'HTML-in-Canvas WebGPU upload failed (will retry): ' + lastErr);
+        if (HUI.transient(lastErr)) HUI.log('HTML-in-Canvas WebGPU upload not ready yet: ' + lastErr);
+        else HUI.warnOnce('gpuup', 'HTML-in-Canvas WebGPU upload failed (will retry): ' + lastErr);
         return false;
       }
 

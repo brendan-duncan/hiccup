@@ -313,7 +313,8 @@ on anything else. A `MutationObserver` on the content root binds elements that a
 `innerHTML` or `insertAdjacentHTML`, and re-binds one whose `data-hui-image` attribute changes, so the HTML
 never has to know the URL. Replacing an image revokes the old URL after the new one is applied; destroying the
 panel revokes all of them. The encoder reads readable textures on the CPU and everything else through a blit
-into an sRGB target and a `ReadPixels`, the same path the uGUI mirror uses.
+into an sRGB target and a `ReadPixels`, the same path the mirrors use. WebGPU has no synchronous readback, so
+there the blit is followed by an `AsyncGPUReadback` and the image reaches the page a frame or two after the call.
 
 ## Element handles
 

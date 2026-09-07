@@ -15,6 +15,8 @@ laying out and running but neither renders nor sees the pointer. Turn it off to 
 
 Sprites and textures reach the page as PNG data URLs. Readable textures (anything created at runtime, or imported
 with Read/Write enabled) are copied on the CPU; others are blitted through an sRGB render target and read back.
+On WebGPU that readback is asynchronous (the API has no synchronous one), so such an image is missing from the
+page for the frame or two until it lands, then cached like any other export.
 **Dump Exports** writes every PNG to `persistentDataPath/HiccupUguiExports` so you can check what the page gets.
 
 Fonts: the browser cannot read Unity `Font` or TMP font assets, so by default a Unity font name maps to a CSS

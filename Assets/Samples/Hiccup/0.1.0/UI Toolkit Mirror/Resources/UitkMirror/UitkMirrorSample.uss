@@ -5,6 +5,10 @@
     flex-grow: 1;
     align-items: center;
     justify-content: center;
+    /* The sample makes its PanelSettings in code, so a build carries no ICU data for the advanced text generator
+       (Unity logs "ICU Data not available" and falls back). The standard generator needs none, and it is what the
+       Liberation Sans font mapping below was matched against. Inherited by every label. */
+    -unity-text-generator: standard;
 }
 
 .panel {

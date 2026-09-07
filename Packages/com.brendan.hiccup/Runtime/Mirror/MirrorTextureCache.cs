@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Hiccup.Mirror
 {
@@ -40,6 +41,22 @@ namespace Hiccup.Mirror
         private readonly List<Key> _deadKeys = new List<Key>();
         private readonly List<SlicedKey> _deadSliced = new List<SlicedKey>();
         private Texture2D _scratch;
+
+        // WebGPU cannot read a render target back synchronously (Texture2D.ReadPixels logs an error and returns
+        // nothing), so blit reads are issued as AsyncGPUReadback requests and picked up on a later sync pass. The
+        // caller gets null until then and no background for the element; the next sync retries and finds the pixels.
+        private struct PendingRead
+        {
+            public AsyncGPUReadbackRequest Request;
+            public RenderTexture Target;   // kept alive until the readback completes
+            public int W, H;
+        }
+
+        private readonly Dictionary<Key, PendingRead> _pending = new Dictionary<Key, PendingRead>();
+        private bool _asyncErrorLogged;
+
+        /// <summary>True where a synchronous readback is not available (WebGPU) and the async path is used instead.</summary>
+        private static bool ReadsAsync => SystemInfo.graphicsDeviceType == GraphicsDeviceType.WebGPU && SystemInfo.supportsAsyncGPUReadback;
         // The last whole texture read for a sub-rectangle, kept for the rest of the sync pass so an atlas is
         // copied once for all of its sprites rather than once per sprite (see EndSync).
         private EntityId _fullId;
@@ -137,6 +154,14 @@ namespace Hiccup.Mirror
             }
             foreach (var k in _deadKeys)
                 _sources.Remove(k);
+            _deadKeys.Clear();
+            foreach (var k in _pending.Keys)
+            {
+                if (k.Texture.Equals(id))
+                    _deadKeys.Add(k);
+            }
+            foreach (var k in _deadKeys)
+                DropPending(k);
             _deadSliced.Clear();
             foreach (var k in _sliced.Keys)
             {
@@ -168,10 +193,54 @@ namespace Hiccup.Mirror
             if (_sources.TryGetValue(source, out var px))
                 return px;
             int w = Mathf.Max(1, rect.width), h = Mathf.Max(1, rect.height);
-            px = ReadDirect(texture, rect, w, h) ?? ReadThroughBlit(texture, rect, w, h);
-            if (px != null && !(texture is RenderTexture))
+            if (_pending.TryGetValue(source, out var pending))
+            {
+                px = CompleteAsyncRead(source, pending);
+            }
+            else
+            {
+                px = ReadDirect(texture, rect, w, h);
+                if (px == null)
+                {
+                    if (ReadsAsync)
+                    {
+                        BeginAsyncRead(source, texture, rect, w, h);
+                        return null;
+                    }
+                    px = ReadThroughBlit(texture, rect, w, h);
+                }
+            }
+            if (px == null)
+                return null;
+            if (texture is Texture2D t2 && t2.format == TextureFormat.Alpha8)
+                NormalizeAlphaOnly(px);
+            if (!(texture is RenderTexture))
                 _sources[source] = px;
             return px;
+        }
+
+        /// <summary>
+        /// An alpha-only texture (icons, font glyphs) reads back as black, gray or white with the coverage in the
+        /// alpha or the color channels, depending on the graphics API and on whether it came from the CPU or a
+        /// blit. Unity draws it as its tint color, so the pixels become white with the coverage as alpha.
+        /// </summary>
+        private static void NormalizeAlphaOnly(Color32[] px)
+        {
+            bool alphaVaries = false;
+            for (int i = 0; i < px.Length; i++)
+            {
+                if (px[i].a != 255)
+                {
+                    alphaVaries = true;
+                    break;
+                }
+            }
+            for (int i = 0; i < px.Length; i++)
+            {
+                var p = px[i];
+                byte a = alphaVaries ? p.a : (byte)Mathf.Max(p.r, Mathf.Max(p.g, p.b));
+                px[i] = new Color32(255, 255, 255, a);
+            }
         }
 
         private static readonly byte[] s_tintLut = new byte[3 * 256];
@@ -362,14 +431,10 @@ namespace Hiccup.Mirror
         /// <summary>Non-readable or compressed textures go through the GPU: blit the sub-rectangle into an sRGB target and read it back.</summary>
         private Color32[] ReadThroughBlit(Texture texture, RectInt rect, int w, int h)
         {
-            var desc = new RenderTextureDescriptor(w, h, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_SRGB, 0) { sRGB = true, msaaSamples = 1, useMipMap = false };
-            var rt = RenderTexture.GetTemporary(desc);
+            var rt = BlitRect(texture, rect, w, h);
             var previous = RenderTexture.active;
             try
             {
-                var scale = new Vector2((float)w / texture.width, (float)h / texture.height);
-                var offset = new Vector2((float)rect.x / texture.width, (float)rect.y / texture.height);
-                Graphics.Blit(texture, rt, scale, offset);
                 RenderTexture.active = rt;
                 var scratch = Scratch(w, h);
                 scratch.ReadPixels(new Rect(0, 0, w, h), 0, 0, false);
@@ -380,6 +445,58 @@ namespace Hiccup.Mirror
                 RenderTexture.active = previous;
                 RenderTexture.ReleaseTemporary(rt);
             }
+        }
+
+        /// <summary>Blits the sub-rectangle into a temporary sRGB target, one texture pixel per pixel. The caller releases it.</summary>
+        private static RenderTexture BlitRect(Texture texture, RectInt rect, int w, int h)
+        {
+            var desc = new RenderTextureDescriptor(w, h, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_SRGB, 0) { sRGB = true, msaaSamples = 1, useMipMap = false };
+            var rt = RenderTexture.GetTemporary(desc);
+            var scale = new Vector2((float)w / texture.width, (float)h / texture.height);
+            var offset = new Vector2((float)rect.x / texture.width, (float)rect.y / texture.height);
+            Graphics.Blit(texture, rt, scale, offset);
+            return rt;
+        }
+
+        /// <summary>Blits and queues a readback; the pixels arrive on a later sync pass through <see cref="CompleteAsyncRead"/>.</summary>
+        private void BeginAsyncRead(Key source, Texture texture, RectInt rect, int w, int h)
+        {
+            var rt = BlitRect(texture, rect, w, h);
+            var request = AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
+            _pending[source] = new PendingRead { Request = request, Target = rt, W = w, H = h };
+        }
+
+        /// <summary>Null while the readback is in flight. On an error the rectangle is marked unreadable so it is not requested every frame.</summary>
+        private Color32[] CompleteAsyncRead(Key source, PendingRead pending)
+        {
+            if (!pending.Request.done)
+                return null;
+            Color32[] px = null;
+            if (pending.Request.hasError)
+            {
+                if (!_asyncErrorLogged)
+                {
+                    _asyncErrorLogged = true;
+                    Debug.LogWarning("[Hiccup] Reading a texture back from the GPU failed; the element keeps no background image.");
+                }
+                _sources[source] = null;   // TryGetValue then yields null without another request
+            }
+            else
+            {
+                var data = pending.Request.GetData<Color32>();
+                px = data.Length == pending.W * pending.H ? data.ToArray() : null;
+            }
+            DropPending(source);
+            return px;
+        }
+
+        private void DropPending(Key source)
+        {
+            if (!_pending.TryGetValue(source, out var pending))
+                return;
+            _pending.Remove(source);
+            if (pending.Target != null)
+                RenderTexture.ReleaseTemporary(pending.Target);
         }
 
         private Texture2D Scratch(int w, int h)
@@ -414,6 +531,12 @@ namespace Hiccup.Mirror
             _sliced.Clear();
             _sources.Clear();
             _full = null;
+            foreach (var p in _pending.Values)
+            {
+                if (p.Target != null)
+                    RenderTexture.ReleaseTemporary(p.Target);
+            }
+            _pending.Clear();
             if (_scratch != null)
             {
                 UnityEngine.Object.Destroy(_scratch);

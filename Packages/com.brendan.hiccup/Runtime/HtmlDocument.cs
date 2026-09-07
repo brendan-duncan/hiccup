@@ -577,13 +577,19 @@ namespace Hiccup
         {
             if (!ValidImageName(name))
                 return;
-            var bytes = HtmlImageEncoder.Encode(texture, rect, format, jpegQuality);
-            if (bytes == null)
+            // Synchronous except on WebGPU for textures that need a GPU readback, where the bytes arrive a frame or
+            // two later; the page then updates when they do.
+            HtmlImageEncoder.EncodeAsync(texture, rect, format, jpegQuality, bytes =>
             {
-                RemoveImage(name);
-                return;
-            }
-            SetImage(name, bytes, HtmlImageEncoder.MimeType(format));
+                if (this == null)
+                    return;   // destroyed while the readback was in flight
+                if (bytes == null)
+                {
+                    RemoveImage(name);
+                    return;
+                }
+                SetImage(name, bytes, HtmlImageEncoder.MimeType(format));
+            });
         }
 
         /// <summary>Shows already-encoded image bytes (a PNG, JPEG, WebP, SVG or GIF file) in the page under a name.</summary>
