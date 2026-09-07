@@ -40,6 +40,8 @@ The same for UI Toolkit: `HtmlUitkMirror` copies a runtime panel into a document
 drawn, clicked and read as DOM while USS keeps doing the styling and layout. Hover and active styles still run, because the
 pointer is forwarded back into the panel.
 
+https://brendan-duncan.github.io/hiccup/build/uitk
+
 ### Multi-Engine
 A Unity game running ThreeJS on a virtual computer.
 Is it necessary? No. Is it fun to see how far things can be pushed? Absolutely.
